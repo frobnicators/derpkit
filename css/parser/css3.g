@@ -100,6 +100,7 @@ elem
 	:     IDENT -> ^( TAG IDENT )
 	| '#' IDENT -> ^( ID IDENT )
 	| '.' IDENT -> ^( CLASS IDENT )
+	| '::' IDENT -> ^( PSEUDO IDENT )
 	;
 
 pseudo
