@@ -11,3 +11,8 @@
 *.lai
 *.la
 *.a
+
+# generated parser files
+css/parser/css3Parser.*
+css/parser/css3Lexer.*
+css/parser/css3.tokens
