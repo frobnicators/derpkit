@@ -42,10 +42,6 @@ NUM
 	|	(('0'..'9')* '.')? ('0'..'9')+
 	;
 
-COLOR
-	:	'#' ('0'..'9'|'a'..'f'|'A'..'F')+
-	;
-
 // Single-line comments
 SL_COMMENT
 	:	'//'
@@ -111,6 +107,10 @@ pseudo
 	| (':'|'::') function -> ^( PSEUDO function )
 	;
 
+color
+	:	'#'! IDENT
+	;
+
 attrib
 	: '[' IDENT (attribRelate (STRING | IDENT))? ']' -> ^( ATTRIB IDENT (attribRelate STRING* IDENT*)? )
 	;
@@ -140,7 +140,7 @@ args
 expr
 	: (NUM unit?)
 	| IDENT
-	| COLOR
+	| color
 	| STRING
 	| function
 	;
