@@ -10,12 +10,16 @@ tokens {
 	NESTED;
 	NEST;
 	RULE;
+	ANY;
 	ATTRIB;
 	PARENTOF;
 	PRECEDEDS;
 	ATTRIBEQUAL;
 	HASVALUE;
 	BEGINSWITH;
+	PREFIXEDWITH;
+	SUFIXEDWITH;
+	CONTAINS;
 	PSEUDO;
 	PROPERTY;
 	FUNCTION;
@@ -41,6 +45,8 @@ NUM
 	:	'-' (('0'..'9')* '.')? ('0'..'9')+
 	|	(('0'..'9')* '.')? ('0'..'9')+
 	;
+
+IMPORTANT : '!important';
 
 // Single-line comments
 SL_COMMENT
@@ -100,7 +106,7 @@ elem
 	:     IDENT -> ^( TAG IDENT )
 	| '#' IDENT -> ^( ID IDENT )
 	| '.' IDENT -> ^( CLASS IDENT )
-	| '::' IDENT -> ^( PSEUDO IDENT )
+	| '*' -> ^( ANY )
 	;
 
 pseudo
@@ -128,10 +134,13 @@ attribRelate
 	: '='  -> ATTRIBEQUAL
 	| '~=' -> HASVALUE
 	| '|=' -> BEGINSWITH
+	| '^=' -> PREFIXEDWITH
+	| '$=' -> SUFIXEDWITH
+	| '*=' -> CONTAINS
 	;
 
 declaration
-	: IDENT ':' args -> ^( PROPERTY IDENT args )
+	: IDENT ':' args IMPORTANT? -> ^( PROPERTY IDENT args IMPORTANT?)
 	;
 
 args
