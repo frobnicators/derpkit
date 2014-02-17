@@ -186,13 +186,17 @@ attrib
       RBRACKET
 ;
 
-pseudo
-    : COLON
-            IDENT
-                ( // Function
+function_args
+	: LPAREN
+		(
+			expr
+			|
+			selector
+		)?
+	RPAREN;
 
-                    LPAREN IDENT? RPAREN
-                )?
+pseudo
+    : COLON COLON? IDENT function_args?
     ;
 
 declaration
@@ -220,9 +224,7 @@ term
             | FREQ
         )
     | STRING
-    | IDENT (   // Function
-                LPAREN expr RPAREN
-            )?
+    | IDENT function_args?
     | URI
     | hexColor
     ;
