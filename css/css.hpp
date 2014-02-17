@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "cssrule.hpp"
+
 class CSS {
 	public:
 		~CSS();
@@ -12,7 +14,11 @@ class CSS {
 	private:
 		CSS(const std::string &filename);
 
+		void parse(struct ANTLR3_INPUT_STREAM_struct * input);
+		void traverse(struct ANTLR3_BASE_TREE_struct * node);
+
 		std::string m_filename;
+		std::vector<CSSRule> m_rules;
 };
 
 #endif

@@ -629,17 +629,17 @@ CSS_DOT             : '.'       ;
 // -----------------
 // Literal strings. Delimited by either ' or "
 //
-//fragment    CSS_INVALID :;
+//fragment    INVALID :;
 CSS_STRING          : '\'' ( ~('\n'|'\r'|'\f'|'\'') )*
                     (
                           '\''
-                        | { $type = CSS_INVALID; }
+                        | { $type = INVALID; }
                     )
 
                 | '"' ( ~('\n'|'\r'|'\f'|'"') )*
                     (
                           '"'
-                        | { $type = CSS_INVALID; }
+                        | { $type = INVALID; }
                     )
                 ;
 
@@ -743,8 +743,8 @@ CSS_URI :   CSS_U CSS_R CSS_L
 //              that process the whitespace within the parser, CSS_ANTLR does not
 //              need to deal with the whitespace directly in the parser.
 //
-CSS_WS      : (' '|'\t')+           { $channel = CSS_HIDDEN;    }   ;
-CSS_NL      : ('\r' '\n'? | '\n')   { $channel = CSS_HIDDEN;    }   ;
+CSS_WS      : (' '|'\t')+           { $channel = HIDDEN;    }   ;
+CSS_NL      : ('\r' '\n'? | '\n')   { $channel = HIDDEN;    }   ;
 
 
 // -------------

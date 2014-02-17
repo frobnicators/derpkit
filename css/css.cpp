@@ -3,58 +3,41 @@
 #include <antlr3.h>
 #include "parser/css3.h"
 
-static void parse(CSS * css, pANTLR3_INPUT_STREAM input);
-
-static void traverse(pANTLR3_BASE_TREE node, int depth) {
-	for(int i=0;i<depth;++i) {
-		printf("\t");
+static CSSSelector::Type convert_antlr_selector_type(ANTLR3_UINT32 type) {
+	switch(type) {
+		case CSS_TAG: return CSSSelector::TAG;
+		case CSS_CLASS: return CSSSelector::CLASS;
+		case CSS_ID: return CSSSelector::ID;
+		case CSS_PSEUDO: return CSSSelector::PSEUDO;
+		default: return CSSSelector::UNKNOWN;
 	}
-	pANTLR3_COMMON_TOKEN token = node->getToken(node);
-	if(token != NULL) {
-		pANTLR3_STRING str = token->getText(token);
-		printf("%s (", str->chars);
-	} else {
-		printf("--null-- (");
-	}
-	if(node->getChildCount(node) > 0) {
-		printf("\n");
-		for(int c=0; c<node->getChildCount(node); ++c) {
-			traverse((pANTLR3_BASE_TREE)node->getChild(node, c), depth+1);
-		}
-		for(int i=0;i<depth;++i) {
-			printf("\t");
-		}
-	}
-	printf(")\n");
 }
 
-
-CSS::CSS(const std::string &filename) : m_filename(filename) {
-}
+CSS::CSS(const std::string &filename) : m_filename(filename) { }
 
 CSS::~CSS() { }
 
 CSS * CSS::from_source(const std::string &source) {
 	pANTLR3_INPUT_STREAM input = antlr3StringStreamNew((pANTLR3_UINT8) source.c_str(),ANTLR3_ENC_UTF8, (ANTLR3_UINT32)source.size()+1, (pANTLR3_UINT8)"inline");
 	CSS * css = new CSS("inline");
-	parse(css, input);
+	css->parse(input);
+	return css;
 }
 
 CSS * CSS::from_file(const std::string &filename) {
 	pANTLR3_INPUT_STREAM input = antlr3FileStreamNew((pANTLR3_UINT8)filename.c_str(), ANTLR3_ENC_UTF8);
 	CSS * css = new CSS(filename);
-	parse(css, input);
+	css->parse(input);
+	return css;
 }
 
-static void parse(CSS * css, pANTLR3_INPUT_STREAM input) {
+void CSS::parse(pANTLR3_INPUT_STREAM input) {
 	pcss3Lexer lxr;
 	pANTLR3_COMMON_TOKEN_STREAM tstream;
 	pcss3Parser psr;
 	css3Parser_stylesheet_return cssAST;
 
 	pANTLR3_COMMON_TREE_NODE_STREAM nodes;
-
-	//pcss3DeclDump treeDecl;
 
 	lxr = css3LexerNew(input);
 
@@ -85,8 +68,21 @@ static void parse(CSS * css, pANTLR3_INPUT_STREAM input) {
 		abort();
 	}
 
-	/*pANTLR3_STRING tree = cssAST.tree->toStringTree(cssAST.tree);
-	printf("Tree: %s\n", tree->chars);*/
-
-	traverse(cssAST.tree, 0);
+	traverse(cssAST.tree);
 }
+
+void CSS::traverse(pANTLR3_BASE_TREE node) {
+	pANTLR3_COMMON_TOKEN token = node->getToken(node);
+	if(token != NULL) {
+		pANTLR3_STRING str = token->getText(token);
+		printf("%s (", str->chars);
+	}
+	if(node->getChildCount(node) > 0) {
+		printf("\n");
+		for(int c=0; c<node->getChildCount(node); ++c) {
+			traverse((pANTLR3_BASE_TREE)node->getChild(node, c));
+		}
+	}
+}
+
+

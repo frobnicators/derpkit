@@ -4,7 +4,7 @@ body {
 	color: green;
 }
 
-.foo {
+.foo, .bar {
 	color: #fff;
 	line-height: 1.428571429;
 }
