@@ -12,6 +12,9 @@
 // Please visit our Web site at http://www.temporal-wave.com and try our commercial
 // parsers for CSS_SQL, CSS_C#, CSS_VB.Net and more.
 //
+// This grammar was modified for CSS 3 by Andreas Tarandi for frobnicators derpkit:
+// https://github.com/frobnicators/derpkit
+//
 // This grammar is free to use providing you retain everything in this header comment
 // section.
 //
