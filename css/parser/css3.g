@@ -76,7 +76,7 @@ bodylist
 
 bodyset
     : ruleSet
-	//|atrule
+	| atRule
     | media
     | page
     ;
@@ -117,7 +117,7 @@ ruleSet
     : selector (COMMA selector)* brace_block
     ;
 
-at_rule
+atRule
 	: '@' IDENT
 	  selector (COMMA selector)* brace_block
 	;
