@@ -57,18 +57,28 @@ imports
 //
 media
     : MEDIA_SYM medium (COMMA medium)*
-        LBRACE
-            ruleSet
-        RBRACE
+	  LBRACE
+		ruleSet
+	  RBRACE
     ;
 
+atRule
+	: '@' IDENT
+	  (COMMA selector)* brace_block
+	;
 // ---------
 // Medium.  The name of a medim that are particulare set of rules applies to.
 //
 medium
-    : IDENT
+    : //('only' | 'not')?
+	  IDENT
+	  ( 'and' media_expression )*
+	| media_expression ( 'and' media_expression )*
     ;
 
+media_expression
+	: LPAREN IDENT ( COLON expr )? RPAREN
+	;
 
 bodylist
     : bodyset*
@@ -83,9 +93,9 @@ bodyset
 
 page
     : PAGE_SYM pseudoPage?
-        LBRACE
-            declaration SEMI (declaration SEMI)*
-        RBRACE
+		LBRACE
+		  ruleSet
+		RBRACE
     ;
 
 pseudoPage
@@ -95,6 +105,7 @@ pseudoPage
 operator
     : SOLIDUS
     | COMMA
+	| OPEQ
     |
     ;
 
@@ -117,15 +128,10 @@ ruleSet
     : selector (COMMA selector)* brace_block
     ;
 
-atRule
-	: '@' IDENT
-	  selector (COMMA selector)* brace_block
-	;
-
 brace_block
-	: LBRACE!
+	: LBRACE
 		declarations?
-	  RBRACE!
+	  RBRACE
 	;
 
 declarations
@@ -635,7 +641,7 @@ fragment    PERCENTAGE  :;  // '%'
 
 NUMBER
     :   (
-              '0'..'9' ('.' '0'..'9'+)?
+              '0'..'9'+ ('.' '0'..'9'+)?
             | '.' '0'..'9'+
         )
         (
