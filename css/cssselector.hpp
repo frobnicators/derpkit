@@ -2,6 +2,7 @@
 #define CSS_SELECTOR_HPP
 
 #include <string>
+#include <vector>
 
 class CSSSelector {
 	public:
@@ -21,8 +22,10 @@ class CSSSelector {
 		//bool match(...);
 
 		/** Debug method */
-		const char * type_as_string();
+		const char * type_as_string() const;
 
 };
+
+typedef std::vector<CSSSelector> CSSSelectorGroup;
 
 #endif

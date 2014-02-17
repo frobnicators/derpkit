@@ -1,10 +1,8 @@
 #include "cssselector.hpp"
 
-CSSSelector::CSSSelector(Type type, const std::string &value) : type(type), value(value) {
-	printf("[CSS] Created selector %s = %s\n", type_as_string(), value.c_str());
-}
+CSSSelector::CSSSelector(Type type, const std::string &value) : type(type), value(value) { }
 
-const char * CSSSelector::type_as_string() {
+const char * CSSSelector::type_as_string() const {
 	static const char * convert[] = {
 		"TAG",
 		"CLASS",

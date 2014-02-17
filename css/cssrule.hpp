@@ -10,10 +10,10 @@ class CSSRule {
 		/**
 		 * Debug print
 		 */
-		void print(int indent=0);
+		void print(int indent=0) const;
 
 	private:
-		std::vector<CSSSelector> m_selectors;
+		std::vector<CSSSelectorGroup> m_selectors;
 		std::vector<CSSProperty> m_properties;
 
 		friend class CSS;

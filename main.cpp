@@ -8,4 +8,5 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 	CSS * css = CSS::from_file(argv[1]);
+	css->print();
 }

@@ -11,6 +11,8 @@ class CSS {
 
 		static CSS * from_source(const std::string &source);
 		static CSS * from_file(const std::string &filename);
+
+		void print() const;
 	private:
 		CSS(const std::string &filename);
 

@@ -8,8 +8,12 @@ class CSSProperty {
 	public:
 		CSSProperty(const std::string &property);
 
+		void print() const;
+
 		const std::string property;
 		std::vector<std::string> values;
+
+		bool important;
 };
 
 #endif
