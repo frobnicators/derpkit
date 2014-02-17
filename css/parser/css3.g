@@ -189,7 +189,7 @@ attrib
 function_args
 	: LPAREN
 		(
-			expr
+			red_expr
 			|
 			selector
 		)?
@@ -211,7 +211,13 @@ expr
     : term (operator term)*
     ;
 
-term
+// Reduced expression, no colors or functions
+red_expr
+	: red_term (operator red_term)*
+	;
+
+// Reduced term
+red_term
     : unaryOperator?
         (
               NUMBER
@@ -224,10 +230,13 @@ term
             | FREQ
         )
     | STRING
-    | IDENT function_args?
     | URI
-    | hexColor
     ;
+
+term
+	: red_term
+	| IDENT function_args?
+	| hexColor;
 
 hexColor
     : HASH
