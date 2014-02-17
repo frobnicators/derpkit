@@ -35,6 +35,7 @@ input[type="text"] {
 input[type='text'] {
 	border-radius: 10px;
 	color: #1a2b3c !important;
+	width: 200px;
 }
 
 
@@ -53,6 +54,10 @@ input[type^='te'] { }
 input[type$='xt'] { }
 
 input[type*='ex'] { }
+
+@media screen and (width: 200px) {
+	.foo:not(.bar) { }
+}
 
 .foo:not(.bar) { }
 .foo:nth-child(2) { }
