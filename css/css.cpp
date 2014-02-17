@@ -5,6 +5,30 @@
 
 static void parse(CSS * css, pANTLR3_INPUT_STREAM input);
 
+static void traverse(pANTLR3_BASE_TREE node, int depth) {
+	for(int i=0;i<depth;++i) {
+		printf("\t");
+	}
+	pANTLR3_COMMON_TOKEN token = node->getToken(node);
+	if(token != NULL) {
+		pANTLR3_STRING str = token->getText(token);
+		printf("%s (", str->chars);
+	} else {
+		printf("--null-- (");
+	}
+	if(node->getChildCount(node) > 0) {
+		printf("\n");
+		for(int c=0; c<node->getChildCount(node); ++c) {
+			traverse((pANTLR3_BASE_TREE)node->getChild(node, c), depth+1);
+		}
+		for(int i=0;i<depth;++i) {
+			printf("\t");
+		}
+	}
+	printf(")\n");
+}
+
+
 CSS::CSS(const std::string &filename) : m_filename(filename) {
 }
 
@@ -61,6 +85,8 @@ static void parse(CSS * css, pANTLR3_INPUT_STREAM input) {
 		abort();
 	}
 
-	pANTLR3_STRING tree = cssAST.tree->toStringTree(cssAST.tree);
-	printf("Tree: %s\n", tree->chars);
+	/*pANTLR3_STRING tree = cssAST.tree->toStringTree(cssAST.tree);
+	printf("Tree: %s\n", tree->chars);*/
+
+	traverse(cssAST.tree, 0);
 }

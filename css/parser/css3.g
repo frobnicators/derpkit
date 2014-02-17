@@ -21,6 +21,32 @@ options {
        language=C;
 }
 
+tokens {
+	IMPORT;
+	MEDIA;
+	CHARSET;
+	MEDIUMS;
+	MEDIA_EXPR;
+	AT_RULE;
+	PAGE;
+	RULE;
+	SELECTOR;
+	ATTRIB;
+	PSEUDO;
+	EQUAL;
+	CONTAINS;
+	STARTSWITH;
+	ENDSWITH;
+	PROPERTY;
+	ARGS;
+	TAG;
+	ANY;
+	HEXCOLOR;
+	ID;
+	CLASS;
+	IMPORTANT;
+}
+
 
 // -------------
 // Main rule.   This is the main entry rule for the parser, the top level
@@ -33,22 +59,28 @@ stylesheet
     :   charSet
         imports*
         bodylist
-     EOF
+     EOF!
     ;
 
 // -----------------
 // Character set.   Picks up the user specified character set, should it be present.
 //
 charSet
-    :   CHARSET_SYM STRING SEMI
+    :   CHARSET_SYM STRING SEMI -> ^( CHARSET STRING )
     |
     ;
+
+
+mediums
+	: medium (COMMA medium)* -> ^(MEDIUMS medium+)
+	;
 
 // ---------
 // Import.  Location of an external style sheet to include in the ruleset.
 //
 imports
-    :   IMPORT_SYM (STRING|URI) (medium (COMMA medium)*)? SEMI
+    :   IMPORT_SYM s=(STRING|URI) mediums? SEMI
+		-> ^(IMPORT $s mediums*)
     ;
 
 // ---------
@@ -56,27 +88,29 @@ imports
 //          it belongs to the signified medium.
 //
 media
-    : MEDIA_SYM medium (COMMA medium)*
+    : MEDIA_SYM mediums
 	  LBRACE
-		ruleSet
+		bodyset
 	  RBRACE
+	  -> ^(MEDIA mediums bodyset)
     ;
 
 atRule
 	: '@' IDENT
 	  (COMMA selector)* brace_block
+	  -> ^(AT_RULE IDENT selector* brace_block)
 	;
 // ---------
 // Medium.  The name of a medim that are particulare set of rules applies to.
 //
 medium
-    : IDENT IDENT?
-	  ( 'and' media_expression )*
-	| media_expression ( 'and' media_expression )*
+    : IDENT s=IDENT? ( 'and' media_expression )* -> IDENT $s media_expression*
+	| media_expression ( 'and' media_expression )* -> media_expression+
     ;
 
 media_expression
 	: LPAREN IDENT ( COLON expr )? RPAREN
+	-> ^(MEDIA_EXPR IDENT expr)
 	;
 
 bodylist
@@ -93,8 +127,9 @@ bodyset
 page
     : PAGE_SYM pseudoPage?
 		LBRACE
-		  ruleSet
+		  bodyset
 		RBRACE
+		-> ^(PAGE pseudoPage? bodyset)
     ;
 
 pseudoPage
@@ -125,16 +160,18 @@ property
 
 ruleSet
     : selector (COMMA selector)* brace_block
+	-> ^(RULE ^(SELECTOR selector+) brace_block)
     ;
 
 brace_block
-	: LBRACE
+	: LBRACE!
 		declarations?
-	  RBRACE
+	  RBRACE!
 	;
 
 declarations
 	: declaration SEMI (declaration SEMI)*
+	-> declaration+
 	;
 
 selector
@@ -153,7 +190,7 @@ esPred
     ;
 
 elementSubsequent
-    : HASH
+    : HASH -> ^(ID HASH)
     | cssClass
     | attrib
     | pseudo
@@ -161,12 +198,21 @@ elementSubsequent
 
 cssClass
     : DOT IDENT
+	-> ^(CLASS IDENT)
     ;
 
 elementName
-    : IDENT
-    | STAR
+    : IDENT -> ^(TAG IDENT)
+    | STAR -> ^(TAG ANY)
     ;
+
+
+attribRelate
+  : OPEQ -> EQUAL
+  | STAREQ -> CONTAINS
+  | CIREQ -> STARTSWITH
+  | DOLLAREQ -> ENDSWITH
+;
 
 attrib
     : LBRACKET
@@ -174,21 +220,12 @@ attrib
         IDENT
 
             (
-                (
-                      OPEQ
-                    | INCLUDES
-                    | DASHMATCH
-					| CONTAINS
-					| STARTSWITH
-					| ENDSWITH
-                )
-                (
-                      IDENT
-                    | STRING
-                )
+				attribRelate
+                ( s=STRING | i=IDENT )
             )?
 
       RBRACKET
+	  -> ^(ATTRIB IDENT (attribRelate $s $i )? )
 ;
 
 function_args
@@ -198,18 +235,22 @@ function_args
 			|
 			selector
 		)?
-	RPAREN;
+	RPAREN
+	-> ^(ARGS red_expr selector)
+;
 
 pseudo
-    : COLON COLON? IDENT function_args?
+    : COLON COLON? IDENT function_args? -> ^(PSEUDO IDENT function_args? )
     ;
 
 declaration
     : property COLON expr prio?
+	-> ^(PROPERTY property expr prio?)
     ;
 
 prio
     : IMPORTANT_SYM
+	-> IMPORTANT
     ;
 
 expr
@@ -240,11 +281,12 @@ red_term
 
 term
 	: red_term
-	| IDENT function_args?
+	| IDENT function_args? -> ^(IDENT function_args?)
 	| hexColor;
 
 hexColor
     : HASH
+	-> ^(HEXCOLOR HASH)
     ;
 
 // ==============================================================
@@ -562,11 +604,9 @@ CDC             : '-->'
                     }
                 ;
 
-INCLUDES        : '~='      ;
-DASHMATCH       : '|='      ;
-CONTAINS        : '*='      ;
-STARTSWITH	    : '^='      ;
-ENDSWITH	    : '$='      ;
+STAREQ        : '*='      ;
+CIREQ	    : '^='      ;
+DOLLAREQ	    : '$='      ;
 
 GREATER         : '>'       ;
 LBRACE          : '{'       ;

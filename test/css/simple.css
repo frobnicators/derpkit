@@ -54,6 +54,7 @@ input[type^='te'] { }
 input[type$='xt'] { }
 
 input[type*='ex'] { }
+input[type*=hai] { }
 
 @media screen and (width: 200px) {
 	.foo:not(.bar) { }
