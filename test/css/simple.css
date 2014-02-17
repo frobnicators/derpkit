@@ -1,0 +1,67 @@
+/* derp */
+body {
+	background-color: transparent;
+	color: green;
+}
+
+.foo {
+	color: #fff;
+	line-height: 1.428571429;
+}
+
+h1 {
+	font-size: 1em;
+	color: #428bca;
+}
+
+#baaaaaar {
+	display: block;
+	color: #aaa;
+}
+
+div.foo#far {
+	color: red;
+}
+
+#foo:after {
+	color: magenta;
+}
+
+input[type="text"] {
+	border-radius: 10px;
+	color: #333;
+}
+
+input[type='text'] {
+	border-radius: 10px;
+	color: #1a2b3c !important;
+}
+
+
+.foo > .bar {
+	color: red;
+}
+
+/* A comment */
+
+//::-webkit-scrollbar { visibility: hidden; }
+
+
+/* Test some css3 stuff */
+input[type^='te'] { }
+
+input[type$='xt'] { }
+
+input[type*='ex'] { }
+
+.foo:not(.bar) { }
+.foo:nth-child(2) { }
+.foo:nth-last-child(2) { }
+.foo:nth-of-type(2) { }
+.foo:nth-last-of-type(2) { }
+.foo:first-child { }
+.foo:last-child { }
+.foo:first-of-type { }
+.foo:last-of-type { }
+.foo:target { }
+.foo:empty { }
