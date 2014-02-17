@@ -101,7 +101,7 @@ pseudoPage
     : COLON IDENT
     ;
 
-operator
+expr_operator
     : SOLIDUS
     | COMMA
 	| OPEQ
@@ -213,12 +213,12 @@ prio
     ;
 
 expr
-    : term (operator term)*
+    : term (expr_operator term)*
     ;
 
 // Reduced expression, no colors or functions
 red_expr
-	: red_term (operator red_term)*
+	: red_term (expr_operator red_term)*
 	;
 
 // Reduced term
