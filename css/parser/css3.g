@@ -70,8 +70,7 @@ atRule
 // Medium.  The name of a medim that are particulare set of rules applies to.
 //
 medium
-    : //('only' | 'not')?
-	  IDENT
+    : IDENT IDENT?
 	  ( 'and' media_expression )*
 	| media_expression ( 'and' media_expression )*
     ;
