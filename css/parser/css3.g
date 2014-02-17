@@ -148,6 +148,7 @@ expr_operator
 combinator
     : CSS_PLUS
     | CSS_GREATER
+	| CSS_TILDE
     |
     ;
 
@@ -626,6 +627,7 @@ CSS_LPAREN          : '('       ;
 CSS_RPAREN          : ')'       ;
 CSS_COMMA           : ','       ;
 CSS_DOT             : '.'       ;
+CSS_TILDE			: '~'		;
 
 // -----------------
 // Literal strings. Delimited by either ' or "

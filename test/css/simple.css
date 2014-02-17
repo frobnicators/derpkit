@@ -43,6 +43,10 @@ input[type='text'] {
 	color: red;
 }
 
+p~ul { } /* all ul that are preceded by p */
+
+div+p { } /* all p that are placed immediatly after div */
+
 /* A comment */
 
 ::-webkit-scrollbar { visibility: hidden; }
