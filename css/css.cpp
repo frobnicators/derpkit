@@ -1,6 +1,8 @@
 #include "css.hpp"
 
 #include <antlr3.h>
+#include <cassert>
+#include <functional>
 #include "parser/css3.h"
 
 static CSSSelector::Type convert_antlr_selector_type(ANTLR3_UINT32 type) {
@@ -11,6 +13,31 @@ static CSSSelector::Type convert_antlr_selector_type(ANTLR3_UINT32 type) {
 		case CSS_PSEUDO: return CSSSelector::PSEUDO;
 		default: return CSSSelector::UNKNOWN;
 	}
+}
+
+static pANTLR3_BASE_TREE get_child_or_null(pANTLR3_BASE_TREE tree, int index) {
+	if(tree->getChildCount(tree) > index) {
+		return (pANTLR3_BASE_TREE)tree->getChild(tree, index);
+	} else {
+		return nullptr;
+	}
+}
+
+static pANTLR3_BASE_TREE get_child(pANTLR3_BASE_TREE tree, int index) {
+	pANTLR3_BASE_TREE n = get_child_or_null(tree, index);
+	assert(n != nullptr);
+	return n;
+}
+
+static void traverse_tree(pANTLR3_BASE_TREE node, std::function<void(pANTLR3_BASE_TREE node)> callback) {
+	for(int c=0; c<node->getChildCount(node); ++c) {
+		callback(get_child(node, c));
+	}
+}
+
+static std::string convert_string(pANTLR3_STRING str) {
+	/* TODO more safe? */
+	return std::string((const char*)str->chars);
 }
 
 CSS::CSS(const std::string &filename) : m_filename(filename) { }
@@ -74,15 +101,46 @@ void CSS::parse(pANTLR3_INPUT_STREAM input) {
 void CSS::traverse(pANTLR3_BASE_TREE node) {
 	pANTLR3_COMMON_TOKEN token = node->getToken(node);
 	if(token != NULL) {
-		pANTLR3_STRING str = token->getText(token);
-		printf("%s (", str->chars);
-	}
-	if(node->getChildCount(node) > 0) {
-		printf("\n");
-		for(int c=0; c<node->getChildCount(node); ++c) {
-			traverse((pANTLR3_BASE_TREE)node->getChild(node, c));
+		switch(token->getType(token)) {
+			case CSS_RULE:
+				parse_rule(node);
+				break;
+			default:
+				printf("[CSS] Warning: Unknown node %s\n", token->getText(token)->chars);
+
 		}
+		pANTLR3_STRING str = token->getText(token);
+	} else {
+		traverse_tree(node, [&](pANTLR3_BASE_TREE node) { traverse(node); });
 	}
 }
 
+void CSS::parse_rule(pANTLR3_BASE_TREE node) {
+	CSSRule rule;
+	traverse_tree(node, [&](pANTLR3_BASE_TREE node) {
+		pANTLR3_COMMON_TOKEN token = node->getToken(node);
+		if(token != NULL) {
+			switch(token->getType(token)) {
+				case CSS_SELECTOR:
+				{
+					pANTLR3_BASE_TREE sel_node = get_child(node, 0);
+					pANTLR3_COMMON_TOKEN sel_token = sel_node->getToken(sel_node);
+					CSSSelector::Type type = convert_antlr_selector_type(sel_token->getType(sel_token));
+					if(type == CSSSelector::UNKNOWN) {
+						printf("[CSS] Warning: Unknown selector type %s on line %d\n",
+							sel_token->getText(sel_token)->chars, sel_token->getLine(sel_token));
+					} else {
+						pANTLR3_BASE_TREE val_node = get_child(sel_node, 0);
+						pANTLR3_COMMON_TOKEN val_token = val_node->getToken(val_node);
+						std::string value = convert_string(val_token->getText(val_token));
 
+						rule.m_selectors.push_back(CSSSelector(type, value));
+					}
+				}
+				break;
+				case CSS_PROPERTY:
+				break;
+			}
+		}
+	});
+}

@@ -36,13 +36,11 @@ tokens {
 	CSS_EQUAL;
 	CSS_CONTAINS;
 	CSS_SELECTOR;
-	CSS_DECLARATIONS;
 	CSS_STARTSWITH;
 	CSS_ENDSWITH;
 	CSS_PROPERTY;
 	CSS_ARGS;
 	CSS_TAG;
-	CSS_ANY;
 	CSS_ID;
 	CSS_CLASS;
 	CSS_IMPORTANT;
@@ -172,7 +170,7 @@ brace_block
 
 declarations
 	: declaration CSS_SEMI (declaration CSS_SEMI)*
-	-> ^(CSS_DECLARATIONS declaration+)
+	-> declaration+
 	;
 
 selector
@@ -205,7 +203,7 @@ cssClass
 
 elementName
     : CSS_IDENT -> ^(CSS_TAG CSS_IDENT)
-    | CSS_STAR -> ^(CSS_TAG CSS_ANY)
+    | CSS_STAR -> ^(CSS_TAG CSS_STAR)
     ;
 
 
