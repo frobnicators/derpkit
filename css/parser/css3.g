@@ -1,16 +1,16 @@
-// A complete lexer and grammar for CSS 2.1 as defined by the
+// CSS_A complete lexer and grammar for CSS 2.1 as defined by the
 // W3 specification.
 //
 // This grammar is free to use providing you retain everyhting in this header comment
 // section.
 //
-// Author      : Jim Idle, Temporal Wave LLC.
+// Author      : Jim Idle, Temporal Wave CSS_LLC.
 // Contact     : jimi@temporal-wave.com
 // Website     : http://www.temporal-wave.com
-// License     : ANTLR Free BSD License
+// License     : CSS_ANTLR Free CSS_BSD License
 //
 // Please visit our Web site at http://www.temporal-wave.com and try our commercial
-// parsers for SQL, C#, VB.Net and more.
+// parsers for CSS_SQL, CSS_C#, CSS_VB.Net and more.
 //
 // This grammar is free to use providing you retain everything in this header comment
 // section.
@@ -22,29 +22,30 @@ options {
 }
 
 tokens {
-	IMPORT;
-	MEDIA;
-	CHARSET;
-	MEDIUMS;
-	MEDIA_EXPR;
-	AT_RULE;
-	PAGE;
-	RULE;
-	SELECTOR;
-	ATTRIB;
-	PSEUDO;
-	EQUAL;
-	CONTAINS;
-	STARTSWITH;
-	ENDSWITH;
-	PROPERTY;
-	ARGS;
-	TAG;
-	ANY;
-	HEXCOLOR;
-	ID;
-	CLASS;
-	IMPORTANT;
+	CSS_IMPORT;
+	CSS_MEDIA;
+	CSS_CHARSET;
+	CSS_MEDIUMS;
+	CSS_MEDIA_EXPR;
+	CSS_AT_RULE;
+	CSS_PAGE;
+	CSS_RULE;
+	CSS_SELECTOR;
+	CSS_ATTRIB;
+	CSS_PSEUDO;
+	CSS_EQUAL;
+	CSS_CONTAINS;
+	CSS_SELECTOR;
+	CSS_DECLARATIONS;
+	CSS_STARTSWITH;
+	CSS_ENDSWITH;
+	CSS_PROPERTY;
+	CSS_ARGS;
+	CSS_TAG;
+	CSS_ANY;
+	CSS_ID;
+	CSS_CLASS;
+	CSS_IMPORTANT;
 }
 
 
@@ -52,7 +53,7 @@ tokens {
 // Main rule.   This is the main entry rule for the parser, the top level
 //              grammar rule.
 //
-// A style sheet consists of an optional character set specification, an optional series
+// CSS_A style sheet consists of an optional character set specification, an optional series
 // of imports, and then the main body of style rules.
 //
 stylesheet
@@ -66,21 +67,21 @@ stylesheet
 // Character set.   Picks up the user specified character set, should it be present.
 //
 charSet
-    :   CHARSET_SYM STRING SEMI -> ^( CHARSET STRING )
+    :   CSS_CHARSET_SYM CSS_STRING CSS_SEMI -> ^( CSS_CHARSET CSS_STRING )
     |
     ;
 
 
 mediums
-	: medium (COMMA medium)* -> ^(MEDIUMS medium+)
+	: medium (CSS_COMMA medium)* -> ^(CSS_MEDIUMS medium+)
 	;
 
 // ---------
 // Import.  Location of an external style sheet to include in the ruleset.
 //
 imports
-    :   IMPORT_SYM s=(STRING|URI) mediums? SEMI
-		-> ^(IMPORT $s mediums*)
+    :   CSS_IMPORT_SYM s=(CSS_STRING|CSS_URI) mediums? CSS_SEMI
+		-> ^(CSS_IMPORT $s mediums*)
     ;
 
 // ---------
@@ -88,29 +89,29 @@ imports
 //          it belongs to the signified medium.
 //
 media
-    : MEDIA_SYM mediums
-	  LBRACE
+    : CSS_MEDIA_SYM mediums
+	  CSS_LBRACE
 		bodyset
-	  RBRACE
-	  -> ^(MEDIA mediums bodyset)
+	  CSS_RBRACE
+	  -> ^(CSS_MEDIA mediums bodyset)
     ;
 
 atRule
-	: '@' IDENT
-	  (COMMA selector)* brace_block
-	  -> ^(AT_RULE IDENT selector* brace_block)
+	: '@' CSS_IDENT
+	  (CSS_COMMA selector)* brace_block
+	  -> ^(CSS_AT_RULE CSS_IDENT selector* brace_block)
 	;
 // ---------
 // Medium.  The name of a medim that are particulare set of rules applies to.
 //
 medium
-    : IDENT s=IDENT? ( 'and' media_expression )* -> IDENT $s media_expression*
+    : CSS_IDENT s=CSS_IDENT? ( 'and' media_expression )* -> CSS_IDENT $s media_expression*
 	| media_expression ( 'and' media_expression )* -> media_expression+
     ;
 
 media_expression
-	: LPAREN IDENT ( COLON expr )? RPAREN
-	-> ^(MEDIA_EXPR IDENT expr)
+	: CSS_LPAREN CSS_IDENT ( CSS_COLON expr )? CSS_RPAREN
+	-> ^(CSS_MEDIA_EXPR CSS_IDENT expr)
 	;
 
 bodylist
@@ -125,57 +126,58 @@ bodyset
     ;
 
 page
-    : PAGE_SYM pseudoPage?
-		LBRACE
+    : CSS_PAGE_SYM pseudoPage?
+		CSS_LBRACE
 		  bodyset
-		RBRACE
-		-> ^(PAGE pseudoPage? bodyset)
+		CSS_RBRACE
+		-> ^(CSS_PAGE pseudoPage? bodyset)
     ;
 
 pseudoPage
-    : COLON IDENT
+    : CSS_COLON CSS_IDENT
     ;
 
 expr_operator
-    : SOLIDUS
-    | COMMA
-	| OPEQ
+    : CSS_SOLIDUS
+    | CSS_COMMA
+	| CSS_OPEQ
     |
     ;
 
 combinator
-    : PLUS
-    | GREATER
+    : CSS_PLUS
+    | CSS_GREATER
     |
     ;
 
 unaryOperator
-    : MINUS
-    | PLUS
+    : CSS_MINUS
+    | CSS_PLUS
     ;
 
 property
-    : IDENT
+    : CSS_IDENT
     ;
 
 ruleSet
-    : selector (COMMA selector)* brace_block
-	-> ^(RULE ^(SELECTOR selector+) brace_block)
+    : selector (CSS_COMMA selector)* brace_block
+	-> ^(CSS_RULE selector+ brace_block)
     ;
 
 brace_block
-	: LBRACE!
+	: CSS_LBRACE!
 		declarations?
-	  RBRACE!
+	  CSS_RBRACE!
 	;
 
 declarations
-	: declaration SEMI (declaration SEMI)*
-	-> declaration+
+	: declaration CSS_SEMI (declaration CSS_SEMI)*
+	-> ^(CSS_DECLARATIONS declaration+)
 	;
 
 selector
     : simpleSelector (combinator simpleSelector)*
+	-> ^(CSS_SELECTOR simpleSelector (combinator simpleSelector)* )
     ;
 
 simpleSelector
@@ -186,71 +188,71 @@ simpleSelector
     ;
 
 esPred
-    : HASH | DOT | LBRACKET | COLON
+    : CSS_HASH | CSS_DOT | CSS_LBRACKET | CSS_COLON
     ;
 
 elementSubsequent
-    : HASH -> ^(ID HASH)
+    : CSS_HASH -> ^(CSS_ID CSS_HASH)
     | cssClass
     | attrib
     | pseudo
     ;
 
 cssClass
-    : DOT IDENT
-	-> ^(CLASS IDENT)
+    : CSS_DOT CSS_IDENT
+	-> ^(CSS_CLASS CSS_IDENT)
     ;
 
 elementName
-    : IDENT -> ^(TAG IDENT)
-    | STAR -> ^(TAG ANY)
+    : CSS_IDENT -> ^(CSS_TAG CSS_IDENT)
+    | CSS_STAR -> ^(CSS_TAG CSS_ANY)
     ;
 
 
 attribRelate
-  : OPEQ -> EQUAL
-  | STAREQ -> CONTAINS
-  | CIREQ -> STARTSWITH
-  | DOLLAREQ -> ENDSWITH
+  : CSS_OPEQ -> CSS_EQUAL
+  | CSS_STAREQ -> CSS_CONTAINS
+  | CSS_CIREQ -> CSS_STARTSWITH
+  | CSS_DOLLAREQ -> CSS_ENDSWITH
 ;
 
 attrib
-    : LBRACKET
+    : CSS_LBRACKET
 
-        IDENT
+        CSS_IDENT
 
             (
 				attribRelate
-                ( s=STRING | i=IDENT )
+                ( s=CSS_STRING | i=CSS_IDENT )
             )?
 
-      RBRACKET
-	  -> ^(ATTRIB IDENT (attribRelate $s $i )? )
+      CSS_RBRACKET
+	  -> ^(CSS_ATTRIB CSS_IDENT (attribRelate $s $i )? )
 ;
 
 function_args
-	: LPAREN
+	: CSS_LPAREN
 		(
 			red_expr
 			|
 			selector
 		)?
-	RPAREN
-	-> ^(ARGS red_expr selector)
+	CSS_RPAREN
+	-> ^(CSS_ARGS red_expr selector)
 ;
 
 pseudo
-    : COLON COLON? IDENT function_args? -> ^(PSEUDO IDENT function_args? )
+    : CSS_COLON CSS_COLON? CSS_IDENT function_args? -> ^(CSS_PSEUDO CSS_IDENT function_args? )
     ;
 
 declaration
-    : property COLON expr prio?
-	-> ^(PROPERTY property expr prio?)
+    : property CSS_COLON expr prio?
+	-> ^(CSS_PROPERTY property expr prio?)
     ;
 
 prio
-    : IMPORTANT_SYM
-	-> IMPORTANT
+    : CSS_IMPORTANT_SYM
+	-> CSS_IMPORTANT
     ;
 
 expr
@@ -266,51 +268,50 @@ red_expr
 red_term
     : unaryOperator?
         (
-              NUMBER
-            | PERCENTAGE
-            | LENGTH
-            | EMS
-            | EXS
-            | ANGLE
-            | TIME
-            | FREQ
+              CSS_NUMBER
+            | CSS_PERCENTAGE
+            | CSS_LENGTH
+            | CSS_EMS
+            | CSS_EXS
+            | CSS_ANGLE
+            | CSS_TIME
+            | CSS_FREQ
         )
-    | STRING
-    | URI
+    | CSS_STRING
+    | CSS_URI
     ;
 
 term
 	: red_term
-	| IDENT function_args? -> ^(IDENT function_args?)
+	| CSS_IDENT function_args? -> ^(CSS_IDENT function_args?)
 	| hexColor;
 
 hexColor
-    : HASH
-	-> ^(HEXCOLOR HASH)
+    : CSS_HASH
     ;
 
 // ==============================================================
-// LEXER
+// CSS_LEXER
 //
-// The lexer follows the normative section of WWW standard as closely
-// as it can. For instance, where the ANTLR lexer returns a token that
-// is unambiguous for both ANTLR and lex (the standard defines tokens
+// The lexer follows the normative section of CSS_WWW standard as closely
+// as it can. For instance, where the CSS_ANTLR lexer returns a token that
+// is unambiguous for both CSS_ANTLR and lex (the standard defines tokens
 // in lex notation), then the token names are equivalent.
 //
 // Note however that lex has a match order defined as top to bottom
 // with longest match first. This results in a fairly inefficent, match,
-// REJECT, match REJECT set of operations. ANTLR lexer grammars are actaully
-// LL grammars (and hence LL recognizers), which means that we must
+// CSS_REJECT, match CSS_REJECT set of operations. CSS_ANTLR lexer grammars are actaully
+// CSS_LL grammars (and hence CSS_LL recognizers), which means that we must
 // specifically disambiguate longest matches and so on, when the lex
-// like normative grammar results in ambiguities as far as ANTLR is concerned.
+// like normative grammar results in ambiguities as far as CSS_ANTLR is concerned.
 //
 // This means that some tokens will either be combined compared to the
 // normative spec, and the paresr will recognize them for what they are.
-// In this case, the token will named as XXX_YYY where XXX and YYY are the
+// In this case, the token will named as XXX_YYY where CSS_XXX and CSS_YYY are the
 // token names used in the specification.
 //
 // Lex style macro names used in the spec may sometimes be used (in upper case
-// version) as fragment rules in this grammar. However ANTLR fragment rules
+// version) as fragment rules in this grammar. However CSS_ANTLR fragment rules
 // are not quite the same as lex macros, in that they generate actual
 // methods in the recognizer class, and so may not be as effecient. In
 // some cases then, the macro contents are embedded. Annotation indicate when
@@ -319,7 +320,7 @@ hexColor
 // See comments in the rules for specific details.
 // --------------------------------------------------------------
 //
-// N.B. CSS 2.1 is defined as case insensitive, but because each character
+// CSS_N.CSS_B. CSS 2.1 is defined as case insensitive, but because each character
 //      is allowed to be written as in escaped form we basically define each
 //      character as a fragment and reuse it in all other rules.
 // ==============================================================
@@ -333,44 +334,44 @@ hexColor
 // the token string.
 //
 
-fragment    HEXCHAR     : ('a'..'f'|'A'..'F'|'0'..'9')  ;
+fragment    CSS_HEXCHAR     : ('a'..'f'|'A'..'F'|'0'..'9')  ;
 
-fragment    NONASCII    : '\u0080'..'\uFFFF'            ;   // NB: Upper bound should be \u4177777
+fragment    CSS_NONASCII    : '\u0080'..'\uFFFF'            ;   // CSS_NB: Upper bound should be \u4177777
 
-fragment    UNICODE     : '\\' HEXCHAR
-                                (HEXCHAR
-                                    (HEXCHAR
-                                        (HEXCHAR
-                                            (HEXCHAR HEXCHAR?)?
+fragment    CSS_UNICODE     : '\\' CSS_HEXCHAR
+                                (CSS_HEXCHAR
+                                    (CSS_HEXCHAR
+                                        (CSS_HEXCHAR
+                                            (CSS_HEXCHAR CSS_HEXCHAR?)?
                                         )?
                                     )?
                                 )?
                                 ('\r'|'\n'|'\t'|'\f'|' ')*  ;
 
-fragment    ESCAPE      : UNICODE | '\\' ~('\r'|'\n'|'\f'|HEXCHAR)  ;
+fragment    CSS_ESCAPE      : CSS_UNICODE | '\\' ~('\r'|'\n'|'\f'|CSS_HEXCHAR)  ;
 
-fragment    NMSTART     : '_'
+fragment    CSS_NMSTART     : '_'
                         | 'a'..'z'
                         | 'A'..'Z'
-                        | NONASCII
-                        | ESCAPE
+                        | CSS_NONASCII
+                        | CSS_ESCAPE
                         ;
 
-fragment    NMCHAR      : '_'
+fragment    CSS_NMCHAR      : '_'
                         | 'a'..'z'
                         | 'A'..'Z'
                         | '0'..'9'
                         | '-'
-                        | NONASCII
-                        | ESCAPE
+                        | CSS_NONASCII
+                        | CSS_ESCAPE
                         ;
 
-fragment    NAME        : NMCHAR+   ;
+fragment    CSS_NAME        : CSS_NMCHAR+   ;
 
-fragment    URL         : (
+fragment    CSS_URL         : (
                               '['|'!'|'#'|'$'|'%'|'&'|'*'|'-'|'~'
-                            | NONASCII
-                            | ESCAPE
+                            | CSS_NONASCII
+                            | CSS_ESCAPE
                           )*
                         ;
 
@@ -380,25 +381,25 @@ fragment    URL         : (
 // however call a further fragment rule to consume these characters for
 // reasons of performance - the rules are still eminently readable.
 //
-fragment    A   :   ('a'|'A') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_A   :   ('a'|'A') ('\r'|'\n'|'\t'|'\f'|' ')*
                 |   '\\' ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')'1'
                 ;
-fragment    B   :   ('b'|'B') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_B   :   ('b'|'B') ('\r'|'\n'|'\t'|'\f'|' ')*
                 |   '\\' ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')'2'
                 ;
-fragment    C   :   ('c'|'C') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_C   :   ('c'|'C') ('\r'|'\n'|'\t'|'\f'|' ')*
                 |   '\\' ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')'3'
                 ;
-fragment    D   :   ('d'|'D') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_D   :   ('d'|'D') ('\r'|'\n'|'\t'|'\f'|' ')*
                 |   '\\' ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')'4'
                 ;
-fragment    E   :   ('e'|'E') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_E   :   ('e'|'E') ('\r'|'\n'|'\t'|'\f'|' ')*
                 |   '\\' ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')'5'
                 ;
-fragment    F   :   ('f'|'F') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_F   :   ('f'|'F') ('\r'|'\n'|'\t'|'\f'|' ')*
                 |   '\\' ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')'6'
                 ;
-fragment    G   :   ('g'|'G') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_G   :   ('g'|'G') ('\r'|'\n'|'\t'|'\f'|' ')*
                 |   '\\'
                         (
                               'g'
@@ -406,7 +407,7 @@ fragment    G   :   ('g'|'G') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')'7'
                         )
                 ;
-fragment    H   :   ('h'|'H') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_H   :   ('h'|'H') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'h'
@@ -414,7 +415,7 @@ fragment    H   :   ('h'|'H') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')'8'
                         )
                 ;
-fragment    I   :   ('i'|'I') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_I   :   ('i'|'I') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'i'
@@ -422,7 +423,7 @@ fragment    I   :   ('i'|'I') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')'9'
                         )
                 ;
-fragment    J   :   ('j'|'J') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_J   :   ('j'|'J') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'j'
@@ -430,7 +431,7 @@ fragment    J   :   ('j'|'J') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')('A'|'a')
                         )
                 ;
-fragment    K   :   ('k'|'K') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_K   :   ('k'|'K') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'k'
@@ -438,7 +439,7 @@ fragment    K   :   ('k'|'K') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')('B'|'b')
                         )
                 ;
-fragment    L   :   ('l'|'L') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_L   :   ('l'|'L') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'l'
@@ -446,7 +447,7 @@ fragment    L   :   ('l'|'L') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')('C'|'c')
                         )
                 ;
-fragment    M   :   ('m'|'M') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_M   :   ('m'|'M') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'm'
@@ -454,7 +455,7 @@ fragment    M   :   ('m'|'M') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')('D'|'d')
                         )
                 ;
-fragment    N   :   ('n'|'N') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_N   :   ('n'|'N') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'n'
@@ -462,7 +463,7 @@ fragment    N   :   ('n'|'N') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')('E'|'e')
                         )
                 ;
-fragment    O   :   ('o'|'O') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_O   :   ('o'|'O') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'o'
@@ -470,7 +471,7 @@ fragment    O   :   ('o'|'O') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('4'|'6')('F'|'f')
                         )
                 ;
-fragment    P   :   ('p'|'P') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_P   :   ('p'|'P') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'p'
@@ -478,7 +479,7 @@ fragment    P   :   ('p'|'P') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('0')
                         )
                 ;
-fragment    Q   :   ('q'|'Q') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_Q   :   ('q'|'Q') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'q'
@@ -486,7 +487,7 @@ fragment    Q   :   ('q'|'Q') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('1')
                         )
                 ;
-fragment    R   :   ('r'|'R') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_R   :   ('r'|'R') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'r'
@@ -494,7 +495,7 @@ fragment    R   :   ('r'|'R') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('2')
                         )
                 ;
-fragment    S   :   ('s'|'S') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_S   :   ('s'|'S') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               's'
@@ -502,7 +503,7 @@ fragment    S   :   ('s'|'S') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('3')
                         )
                 ;
-fragment    T   :   ('t'|'T') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_T   :   ('t'|'T') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               't'
@@ -510,7 +511,7 @@ fragment    T   :   ('t'|'T') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('4')
                         )
                 ;
-fragment    U   :   ('u'|'U') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_U   :   ('u'|'U') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'u'
@@ -518,14 +519,14 @@ fragment    U   :   ('u'|'U') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('5')
                         )
                 ;
-fragment    V   :   ('v'|'V') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_V   :   ('v'|'V') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (     'v'
                             | 'V'
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('6')
                         )
                 ;
-fragment    W   :   ('w'|'W') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_W   :   ('w'|'W') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'w'
@@ -533,7 +534,7 @@ fragment    W   :   ('w'|'W') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('7')
                         )
                 ;
-fragment    X   :   ('x'|'X') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_X   :   ('x'|'X') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'x'
@@ -541,7 +542,7 @@ fragment    X   :   ('x'|'X') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('8')
                         )
                 ;
-fragment    Y   :   ('y'|'Y') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_Y   :   ('y'|'Y') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'y'
@@ -549,7 +550,7 @@ fragment    Y   :   ('y'|'Y') ('\r'|'\n'|'\t'|'\f'|' ')*
                             | ('0' ('0' ('0' '0'?)?)?)? ('5'|'7')('9')
                         )
                 ;
-fragment    Z   :   ('z'|'Z') ('\r'|'\n'|'\t'|'\f'|' ')*
+fragment    CSS_Z   :   ('z'|'Z') ('\r'|'\n'|'\t'|'\f'|' ')*
                 | '\\'
                         (
                               'z'
@@ -561,103 +562,103 @@ fragment    Z   :   ('z'|'Z') ('\r'|'\n'|'\t'|'\f'|' ')*
 
 // -------------
 // Comments.    Comments may not be nested, may be multilined and are delimited
-//              like C comments: /* ..... */
-//              COMMENTS are hidden from the parser which simplifies the parser
+//              like CSS_C comments: /* ..... */
+//              CSS_COMMENTS are hidden from the parser which simplifies the parser
 //              grammar a lot.
 //
-COMMENT         : '/*' ( options { greedy=false; } : .*) '*/'
+CSS_COMMENT         : '/*' ( options { greedy=false; } : .*) '*/'
 
                     {
                         $channel = 2;   // Comments on channel 2 in case we want to find them
                     }
                 ;
 
-SL_COMMENT
+CSS_SL_COMMENT
 	:	'//'
 		(~('\n'|'\r'))* ('\n'|'\r'('\n')?)
 		{$channel=2;}
 	;
 
 // ---------------------
-// HTML comment open.   HTML/XML comments may be placed around style sheets so that they
-//                      are hidden from higher scope parsing engines such as HTML parsers.
+// CSS_HTML comment open.   CSS_HTML/CSS_XML comments may be placed around style sheets so that they
+//                      are hidden from higher scope parsing engines such as CSS_HTML parsers.
 //                      They comment open is therfore ignored by the CSS parser and we hide
-//                      it from the ANLTR parser.
+//                      it from the CSS_ANLTR parser.
 //
-CDO             : '<!--'
+CSS_CDO             : '<!--'
 
                     {
-                        $channel = 3;   // CDO on channel 3 in case we want it later
+                        $channel = 3;   // CSS_CDO on channel 3 in case we want it later
                     }
                 ;
 
 // ---------------------
-// HTML comment close.  HTML/XML comments may be placed around style sheets so that they
-//                      are hidden from higher scope parsing engines such as HTML parsers.
+// CSS_HTML comment close.  CSS_HTML/CSS_XML comments may be placed around style sheets so that they
+//                      are hidden from higher scope parsing engines such as CSS_HTML parsers.
 //                      They comment close is therfore ignored by the CSS parser and we hide
-//                      it from the ANLTR parser.
+//                      it from the CSS_ANLTR parser.
 //
-CDC             : '-->'
+CSS_CDC             : '-->'
 
                     {
-                        $channel = 4;   // CDC on channel 4 in case we want it later
+                        $channel = 4;   // CSS_CDC on channel 4 in case we want it later
                     }
                 ;
 
-STAREQ        : '*='      ;
-CIREQ	    : '^='      ;
-DOLLAREQ	    : '$='      ;
+CSS_STAREQ        : '*='      ;
+CSS_CIREQ	    : '^='      ;
+CSS_DOLLAREQ	    : '$='      ;
 
-GREATER         : '>'       ;
-LBRACE          : '{'       ;
-RBRACE          : '}'       ;
-LBRACKET        : '['       ;
-RBRACKET        : ']'       ;
-OPEQ            : '='       ;
-SEMI            : ';'       ;
-COLON           : ':'       ;
-SOLIDUS         : '/'       ;
-MINUS           : '-'       ;
-PLUS            : '+'       ;
-STAR            : '*'       ;
-LPAREN          : '('       ;
-RPAREN          : ')'       ;
-COMMA           : ','       ;
-DOT             : '.'       ;
+CSS_GREATER         : '>'       ;
+CSS_LBRACE          : '{'       ;
+CSS_RBRACE          : '}'       ;
+CSS_LBRACKET        : '['       ;
+CSS_RBRACKET        : ']'       ;
+CSS_OPEQ            : '='       ;
+CSS_SEMI            : ';'       ;
+CSS_COLON           : ':'       ;
+CSS_SOLIDUS         : '/'       ;
+CSS_MINUS           : '-'       ;
+CSS_PLUS            : '+'       ;
+CSS_STAR            : '*'       ;
+CSS_LPAREN          : '('       ;
+CSS_RPAREN          : ')'       ;
+CSS_COMMA           : ','       ;
+CSS_DOT             : '.'       ;
 
 // -----------------
 // Literal strings. Delimited by either ' or "
 //
-//fragment    INVALID :;
-STRING          : '\'' ( ~('\n'|'\r'|'\f'|'\'') )*
+//fragment    CSS_INVALID :;
+CSS_STRING          : '\'' ( ~('\n'|'\r'|'\f'|'\'') )*
                     (
                           '\''
-                        | { $type = INVALID; }
+                        | { $type = CSS_INVALID; }
                     )
 
                 | '"' ( ~('\n'|'\r'|'\f'|'"') )*
                     (
                           '"'
-                        | { $type = INVALID; }
+                        | { $type = CSS_INVALID; }
                     )
                 ;
 
 // -------------
 // Identifier.  Identifier tokens pick up properties names and values
 //
-IDENT           : '-'? NMSTART NMCHAR*  ;
+CSS_IDENT           : '-'? CSS_NMSTART CSS_NMCHAR*  ;
 
 // -------------
-// Reference.   Reference to an element in the body we are styling, such as <XXXX id="reference">
+// Reference.   Reference to an element in the body we are styling, such as <CSS_XXXX id="reference">
 //
-HASH            : '#' NAME              ;
+CSS_HASH            : '#' CSS_NAME              ;
 
-IMPORT_SYM      : '@' I M P O R T       ;
-PAGE_SYM        : '@' P A G E           ;
-MEDIA_SYM       : '@' M E D I A         ;
-CHARSET_SYM     : '@charset '           ;
+CSS_IMPORT_SYM      : '@' CSS_I CSS_M CSS_P CSS_O CSS_R CSS_T       ;
+CSS_PAGE_SYM        : '@' CSS_P CSS_A CSS_G CSS_E           ;
+CSS_MEDIA_SYM       : '@' CSS_M CSS_E CSS_D CSS_I CSS_A         ;
+CSS_CHARSET_SYM     : '@charset '           ;
 
-IMPORTANT_SYM   : '!' (WS|COMMENT)* I M P O R T A N T   ;
+CSS_IMPORTANT_SYM   : '!' (CSS_WS|CSS_COMMENT)* CSS_I CSS_M CSS_P CSS_O CSS_R CSS_T CSS_A CSS_N CSS_T   ;
 
 // ---------
 // Numbers. Numbers can be followed by pre-known units or unknown units
@@ -669,60 +670,60 @@ IMPORTANT_SYM   : '!' (WS|COMMENT)* I M P O R T A N T   ;
 //          Here we first define the various tokens, then we implement the
 //          number parsing rule.
 //
-fragment    EMS         :;  // 'em'
-fragment    EXS         :;  // 'ex'
-fragment    LENGTH      :;  // 'px'. 'cm', 'mm', 'in'. 'pt', 'pc'
-fragment    ANGLE       :;  // 'deg', 'rad', 'grad'
-fragment    TIME        :;  // 'ms', 's'
-fragment    FREQ        :;  // 'khz', 'hz'
-fragment    DIMENSION   :;  // nnn'Somethingnotyetinvented'
-fragment    PERCENTAGE  :;  // '%'
+fragment    CSS_EMS         :;  // 'em'
+fragment    CSS_EXS         :;  // 'ex'
+fragment    CSS_LENGTH      :;  // 'px'. 'cm', 'mm', 'in'. 'pt', 'pc'
+fragment    CSS_ANGLE       :;  // 'deg', 'rad', 'grad'
+fragment    CSS_TIME        :;  // 'ms', 's'
+fragment    CSS_FREQ        :;  // 'khz', 'hz'
+fragment    CSS_DIMENSION   :;  // nnn'Somethingnotyetinvented'
+fragment    CSS_PERCENTAGE  :;  // '%'
 
-NUMBER
+CSS_NUMBER
     :   (
               '0'..'9'+ ('.' '0'..'9'+)?
             | '.' '0'..'9'+
         )
         (
-              (E (M|X))=>
-                E
+              (CSS_E (CSS_M|CSS_X))=>
+                CSS_E
                 (
-                      M     { $type = EMS;          }
-                    | X     { $type = EXS;          }
+                      CSS_M     { $type = CSS_EMS;          }
+                    | CSS_X     { $type = CSS_EXS;          }
                 )
-            | (P(X|T|C))=>
-                P
+            | (CSS_P(CSS_X|CSS_T|CSS_C))=>
+                CSS_P
                 (
-                      X
-                    | T
-                    | C
+                      CSS_X
+                    | CSS_T
+                    | CSS_C
                 )
-                            { $type = LENGTH;       }
-            | (C M)=>
-                C M         { $type = LENGTH;       }
-            | (M (M|S))=>
-                M
+                            { $type = CSS_LENGTH;       }
+            | (CSS_C CSS_M)=>
+                CSS_C CSS_M         { $type = CSS_LENGTH;       }
+            | (CSS_M (CSS_M|CSS_S))=>
+                CSS_M
                 (
-                      M     { $type = LENGTH;       }
+                      CSS_M     { $type = CSS_LENGTH;       }
 
-                    | S     { $type = TIME;         }
+                    | CSS_S     { $type = CSS_TIME;         }
                 )
-            | (I N)=>
-                I N         { $type = LENGTH;       }
+            | (CSS_I CSS_N)=>
+                CSS_I CSS_N         { $type = CSS_LENGTH;       }
 
-            | (D E G)=>
-                D E G       { $type = ANGLE;        }
-            | (R A D)=>
-                R A D       { $type = ANGLE;        }
+            | (CSS_D CSS_E CSS_G)=>
+                CSS_D CSS_E CSS_G       { $type = CSS_ANGLE;        }
+            | (CSS_R CSS_A CSS_D)=>
+                CSS_R CSS_A CSS_D       { $type = CSS_ANGLE;        }
 
-            | (S)=>S        { $type = TIME;         }
+            | (CSS_S)=>CSS_S        { $type = CSS_TIME;         }
 
-            | (K? H Z)=>
-                K? H    Z   { $type = FREQ;         }
+            | (CSS_K? CSS_H CSS_Z)=>
+                CSS_K? CSS_H    CSS_Z   { $type = CSS_FREQ;         }
 
-            | IDENT         { $type = DIMENSION;    }
+            | CSS_IDENT         { $type = CSS_DIMENSION;    }
 
-            | '%'           { $type = PERCENTAGE;   }
+            | '%'           { $type = CSS_PERCENTAGE;   }
 
             | // Just a number
         )
@@ -731,19 +732,19 @@ NUMBER
 // ------------
 // url and uri.
 //
-URI :   U R L
+CSS_URI :   CSS_U CSS_R CSS_L
         '('
-            ((WS)=>WS)? (URL|STRING) WS?
+            ((CSS_WS)=>CSS_WS)? (CSS_URL|CSS_STRING) CSS_WS?
         ')'
     ;
 
 // -------------
 // Whitespace.  Though the W3 standard shows a Yacc/Lex style parser and lexer
-//              that process the whitespace within the parser, ANTLR does not
+//              that process the whitespace within the parser, CSS_ANTLR does not
 //              need to deal with the whitespace directly in the parser.
 //
-WS      : (' '|'\t')+           { $channel = HIDDEN;    }   ;
-NL      : ('\r' '\n'? | '\n')   { $channel = HIDDEN;    }   ;
+CSS_WS      : (' '|'\t')+           { $channel = CSS_HIDDEN;    }   ;
+CSS_NL      : ('\r' '\n'? | '\n')   { $channel = CSS_HIDDEN;    }   ;
 
 
 // -------------
