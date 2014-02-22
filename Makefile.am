@@ -16,16 +16,20 @@ css_libparser_a_SOURCES = \
 	src/css/parser/css3Parser.c \
 	src/css/parser/css3Lexer.c
 
-libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Isrc/css/parser
+libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include -Isrc/css/parser
 libderpkit_la_LIBADD = css/libparser.a
 libderpkit_la_LIBS = -static -lantlr3c
 libderpkit_la_SOURCES = \
+	include/derpkit/derpkit.hpp \
+	include/derpkit/forward.hpp \
 	src/css/css.cpp src/css/css.hpp \
 	src/css/cssproperty.cpp src/css/cssproperty.hpp \
 	src/css/cssrule.cpp src/css/cssrule.hpp \
-	src/css/cssselector.cpp src/css/cssselector.hpp
+	src/css/cssselector.cpp src/css/cssselector.hpp \
+	src/version.cpp include/derpkit/version.hpp
 
-parse_LIBS = libderpkit.la
+parse_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include
+parse_LDADD = libderpkit.la
 parse_SOURCES = src/main.cpp
 
 src/css/parser/css3Parser.c: src/css/parser/css3.g
