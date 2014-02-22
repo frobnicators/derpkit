@@ -6,23 +6,21 @@ AM_CXXFLAGS = -Wall -fvisibility=hidden
 AM_CFLAGS = ${AM_CXXFLAGS}
 
 lib_LTLIBRARIES = libderpkit.la
-noinst_LIBRARIES = css/libparser.a
 noinst_PROGRAMS = parse
 
 # ANTLR generates code which exhibits warnings, must compile with different flags
-css_libparser_a_CFLAGS = 
-css_libparser_a_SOURCES = \
-	src/css/parser/css3.g \
-	src/css/parser/css3Parser.c \
-	src/css/parser/css3Lexer.c
+src/css/parser/css3Parser.lo: CFLAGS += -Wno-unused
+src/css/parser/css3Lexer.lo:  CFLAGS += -Wno-unused
 
 libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include -Isrc/css/parser
-libderpkit_la_LIBADD = css/libparser.a
 libderpkit_la_LIBS = -static -lantlr3c
 libderpkit_la_SOURCES = \
 	include/derpkit/derpkit.hpp \
 	include/derpkit/export.hpp \
 	include/derpkit/forward.hpp \
+	src/css/parser/css3.g \
+	src/css/parser/css3Parser.c \
+	src/css/parser/css3Lexer.c \
 	src/css/css.cpp src/css/css.hpp \
 	src/css/cssproperty.cpp src/css/cssproperty.hpp \
 	src/css/cssrule.cpp src/css/cssrule.hpp \
