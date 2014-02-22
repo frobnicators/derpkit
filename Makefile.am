@@ -34,7 +34,7 @@ parse_SOURCES = src/main.cpp
 src/css/parser/css3Parser.c: src/css/parser/css3Lexer.c
 src/css/parser/css3Parser.h: src/css/parser/css3Lexer.c
 src/css/parser/css3Lexer.h: src/css/parser/css3Lexer.c
-wsrc/css/parser/css3Lexer.c: src/css/parser/css3.g
+src/css/parser/css3Lexer.c: src/css/parser/css3.g
 	@test -e src/css/parser || mkdir -p src/css/parser
 	antlr3 -make -fo src/css/parser $<
 
