@@ -33,4 +33,7 @@ AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-std=c++0x], [CXXFLAGS="$CXXFLAGS -std=c++0x"], [AC_MSG_ERROR([Support for C++11 is required])])
 AC_LANG_POP
 
+pkgdatadir="${datadir}/${PACKAGE}"
+AC_SUBST([pkgdatadir])
+
 AC_OUTPUT
