@@ -19,8 +19,8 @@ libderpkit_la_SOURCES = \
 	include/derpkit/export.hpp \
 	include/derpkit/forward.hpp \
 	src/css/parser/css3.g \
-	src/css/parser/css3Parser.c \
-	src/css/parser/css3Lexer.c \
+	src/css/parser/css3Parser.c src/css/parser/css3Parser.h \
+	src/css/parser/css3Lexer.c src/css/parser/css3Lexer.h \
 	src/css/css.cpp src/css/css.hpp \
 	src/css/cssproperty.cpp src/css/cssproperty.hpp \
 	src/css/cssrule.cpp src/css/cssrule.hpp \
@@ -31,7 +31,10 @@ parse_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include
 parse_LDADD = libderpkit.la
 parse_SOURCES = src/main.cpp
 
-src/css/parser/css3Parser.c: src/css/parser/css3.g
+src/css/parser/css3Parser.c: src/css/parser/css3Lexer.c
+src/css/parser/css3Parser.h: src/css/parser/css3Lexer.c
+src/css/parser/css3Lexer.h: src/css/parser/css3Lexer.c
+wsrc/css/parser/css3Lexer.c: src/css/parser/css3.g
 	@test -e src/css/parser || mkdir -p src/css/parser
 	antlr3 -make -fo src/css/parser $<
 
