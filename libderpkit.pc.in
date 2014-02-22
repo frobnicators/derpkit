@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libderpkit
+Description: A lightweight html5 render engine for easy embedding
+Version: @VERSION@
+Libs: -L${libdir} -lderpkit
+Cflags: -I${ffsincludedir}
