@@ -13,9 +13,9 @@
 *.a
 
 # generated parser files
-css/parser/css3Parser.*
-css/parser/css3Lexer.*
-css/parser/css3.tokens
+src/css/parser/css3Parser.*
+src/css/parser/css3Lexer.*
+src/css/parser/css3.tokens
 
 # generated automake files
 aclocal.m4

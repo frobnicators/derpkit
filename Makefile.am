@@ -11,20 +11,23 @@ noinst_PROGRAMS = parse
 
 # ANTLR generates code which exhibits warnings, must compile with different flags
 css_libparser_a_CFLAGS = 
-css_libparser_a_SOURCES = css/parser/css3Parser.c css/parser/css3Lexer.c
+css_libparser_a_SOURCES = \
+	src/css/parser/css3.g \
+	src/css/parser/css3Parser.c \
+	src/css/parser/css3Lexer.c
 
-libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Icss/parser
+libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Isrc/css/parser
 libderpkit_la_LIBADD = css/libparser.a
 libderpkit_la_LIBS = -static -lantlr3c
 libderpkit_la_SOURCES = \
-	css/css.cpp css/css.hpp \
-	css/cssproperty.cpp css/cssproperty.hpp \
-	css/cssrule.cpp css/cssrule.hpp \
-	css/cssselector.cpp css/cssselector.hpp
+	src/css/css.cpp src/css/css.hpp \
+	src/css/cssproperty.cpp src/css/cssproperty.hpp \
+	src/css/cssrule.cpp src/css/cssrule.hpp \
+	src/css/cssselector.cpp src/css/cssselector.hpp
 
 parse_LIBS = libderpkit.la
-parse_SOURCES = main.cpp
+parse_SOURCES = src/main.cpp
 
-css/parser/css3Parser.c: ${top_srcdir}/css/parser/css3.g
-	@test -e css/parser || mkdir -p css/parser
-	antlr3 -make -fo css/parser ${top_srcdir}/css/parser/css3.g
+src/css/parser/css3Parser.c: src/css/parser/css3.g
+	@test -e src/css/parser || mkdir -p src/css/parser
+	antlr3 -make -fo src/css/parser $<
