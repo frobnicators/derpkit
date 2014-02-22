@@ -2,8 +2,8 @@ ACLOCAL_AMFLAGS = -I m4
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 AM_LDFLAGS = -pthread
-AM_CXXFLAGS = -Wall
-AM_CFLAGS = -Wall
+AM_CXXFLAGS = -Wall -fvisibility=hidden
+AM_CFLAGS = ${AM_CXXFLAGS}
 
 lib_LTLIBRARIES = libderpkit.la
 noinst_LIBRARIES = css/libparser.a
@@ -21,6 +21,7 @@ libderpkit_la_LIBADD = css/libparser.a
 libderpkit_la_LIBS = -static -lantlr3c
 libderpkit_la_SOURCES = \
 	include/derpkit/derpkit.hpp \
+	include/derpkit/export.hpp \
 	include/derpkit/forward.hpp \
 	src/css/css.cpp src/css/css.hpp \
 	src/css/cssproperty.cpp src/css/cssproperty.hpp \
