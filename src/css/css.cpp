@@ -15,7 +15,7 @@ static CSSSelector::Type convert_antlr_selector_type(ANTLR3_UINT32 type) {
 	}
 }
 
-static pANTLR3_BASE_TREE get_child_or_null(pANTLR3_BASE_TREE tree, int index) {
+static pANTLR3_BASE_TREE get_child_or_null(pANTLR3_BASE_TREE tree, unsigned int index) {
 	if(tree->getChildCount(tree) > index) {
 		return (pANTLR3_BASE_TREE)tree->getChild(tree, index);
 	} else {
@@ -23,20 +23,19 @@ static pANTLR3_BASE_TREE get_child_or_null(pANTLR3_BASE_TREE tree, int index) {
 	}
 }
 
-static pANTLR3_BASE_TREE get_child(pANTLR3_BASE_TREE tree, int index) {
+static pANTLR3_BASE_TREE get_child(pANTLR3_BASE_TREE tree, unsigned int index) {
 	pANTLR3_BASE_TREE n = get_child_or_null(tree, index);
 	assert(n != nullptr);
 	return n;
 }
 
 static void traverse_tree(pANTLR3_BASE_TREE node, std::function<void(pANTLR3_BASE_TREE node)> callback) {
-	for(int c=0; c<node->getChildCount(node); ++c) {
+	for(unsigned int c=0; c<node->getChildCount(node); ++c) {
 		callback(get_child(node, c));
 	}
 }
 
 static std::string convert_string(pANTLR3_STRING str) {
-	/* TODO more safe? */
 	return std::string((const char*)str->chars);
 }
 
@@ -45,14 +44,14 @@ CSS::CSS(const std::string &filename) : m_filename(filename) { }
 CSS::~CSS() { }
 
 CSS * CSS::from_source(const std::string &source) {
-	pANTLR3_INPUT_STREAM input = antlr3StringStreamNew((pANTLR3_UINT8) source.c_str(),ANTLR3_ENC_UTF8, (ANTLR3_UINT32)source.size()+1, (pANTLR3_UINT8)"inline");
+	pANTLR3_INPUT_STREAM input = antlr3NewAsciiStringCopyStream((pANTLR3_UINT8) source.c_str(), (ANTLR3_UINT32)source.size()+1, (pANTLR3_UINT8)"inline");
 	CSS * css = new CSS("inline");
 	css->parse(input);
 	return css;
 }
 
 CSS * CSS::from_file(const std::string &filename) {
-	pANTLR3_INPUT_STREAM input = antlr3FileStreamNew((pANTLR3_UINT8)filename.c_str(), ANTLR3_ENC_UTF8);
+	pANTLR3_INPUT_STREAM input = antlr3AsciiFileStreamNew((pANTLR3_UINT8)filename.c_str());
 	CSS * css = new CSS(filename);
 	css->parse(input);
 	return css;
@@ -63,8 +62,6 @@ void CSS::parse(pANTLR3_INPUT_STREAM input) {
 	pANTLR3_COMMON_TOKEN_STREAM tstream;
 	pcss3Parser psr;
 	css3Parser_stylesheet_return cssAST;
-
-	pANTLR3_COMMON_TREE_NODE_STREAM nodes;
 
 	lxr = css3LexerNew(input);
 
@@ -109,7 +106,6 @@ void CSS::traverse(pANTLR3_BASE_TREE node) {
 				printf("[CSS] Warning: Unknown node %s\n", token->getText(token)->chars);
 
 		}
-		pANTLR3_STRING str = token->getText(token);
 	} else {
 		traverse_tree(node, [&](pANTLR3_BASE_TREE node) { traverse(node); });
 	}
@@ -147,7 +143,7 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 					pANTLR3_BASE_TREE prop_node = get_child(node, 0);
 					pANTLR3_COMMON_TOKEN prop_token = prop_node->getToken(prop_node);
 					CSSProperty property(convert_string(prop_token->getText(prop_token)));
-					for(int i=1; i<node->getChildCount(node); ++i) {
+					for(unsigned int i=1; i<node->getChildCount(node); ++i) {
 						pANTLR3_BASE_TREE prop_node = get_child(node, i);
 						pANTLR3_COMMON_TOKEN prop_token = prop_node->getToken(prop_node);
 						switch(prop_token->getType(prop_token)) {
