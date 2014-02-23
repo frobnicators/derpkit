@@ -14,10 +14,6 @@ if BUILD_TESTS
 check_PROGRAMS = ${TESTS}
 endif
 
-# ANTLR generates code which exhibits warnings, must compile with different flags
-#src/css/parser/libderpkit_la-css3Parser.lo: CFLAGS += -Wno-unused
-#src/css/parser/libderpkit_la-css3Lexer.lo:  CFLAGS += -Wno-unused
-
 libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include
 libderpkit_la_CFLAGS = ${libderpkit_la_CXXFLAGS} -Wno-unused
 libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la
@@ -49,29 +45,30 @@ libderpkit_la_SOURCES = \
 	src/version.cpp include/derpkit/version.hpp
 
 libantlr3c_la_CFLAGS  = -fvisibility=hidden -w -I${top_srcdir}/vendor/antlr3/include
-libantlr3c_la_SOURCES	=	vendor/antlr3/src/antlr3baserecognizer.c		\
-							vendor/antlr3/src/antlr3basetree.c				\
-							vendor/antlr3/src/antlr3basetreeadaptor.c		\
-							vendor/antlr3/src/antlr3bitset.c				\
-							vendor/antlr3/src/antlr3collections.c			\
-							vendor/antlr3/src/antlr3commontoken.c			\
-							vendor/antlr3/src/antlr3commontree.c			\
-							vendor/antlr3/src/antlr3commontreeadaptor.c		\
-							vendor/antlr3/src/antlr3commontreenodestream.c	\
-							vendor/antlr3/src/antlr3convertutf.c			\
-							vendor/antlr3/src/antlr3cyclicdfa.c				\
-							vendor/antlr3/src/antlr3debughandlers.c			\
-							vendor/antlr3/src/antlr3encodings.c				\
-							vendor/antlr3/src/antlr3exception.c				\
-							vendor/antlr3/src/antlr3filestream.c			\
-							vendor/antlr3/src/antlr3inputstream.c			\
-							vendor/antlr3/src/antlr3intstream.c				\
-							vendor/antlr3/src/antlr3lexer.c					\
-							vendor/antlr3/src/antlr3parser.c				\
-							vendor/antlr3/src/antlr3rewritestreams.c		\
-							vendor/antlr3/src/antlr3string.c				\
-							vendor/antlr3/src/antlr3tokenstream.c			\
-							vendor/antlr3/src/antlr3treeparser.c
+libantlr3c_la_SOURCES	= \
+	vendor/antlr3/src/antlr3baserecognizer.c \
+	vendor/antlr3/src/antlr3basetree.c \
+	vendor/antlr3/src/antlr3basetreeadaptor.c \
+	vendor/antlr3/src/antlr3bitset.c \
+	vendor/antlr3/src/antlr3collections.c \
+	vendor/antlr3/src/antlr3commontoken.c \
+	vendor/antlr3/src/antlr3commontree.c \
+	vendor/antlr3/src/antlr3commontreeadaptor.c \
+	vendor/antlr3/src/antlr3commontreenodestream.c \
+	vendor/antlr3/src/antlr3convertutf.c \
+	vendor/antlr3/src/antlr3cyclicdfa.c \
+	vendor/antlr3/src/antlr3debughandlers.c \
+	vendor/antlr3/src/antlr3encodings.c \
+	vendor/antlr3/src/antlr3exception.c \
+	vendor/antlr3/src/antlr3filestream.c \
+	vendor/antlr3/src/antlr3inputstream.c \
+	vendor/antlr3/src/antlr3intstream.c \
+	vendor/antlr3/src/antlr3lexer.c \
+	vendor/antlr3/src/antlr3parser.c \
+	vendor/antlr3/src/antlr3rewritestreams.c \
+	vendor/antlr3/src/antlr3string.c \
+	vendor/antlr3/src/antlr3tokenstream.c \
+	vendor/antlr3/src/antlr3treeparser.c
 
 libsha1_la_CXXFLAGS = -I${top_srcdir}/vendor/sha1/include
 libsha1_la_SOURCES = vendor/sha1/src/sha1.cpp vendor/sha1/include/sha1.h
@@ -92,9 +89,9 @@ test_dom_CXXFLAGS = ${AM_CXXFLAGS} $(CPPUNIT_CFLAGS)
 test_dom_LDADD = libderpkit.la $(CPPUNIT_LIBS)
 
 CLEANFILES = ${top_srcdir}/src/css/parser/css3Lexer.c \
-			 ${top_srcdir}/src/css/parser/css3Lexer.h \
-			 ${top_srcdir}/src/css/parser/css3Parser.c \
-			 ${top_srcdir}/src/css/parser/css3Parser.h
+	${top_srcdir}/src/css/parser/css3Lexer.h \
+	${top_srcdir}/src/css/parser/css3Parser.c \
+	${top_srcdir}/src/css/parser/css3Parser.h
 
 ${top_srcdir}/src/css/parser/css3Parser.c: src/css/parser/css3Lexer.c
 ${top_srcdir}/src/css/parser/css3Parser.h: src/css/parser/css3Lexer.c
