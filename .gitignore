@@ -12,11 +12,6 @@
 *.la
 *.a
 
-# generated parser files
-src/css/parser/css3Parser.*
-src/css/parser/css3Lexer.*
-src/css/parser/css3.tokens
-
 # generated automake files
 aclocal.m4
 autom4te.cache/
