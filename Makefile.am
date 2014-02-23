@@ -101,7 +101,7 @@ ${top_srcdir}/src/css/parser/css3Parser.h: src/css/parser/css3Lexer.c
 ${top_srcdir}/src/css/parser/css3Lexer.h: src/css/parser/css3Lexer.c
 ${top_srcdir}/src/css/parser/css3Lexer.c: src/css/parser/css3.g
 	@test -e ${top_srcdir}/src/css/parser || mkdir -p ${top_srcdir}/src/css/parser
-	antlr3 -make -fo ${top_srcdir}/src/css/parser $<
+	$(AM_V_GEN)antlr3 -make -fo ${top_srcdir}/src/css/parser $<
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libderpkit.pc
