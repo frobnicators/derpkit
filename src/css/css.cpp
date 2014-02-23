@@ -44,14 +44,14 @@ CSS::CSS(const std::string &filename) : m_filename(filename) { }
 CSS::~CSS() { }
 
 CSS * CSS::from_source(const std::string &source) {
-	pANTLR3_INPUT_STREAM input = antlr3NewAsciiStringCopyStream((pANTLR3_UINT8) source.c_str(), (ANTLR3_UINT32)source.size()+1, (pANTLR3_UINT8)"inline");
+	pANTLR3_INPUT_STREAM input = antlr3StringStreamNew((pANTLR3_UINT8) source.c_str(), ANTLR3_ENC_UTF8, (ANTLR3_UINT32)source.size()+1, (pANTLR3_UINT8)"inline");
 	CSS * css = new CSS("inline");
 	css->parse(input);
 	return css;
 }
 
 CSS * CSS::from_file(const std::string &filename) {
-	pANTLR3_INPUT_STREAM input = antlr3AsciiFileStreamNew((pANTLR3_UINT8)filename.c_str());
+	pANTLR3_INPUT_STREAM input = antlr3FileStreamNew((pANTLR3_UINT8)filename.c_str(), ANTLR3_ENC_UTF8);
 	CSS * css = new CSS(filename);
 	css->parse(input);
 	return css;
