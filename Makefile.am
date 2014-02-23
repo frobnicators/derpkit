@@ -88,11 +88,6 @@ domtest_SOURCES = src/dom/test.cpp
 test_dom_CXXFLAGS = ${AM_CXXFLAGS} $(CPPUNIT_CFLAGS)
 test_dom_LDADD = libderpkit.la $(CPPUNIT_LIBS)
 
-CLEANFILES = ${top_srcdir}/src/css/parser/css3Lexer.c \
-	${top_srcdir}/src/css/parser/css3Lexer.h \
-	${top_srcdir}/src/css/parser/css3Parser.c \
-	${top_srcdir}/src/css/parser/css3Parser.h
-
 ${top_srcdir}/src/css/parser/css3Parser.c: src/css/parser/css3Lexer.c
 ${top_srcdir}/src/css/parser/css3Parser.h: src/css/parser/css3Lexer.c
 ${top_srcdir}/src/css/parser/css3Lexer.h: src/css/parser/css3Lexer.c
