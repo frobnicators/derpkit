@@ -1,5 +1,5 @@
-#ifndef CSS_RULE_HPP
-#define CSS_RULE_HPP
+#ifndef DERPKIT_CSS_RULE_HPP
+#define DERPKIT_CSS_RULE_HPP
 
 #include <vector>
 #include "selector.hpp"

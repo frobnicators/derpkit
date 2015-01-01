@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 AM_LDFLAGS = -pthread
-AM_CXXFLAGS = -Wall -fvisibility=hidden
+AM_CXXFLAGS = -Wall -fvisibility=hidden -I${top_srcdir}/include -I${top_srcdir}/src 
 AM_CFLAGS = ${AM_CXXFLAGS}
 
 lib_LTLIBRARIES = libderpkit.la
@@ -13,7 +13,7 @@ noinst_PROGRAMS = parse domtest
 #src/css/parser/libderpkit_la-css3Parser.lo: CFLAGS += -Wno-unused
 #src/css/parser/libderpkit_la-css3Lexer.lo:  CFLAGS += -Wno-unused
 
-libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include
+libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include
 libderpkit_la_CFLAGS = ${libderpkit_la_CXXFLAGS} -Wno-unused
 libderpkit_la_LIBADD = libantlr3c.la
 libderpkit_la_SOURCES = \
@@ -27,7 +27,6 @@ libderpkit_la_SOURCES = \
 	src/css/property.cpp src/css/property.hpp \
 	src/css/rule.cpp src/css/rule.hpp \
 	src/css/selector.cpp src/css/selector.hpp \
-	src/css/apply.cpp src/css/apply.hpp \
 	src/dom/document.hpp src/dom/document.cpp \
 	src/dom/node.hpp src/dom/node.cpp \
 	include/derpkit/utils/string.hpp src/utils/string.cpp \

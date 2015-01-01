@@ -18,6 +18,7 @@ public:
 	mutable std::vector<std::shared_ptr<NodeImpl>> children;
 	std::map<std::string, std::string> attribute;
 	std::vector<std::string> classes;
+	std::map<std::string,NodeCSSProperty> css_properties;
 
 	NodeImpl(const char* tag)
 		: tag(tag)
@@ -96,9 +97,23 @@ void Node::set_attribute(const char* key, const char* value) {
 	_impl->set_attribute(key, value);
 }
 
-std::vector<std::string>& Node::classes() const {
+const std::vector<std::string>& Node::classes() const {
 	return _impl->classes;
 }
+
+std::map<std::string,NodeCSSProperty>& Node::css_properties() {
+	return _impl->css_properties;
+}
+
+const char* Node::get_css_property(const char* property) const {
+	auto it=_impl->css_properties.find(property);
+	if(it == _impl->css_properties.end()) {
+		return nullptr;
+	}
+
+	return it->second.property.c_str();
+}
+
 
 void Node::attach(const Node* parent){
 	if ( !parent) return;

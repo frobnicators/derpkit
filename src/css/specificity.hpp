@@ -1,5 +1,8 @@
-#ifndef CSS_CSS_SPECIFICITY
-#define CSS_CSS_SPECIFICITY
+#ifndef DERPKIT_CSS_SPECIFICITY
+#define DERPKIT_CSS_SPECIFICITY
+
+#include <cstdint>
+#include <cstring>
 
 namespace css {
 
@@ -17,17 +20,18 @@ public:
 	, c(c)
 	{ }
 
-	Specificity(const CSSSpecificity& other) {
-		memcpy(&important, other.imporant, 4);
+	Specificity(const Specificity& other) {
+		memcpy(&important, &other.important, 4);
 	}
-	Specificity& operator=(const CSSSpecificity& other) {
-		memcpy(&important, other.imporant, 4);
+	Specificity& operator=(const Specificity& other) {
+		memcpy(&important, &other.important, 4);
+		return *this;
 	}
-	bool inline operator==(const CSSSpecificity& other) const {
-		return memcmp(&important, other.important, 4) == 0;
+	bool inline operator==(const Specificity& other) const {
+		return memcmp(&important, &other.important, 4) == 0;
 	}
-	bool inline operator<(const CSSSpecificity& other) const {
-		return memcmp(&important, other.important, 4) < 0;
+	bool inline operator<(const Specificity& other) const {
+		return memcmp(&important, &other.important, 4) < 0;
 	}
 
 };

@@ -3,6 +3,7 @@
 #include <antlr3.h>
 #include <cassert>
 #include <functional>
+#include <sstream>
 #include "parser/css3.h"
 
 namespace css {
@@ -148,6 +149,7 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 					pANTLR3_BASE_TREE prop_node = get_child(node, 0);
 					pANTLR3_COMMON_TOKEN prop_token = prop_node->getToken(prop_node);
 					Property property(convert_string(prop_token->getText(prop_token)));
+					std::stringstream value;
 					for(unsigned int i=1; i<node->getChildCount(node); ++i) {
 						pANTLR3_BASE_TREE prop_node = get_child(node, i);
 						pANTLR3_COMMON_TOKEN prop_token = prop_node->getToken(prop_node);
@@ -156,11 +158,14 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 								property.important = true;
 								break;
 							default:
-								property.values.push_back(convert_string(prop_token->getText(prop_token)));
+								value << convert_string(prop_token->getText(prop_token)) << " ";
 								break;
 						}
 					}
-					rule.m_properties.push_back(property);
+					if(!value.str().empty()) {
+						property.value = value.str();
+						rule.m_properties.push_back(property);
+					}
 				}
 				break;
 			}

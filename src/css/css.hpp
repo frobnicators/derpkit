@@ -1,9 +1,10 @@
-#ifndef CSS_HPP
-#define CSS_HPP
+#ifndef DERPKIT_CSS_HPP
+#define DERPKIT_CSS_HPP
 
 #include <string>
 
 #include "derpkit/export.hpp"
+#include "dom/node.hpp"
 #include "rule.hpp"
 
 struct ANTLR3_INPUT_STREAM_struct;
@@ -19,15 +20,17 @@ class CSS {
 		DERPKIT_EXPORT static CSS * from_source(const std::string &source);
 		DERPKIT_EXPORT static CSS * from_file(const std::string &filename);
 
-		const std::string& filename() const {
+		DERPKIT_EXPORT const std::string& filename() const {
 			return m_filename;
 		}
 
-		const std::vector<Rule>& rules() const {
+		DERPKIT_EXPORT const std::vector<Rule>& rules() const {
 			return m_rules;
 		}
 
 		DERPKIT_EXPORT void print() const;
+
+		DERPKIT_EXPORT void apply_to_tree(dom::Node root);
 	private:
 		CSS(const std::string &filename);
 

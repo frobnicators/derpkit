@@ -1,5 +1,5 @@
-#ifndef CSS_PROPERTY_HPP
-#define CSS_PROPERTY_HPP
+#ifndef DERPKIT_CSS_PROPERTY_HPP
+#define DERPKIT_CSS_PROPERTY_HPP
 
 #include <string>
 #include <vector>
@@ -14,7 +14,7 @@ class Property {
 		void print() const;
 
 		std::string property;
-		std::vector<std::string> values;
+		std::string value;
 
 		bool important;
 };
