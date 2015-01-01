@@ -10,6 +10,8 @@ public:
 
 	String make_pooled() const;
 
+	const char* c_str() const { return s; }
+
 	bool operator<(const String& rhs) const;
 	bool operator==(const String& rhs) const;
 
