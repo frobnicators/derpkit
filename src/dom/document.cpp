@@ -29,20 +29,29 @@ Node Document::root() const{
 	return root_node;
 }
 
-void Document::visit_depthfirst(std::function<void(Node node)> callback){
-	visit_depthfirst(callback, root_node, 0);
+void Document::visit_depthfirst(std::function<void(Node node, const State&)> callback){
+	State state;
+	state.display = DISPLAY_BLOCK;
+	state.color.val = 0x000000ff;
+	state.background_color.val = 0xffffffff;
+	state.width = {0, UNIT_AUTO};
+	state.height = {0, UNIT_AUTO};
+
+	visit_depthfirst(callback, root_node, 0, state);
 }
 
-void Document::visit_depthfirst(std::function<void(Node node)> callback, Node node, int depth){
+void Document::visit_depthfirst(std::function<void(Node node, const State&)> callback, Node node, int depth, const State& parent_state){
 	if ( depth >= MAX_DEPTH ){
 		return;
 	}
 
+	State state = parent_state;
+
 	for ( auto it : node.children() ){
-		visit_depthfirst(callback, it, depth+1);
+		visit_depthfirst(callback, it, depth+1, state);
 	}
 
-	callback(node);
+	callback(node, state);
 }
 
 }

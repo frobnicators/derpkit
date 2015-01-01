@@ -21,8 +21,13 @@ int main(){
 	div2.detach();
 
 	doc.set_root(root);
-	doc.visit_depthfirst([](Node cur){
+	doc.visit_depthfirst([](Node cur, const State& state){
 		printf("tag: %s\n", cur.tag_name());
-		printf("id: %s\n", cur.get_attribute("id"));
+		printf("  id: %s\n", cur.get_attribute("id"));
+		printf("  display: %d\n", state.display);
+		printf("  color: %d\n", state.color.val);
+		printf("  background-color: %d\n", state.background_color.val);
+		printf("  width: %f %d\n", state.width.scalar, state.width.unit);
+		printf("  height: %f %d\n", state.height.scalar, state.height.unit);
 	});
 }

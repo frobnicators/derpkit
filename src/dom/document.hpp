@@ -1,6 +1,7 @@
 #ifndef DERPKIT_DOM_DOCUMENT_HPP
 #define DERPKIT_DOM_DOCUMENT_HPP
 
+#include "state.hpp"
 #include <functional>
 #include "node.hpp"
 
@@ -15,10 +16,10 @@ public:
 	void set_root(Node root);
 	Node root() const;
 
-	void visit_depthfirst(std::function<void(Node node)>);
+	void visit_depthfirst(std::function<void(Node node, const State&)>);
 
 private:
-	void visit_depthfirst(std::function<void(Node node)>, Node node, int depth);
+	void visit_depthfirst(std::function<void(Node node, const State&)>, Node node, int depth, const State& state);
 	Node root_node;
 };
 
