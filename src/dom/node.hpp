@@ -18,6 +18,8 @@ public:
 	bool has_attribute(const char* key) const;
 	void set_attribute(const char* key, const char* value);
 
+	std::vector<std::string>& classes() const;
+
 	void attach(const Node* parent);
 	void detach();
 

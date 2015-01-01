@@ -1,6 +1,7 @@
 #include "dom/document.hpp"
 #include "dom/node.hpp"
 #include <cstdio>
+#include <string>
 
 using namespace dom;
 
@@ -13,6 +14,9 @@ int main(){
 	div1.set_attribute("class", "bar baz");
 
 	printf("id: %s\n", div1.get_attribute("id"));
+	for ( std::string it: div1.classes() ){
+		printf("%s\n", it.c_str());
+	}
 
 	Node div2("div");
 	div2.attach(&div1);

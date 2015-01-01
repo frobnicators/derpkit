@@ -17,6 +17,7 @@ public:
 	std::weak_ptr<NodeImpl> parent;
 	mutable std::vector<std::shared_ptr<NodeImpl>> children;
 	std::map<std::string, std::string> attribute;
+	std::vector<std::string> classes;
 
 	NodeImpl(const char* tag)
 		: tag(tag)
@@ -40,6 +41,14 @@ public:
 
 	void set_attribute(const char* key, const char* value) {
 		attribute[key] = value;
+
+		if ( strcmp(key, "class") == 0 ){
+			parse_classes();
+		}
+	}
+
+	void parse_classes(){
+		classes = str_split(get_attribute("class"), " ", SPLIT_TRIM | SPLIT_IGNORE_EMPTY);
 	}
 
 	void attach(std::shared_ptr<NodeImpl> parent){
@@ -85,6 +94,10 @@ bool Node::has_attribute(const char* key) const {
 
 void Node::set_attribute(const char* key, const char* value) {
 	_impl->set_attribute(key, value);
+}
+
+std::vector<std::string>& Node::classes() const {
+	return _impl->classes;
 }
 
 void Node::attach(const Node* parent){
