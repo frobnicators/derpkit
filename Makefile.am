@@ -30,7 +30,8 @@ libderpkit_la_SOURCES = \
 	src/css/apply.cpp src/css/apply.hpp \
 	src/dom/document.hpp src/dom/document.cpp \
 	src/dom/node.hpp src/dom/node.cpp \
-	src/utils/string.hpp src/utils/string.cpp \
+	include/derpkit/utils/string.hpp src/utils/string.cpp \
+	include/derpkit/utils/string_utils.hpp src/utils/string_utils.cpp \
 	src/version.cpp include/derpkit/version.hpp
 
 libantlr3c_la_CFLAGS  = -fvisibility=hidden -w -I${top_srcdir}/vendor/antlr3/include

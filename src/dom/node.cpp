@@ -3,6 +3,8 @@
 #endif
 
 #include "node.hpp"
+#include <derpkit/utils/string_utils.hpp>
+#include <cstring>
 #include <string>
 #include <map>
 
