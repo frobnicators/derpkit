@@ -16,8 +16,8 @@ class CSSSelector {
 
 		CSSSelector(Type type, const std::string &value);
 
-		const Type type;
-		const std::string value;
+		Type type;
+		std::string value;
 
 		//bool match(...);
 

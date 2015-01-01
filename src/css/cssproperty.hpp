@@ -10,7 +10,7 @@ class CSSProperty {
 
 		void print() const;
 
-		const std::string property;
+		std::string property;
 		std::vector<std::string> values;
 
 		bool important;
