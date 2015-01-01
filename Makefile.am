@@ -24,9 +24,10 @@ libderpkit_la_SOURCES = \
 	src/css/parser/css3Parser.c src/css/parser/css3Parser.h \
 	src/css/parser/css3Lexer.c src/css/parser/css3Lexer.h \
 	src/css/css.cpp src/css/css.hpp \
-	src/css/cssproperty.cpp src/css/cssproperty.hpp \
-	src/css/cssrule.cpp src/css/cssrule.hpp \
-	src/css/cssselector.cpp src/css/cssselector.hpp \
+	src/css/property.cpp src/css/property.hpp \
+	src/css/rule.cpp src/css/rule.hpp \
+	src/css/selector.cpp src/css/selector.hpp \
+	src/css/apply.cpp src/css/apply.hpp \
 	src/version.cpp include/derpkit/version.hpp
 
 libantlr3c_la_CFLAGS  = -fvisibility=hidden -w -I${top_srcdir}/vendor/antlr3/include

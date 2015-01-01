@@ -1,4 +1,6 @@
-#include "cssrule.hpp"
+#include "rule.hpp"
+
+namespace css {
 
 static void print_indent(int levels) {
 	for(int i=0; i<levels; ++i) {
@@ -6,7 +8,7 @@ static void print_indent(int levels) {
 	}
 }
 
-void CSSRule::print(int indent) const {
+void Rule::print(int indent) const {
 	print_indent(indent);
 	printf("RULE (");
 	for(const auto & sg : m_selectors) {
@@ -23,4 +25,6 @@ void CSSRule::print(int indent) const {
 	}
 	print_indent(indent);
 	printf("}\n");
+}
+
 }

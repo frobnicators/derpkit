@@ -2,10 +2,12 @@
 #define CSS_RULE_HPP
 
 #include <vector>
-#include "cssselector.hpp"
-#include "cssproperty.hpp"
+#include "selector.hpp"
+#include "property.hpp"
 
-class CSSRule {
+namespace css {
+
+class Rule {
 	public:
 		/**
 		 * Debug print
@@ -13,10 +15,12 @@ class CSSRule {
 		void print(int indent=0) const;
 
 	private:
-		std::vector<CSSSelectorGroup> m_selectors;
-		std::vector<CSSProperty> m_properties;
+		std::vector<SelectorGroup> m_selectors;
+		std::vector<Property> m_properties;
 
 		friend class CSS;
 };
+
+}
 
 #endif

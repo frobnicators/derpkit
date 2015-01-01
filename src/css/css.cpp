@@ -5,13 +5,15 @@
 #include <functional>
 #include "parser/css3.h"
 
-static CSSSelector::Type convert_antlr_selector_type(ANTLR3_UINT32 type) {
+namespace css {
+
+static Selector::Type convert_antlr_selector_type(ANTLR3_UINT32 type) {
 	switch(type) {
-		case CSS_TAG: return CSSSelector::TAG;
-		case CSS_CLASS: return CSSSelector::CLASS;
-		case CSS_ID: return CSSSelector::ID;
-		case CSS_PSEUDO: return CSSSelector::PSEUDO;
-		default: return CSSSelector::UNKNOWN;
+		case CSS_TAG: return Selector::TAG;
+		case CSS_CLASS: return Selector::CLASS;
+		case CSS_ID: return Selector::ID;
+		case CSS_PSEUDO: return Selector::PSEUDO;
+		default: return Selector::UNKNOWN;
 	}
 }
 
@@ -112,19 +114,21 @@ void CSS::traverse(pANTLR3_BASE_TREE node) {
 }
 
 void CSS::parse_rule(pANTLR3_BASE_TREE node) {
-	CSSRule rule;
+	m_rules.emplace_back();
+	Rule& rule = m_rules.back();
 	traverse_tree(node, [&rule](pANTLR3_BASE_TREE node) {
 		pANTLR3_COMMON_TOKEN token = node->getToken(node);
 		if(token != NULL) {
 			switch(token->getType(token)) {
 				case CSS_SELECTOR:
 				{
-					CSSSelectorGroup selector_group;
+					rule.m_selectors.emplace_back();
+					SelectorGroup& selector_group = rule.m_selectors.back();
 
 					traverse_tree(node, [&selector_group](pANTLR3_BASE_TREE sel_node) {
 						pANTLR3_COMMON_TOKEN sel_token = sel_node->getToken(sel_node);
-						CSSSelector::Type type = convert_antlr_selector_type(sel_token->getType(sel_token));
-						if(type == CSSSelector::UNKNOWN) {
+						Selector::Type type = convert_antlr_selector_type(sel_token->getType(sel_token));
+						if(type == Selector::UNKNOWN) {
 							printf("[CSS] Warning: Unknown selector type %s\n",
 								sel_token->getText(sel_token)->chars);
 						} else {
@@ -132,17 +136,18 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 							pANTLR3_COMMON_TOKEN val_token = val_node->getToken(val_node);
 							std::string value = convert_string(val_token->getText(val_token));
 
-							selector_group.push_back(CSSSelector(type, value));
+							selector_group.emplace_back(type, value);
 						}
 					});
-					if(selector_group.size() > 0) rule.m_selectors.push_back(selector_group);
+
+					if(selector_group.size() == 0) rule.m_selectors.pop_back();
 				}
 				break;
 				case CSS_PROPERTY:
 				{
 					pANTLR3_BASE_TREE prop_node = get_child(node, 0);
 					pANTLR3_COMMON_TOKEN prop_token = prop_node->getToken(prop_node);
-					CSSProperty property(convert_string(prop_token->getText(prop_token)));
+					Property property(convert_string(prop_token->getText(prop_token)));
 					for(unsigned int i=1; i<node->getChildCount(node); ++i) {
 						pANTLR3_BASE_TREE prop_node = get_child(node, i);
 						pANTLR3_COMMON_TOKEN prop_token = prop_node->getToken(prop_node);
@@ -161,11 +166,12 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 			}
 		}
 	});
-	m_rules.push_back(rule);
 }
 
 void CSS::print() const {
 	for(const auto & r : m_rules) {
 		r.print();
 	}
+}
+
 }

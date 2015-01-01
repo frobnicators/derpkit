@@ -14,6 +14,6 @@ int main(int argc, char * argv[]) {
 		printf("Requires exactly one argument: %s css-file\n", argv[0]);
 		exit(1);
 	}
-	CSS * css = CSS::from_file(argv[1]);
+	css::CSS * css = css::CSS::from_file(argv[1]);
 	css->print();
 }

@@ -3,10 +3,13 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
-class CSSProperty {
+namespace css {
+
+class Property {
 	public:
-		CSSProperty(const std::string &property);
+		Property(const std::string &property);
 
 		void print() const;
 
@@ -15,5 +18,7 @@ class CSSProperty {
 
 		bool important;
 };
+
+}
 
 #endif

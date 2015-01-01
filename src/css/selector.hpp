@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 
-class CSSSelector {
+namespace css {
+
+class Selector {
 	public:
 		enum Type {
 			TAG = 0,
@@ -14,7 +16,7 @@ class CSSSelector {
 			UNKNOWN
 		};
 
-		CSSSelector(Type type, const std::string &value);
+		Selector(Type type, const std::string &value);
 
 		Type type;
 		std::string value;
@@ -26,6 +28,8 @@ class CSSSelector {
 
 };
 
-typedef std::vector<CSSSelector> CSSSelectorGroup;
+typedef std::vector<Selector> SelectorGroup;
+
+}
 
 #endif
