@@ -28,6 +28,7 @@ libderpkit_la_SOURCES = \
 	src/css/rule.cpp src/css/rule.hpp \
 	src/css/selector.cpp src/css/selector.hpp \
 	src/css/apply.cpp src/css/apply.hpp \
+	src/utils/string.hpp src/utils/string.cpp \
 	src/version.cpp include/derpkit/version.hpp
 
 libantlr3c_la_CFLAGS  = -fvisibility=hidden -w -I${top_srcdir}/vendor/antlr3/include
