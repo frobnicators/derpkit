@@ -46,6 +46,7 @@ tokens {
 	CSS_TAG;
 	CSS_ID;
 	CSS_CLASS;
+	CSS_ANY;
 	CSS_IMPORTANT;
 }
 
@@ -207,7 +208,7 @@ cssClass
 
 elementName
     : CSS_IDENT -> ^(CSS_TAG CSS_IDENT)
-    | CSS_STAR -> ^(CSS_TAG CSS_STAR)
+    | CSS_STAR -> ^(CSS_ANY CSS_STAR)
     ;
 
 

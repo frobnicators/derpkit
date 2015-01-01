@@ -8,13 +8,14 @@
 
 namespace css {
 
-static Selector::Type convert_antlr_selector_type(ANTLR3_UINT32 type) {
+static SelectorType convert_antlr_selector_type(ANTLR3_UINT32 type) {
 	switch(type) {
-		case CSS_TAG: return Selector::TAG;
-		case CSS_CLASS: return Selector::CLASS;
-		case CSS_ID: return Selector::ID;
-		case CSS_PSEUDO: return Selector::PSEUDO;
-		default: return Selector::UNKNOWN;
+		case CSS_TAG: return TYPE_TAG;
+		case CSS_CLASS: return TYPE_CLASS;
+		case CSS_ID: return TYPE_ID;
+		case CSS_PSEUDO: return TYPE_PSEUDO;
+		case CSS_ANY: return TYPE_ANY;
+		default: return TYPE_UNKNOWN;
 	}
 }
 
@@ -124,12 +125,12 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 				case CSS_SELECTOR:
 				{
 					rule.m_selectors.emplace_back();
-					SelectorGroup& selector_group = rule.m_selectors.back();
+					Selector& selector = rule.m_selectors.back();
 
-					traverse_tree(node, [&selector_group](pANTLR3_BASE_TREE sel_node) {
+					traverse_tree(node, [&selector](pANTLR3_BASE_TREE sel_node) {
 						pANTLR3_COMMON_TOKEN sel_token = sel_node->getToken(sel_node);
-						Selector::Type type = convert_antlr_selector_type(sel_token->getType(sel_token));
-						if(type == Selector::UNKNOWN) {
+						SelectorType type = convert_antlr_selector_type(sel_token->getType(sel_token));
+						if(type == TYPE_UNKNOWN) {
 							printf("[CSS] Warning: Unknown selector type %s\n",
 								sel_token->getText(sel_token)->chars);
 						} else {
@@ -137,11 +138,12 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 							pANTLR3_COMMON_TOKEN val_token = val_node->getToken(val_node);
 							std::string value = convert_string(val_token->getText(val_token));
 
-							selector_group.emplace_back(type, value);
+							selector.m_atoms.emplace_back(type, value);
 						}
 					});
 
-					if(selector_group.size() == 0) rule.m_selectors.pop_back();
+					if(selector.m_atoms.size() == 0) rule.m_selectors.pop_back();
+					else selector.calculate_specificity();
 				}
 				break;
 				case CSS_PROPERTY:
@@ -171,6 +173,10 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 			}
 		}
 	});
+}
+
+void CSS::apply_to_tree(dom::Node root) {
+
 }
 
 void CSS::print() const {

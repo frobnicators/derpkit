@@ -27,6 +27,7 @@ libderpkit_la_SOURCES = \
 	src/css/property.cpp src/css/property.hpp \
 	src/css/rule.cpp src/css/rule.hpp \
 	src/css/selector.cpp src/css/selector.hpp \
+	src/css/specificity.cpp src/css/specificity.hpp \
 	src/dom/document.hpp src/dom/document.cpp \
 	src/dom/node.hpp src/dom/node.cpp \
 	include/derpkit/utils/string.hpp src/utils/string.cpp \

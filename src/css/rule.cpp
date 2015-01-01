@@ -11,10 +11,8 @@ static void print_indent(int levels) {
 void Rule::print(int indent) const {
 	print_indent(indent);
 	printf("RULE (");
-	for(const auto & sg : m_selectors) {
-		for(const auto & s : sg) {
-			printf(" %s=%s", s.type_as_string(), s.value.c_str());
-		}
+	for(const auto & selector : m_selectors) {
+		selector.print();
 		printf(",");
 	}
 	print_indent(indent);

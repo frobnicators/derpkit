@@ -35,4 +35,6 @@ int main(int argc, char * argv[]) {
 	dom::Node div2 = doc.create_element("div");
 	div2.attach(div1);
 	div2.detach();
+
+	css->apply_to_tree(root);
 }

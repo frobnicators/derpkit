@@ -3,22 +3,22 @@
 
 #include <cstdint>
 #include <cstring>
+#include <string>
 
 namespace css {
 
 class Specificity {
-private:
+public:
 	uint8_t important;
 	uint8_t a;
 	uint8_t b;
 	uint8_t c;
-public:
-	Specificity(uint8_t important, uint8_t a, uint8_t b, uint8_t c)
-	: important(important)
-	, a(a)
-	, b(b)
-	, c(c)
-	{ }
+
+	void reset() {
+		memset(&important, 0, 4);
+	}
+
+	Specificity() { }
 
 	Specificity(const Specificity& other) {
 		memcpy(&important, &other.important, 4);
@@ -34,6 +34,7 @@ public:
 		return memcmp(&important, &other.important, 4) < 0;
 	}
 
+	std::string debug_string() const;
 };
 
 }

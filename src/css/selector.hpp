@@ -1,34 +1,51 @@
 #ifndef DERPKIT_CSS_SELECTOR_HPP
 #define DERPKIT_CSS_SELECTOR_HPP
 
+#include "dom/node.hpp"
 #include <string>
 #include <vector>
 
 namespace css {
 
-class Selector {
+enum SelectorType {
+	TYPE_TAG = 0,
+	TYPE_CLASS,
+	TYPE_ID,
+	TYPE_PSEUDO,
+	TYPE_ANY,
+	TYPE_UNKNOWN
+};
+
+class SelectorAtom {
 	public:
-		enum Type {
-			TAG = 0,
-			CLASS,
-			ID,
-			PSEUDO,
-			UNKNOWN
-		};
 
-		Selector(Type type, const std::string &value);
+		SelectorAtom(SelectorType type, const std::string &value);
 
-		Type type;
+		SelectorType type;
 		std::string value;
-
-		//bool match(...);
 
 		/** Debug method */
 		const char * type_as_string() const;
 
 };
 
-typedef std::vector<Selector> SelectorGroup;
+class Selector {
+	public:
+		bool match(dom::Node node);
+
+		void calculate_specificity();
+
+		const Specificity& specificity() const {
+			return m_specificity;
+		}
+
+		void print() const;
+	private:
+		std::vector<SelectorAtom> m_atoms;
+		Specificity m_specificity;
+
+		friend class CSS;
+};
 
 }
 

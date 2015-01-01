@@ -15,7 +15,7 @@ class Rule {
 		void print(int indent=0) const;
 
 	private:
-		std::vector<SelectorGroup> m_selectors;
+		std::vector<Selector> m_selectors;
 		std::vector<Property> m_properties;
 
 		friend class CSS;
