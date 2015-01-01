@@ -7,6 +7,7 @@
 #include <cstring>
 #include <string>
 #include <map>
+#include <cassert>
 
 namespace dom {
 
@@ -54,7 +55,9 @@ public:
 
 	void attach(std::shared_ptr<NodeImpl> parent){
 		this->parent = parent;
-		parent->children.push_back(self.lock());
+		auto ptr = self.lock();
+		assert(!self.expired());
+		parent->children.push_back(ptr);
 	}
 
 	void detach(){
@@ -73,28 +76,59 @@ public:
 	}
 };
 
+Node::Node(){
+
+}
+
+Node::Node(const Node& rhs){
+	_impl = rhs._impl;
+}
+
+Node::Node(std::shared_ptr<NodeImpl> node){
+	_impl = node;
+}
+
 Node::Node(const char* tag){
-	auto ptr= std::make_shared<NodeImpl>(tag);
+	auto ptr = std::make_shared<NodeImpl>(tag);
 	ptr->self = ptr;
 	_impl = ptr;
 }
 
-Node::Node(const char* tag, const Node* parent)
-	: _impl(std::make_shared<NodeImpl>(tag)){
+Node::Node(const char* tag, Node parent){
+	auto ptr = std::make_shared<NodeImpl>(tag);
+	ptr->self = ptr;
+	_impl = ptr;
 
 	attach(parent);
 }
 
 const char* Node::get_attribute(const char* key) const {
+	assert(_impl.get());
 	return _impl->get_attribute(key);
 }
 
 bool Node::has_attribute(const char* key) const {
+	assert(_impl.get());
 	return _impl->has_attribute(key);
 }
 
 void Node::set_attribute(const char* key, const char* value) {
+	assert(_impl.get());
 	_impl->set_attribute(key, value);
+}
+
+const char* Node::tag_name() const {
+	assert(_impl.get());
+	return _impl->tag.c_str();
+}
+
+std::vector<Node> Node::children() const {
+	assert(_impl.get());
+	std::vector<Node> children;
+	for ( auto it : _impl->children ){
+		children.push_back(Node(it));
+	}
+	return children;
 }
 
 const std::vector<std::string>& Node::classes() const {
@@ -114,17 +148,17 @@ const char* Node::get_css_property(const char* property) const {
 	return it->second.property.c_str();
 }
 
-
-void Node::attach(const Node* parent){
-	if ( !parent) return;
+void Node::attach(Node parent){
+	assert(_impl.get());
 
 	/* detatch from previous node first */
 	_impl->detach();
 
-	_impl->attach(parent->_impl);
+	_impl->attach(parent._impl);
 }
 
 void Node::detach(){
+	assert(_impl.get());
 	_impl->detach();
 }
 

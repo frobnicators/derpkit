@@ -6,19 +6,23 @@
 using namespace dom;
 
 int main(){
-	Node root("html");
-	Node body("body", &root);
+	Document doc;
 
-	Node div1("div", &body);
-	div1.set_attribute("id", "foo");
+	Node root = doc.create_element("html");
+	Node body = doc.create_element("body", root);
+	body.set_attribute("id", "body-element");
+
+	Node div1 = doc.create_element("div", body);
+	div1.set_attribute("id", "my-div1");
 	div1.set_attribute("class", "bar baz");
 
-	printf("id: %s\n", div1.get_attribute("id"));
-	for ( std::string it: div1.classes() ){
-		printf("%s\n", it.c_str());
-	}
-
-	Node div2("div");
-	div2.attach(&div1);
+	Node div2 = doc.create_element("div");
+	div2.attach(div1);
 	div2.detach();
+
+	doc.set_root(root);
+	doc.visit_depthfirst([](Node cur){
+		printf("tag: %s\n", cur.tag_name());
+		printf("id: %s\n", cur.get_attribute("id"));
+	});
 }

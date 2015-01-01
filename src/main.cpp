@@ -24,14 +24,15 @@ int main(int argc, char * argv[]) {
 	css->print();
 
 	printf("Build dom\n");
-	dom::Node root("html");
-	dom::Node body("body", &root);
+	dom::Document doc;
+	dom::Node root = doc.create_element("html");
+	dom::Node body = doc.create_element("body", root);
 
-	dom::Node div1("div", &body);
+	dom::Node div1 = doc.create_element("div", body);
 	div1.set_attribute("id", "foo");
 	div1.set_attribute("class", "bar baz");
 
-	dom::Node div2("div");
-	div2.attach(&div1);
+	dom::Node div2 = doc.create_element("div");
+	div2.attach(div1);
 	div2.detach();
 }
