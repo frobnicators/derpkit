@@ -24,6 +24,24 @@ public:
 
 	}
 
+	const char* get_attribute(const char* key) const {
+		auto it = attribute.find(key);
+		if ( it != attribute.end() ){
+			return it->second.c_str();
+		} else {
+			return nullptr;
+		}
+	}
+
+	bool has_attribute(const char* key) const {
+		auto it = attribute.find(key);
+		return it != attribute.end();
+	}
+
+	void set_attribute(const char* key, const char* value) {
+		attribute[key] = value;
+	}
+
 	void attach(std::shared_ptr<NodeImpl> parent){
 		this->parent = parent;
 		parent->children.push_back(self.lock());
@@ -58,21 +76,15 @@ Node::Node(const char* tag, const Node* parent)
 }
 
 const char* Node::get_attribute(const char* key) const {
-	auto it = _impl->attribute.find(key);
-	if ( it != _impl->attribute.end() ){
-		return it->second.c_str();
-	} else {
-		return nullptr;
-	}
+	return _impl->get_attribute(key);
 }
 
 bool Node::has_attribute(const char* key) const {
-	auto it = _impl->attribute.find(key);
-	return it != _impl->attribute.end();
+	return _impl->has_attribute(key);
 }
 
 void Node::set_attribute(const char* key, const char* value) {
-	_impl->attribute[key] = value;
+	_impl->set_attribute(key, value);
 }
 
 void Node::attach(const Node* parent){
