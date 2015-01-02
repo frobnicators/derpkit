@@ -41,6 +41,11 @@ public:
 	Node getElementById(const char* id) const;
 	Node getElementById(const char* id, Node node) const;
 
+	/**
+	 * Find nodes from CSS selector.
+	 */
+	std::vector<Node> find(const char* selector) const;
+	std::vector<Node> find(const char* selector, Node node) const;
 	std::vector<Node> find(const css::Selector& selector) const;
 	std::vector<Node> find(const css::Selector& selector, Node node) const;
 

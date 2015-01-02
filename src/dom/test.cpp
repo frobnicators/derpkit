@@ -13,12 +13,6 @@ using namespace dom;
 int main(){
 	Document doc;
 
-	css::CSS * css = css::CSS::from_source(
-"#my-div1 b {\n"
-"	display: inline;\n"
-"}\n"
-		);
-
 	Node root = doc.create_element("html");
 	Node body = doc.create_element("body", root);
 	body.set_attribute("id", "body-element");
@@ -41,14 +35,8 @@ int main(){
 	doc.set_root(root);
 	printf("%s\n", doc.to_string().c_str());;
 
-	for ( auto rule : css->rules() ){
-		for ( auto selector : rule.selectors() ){
-			selector.print();
-			putc('\n',stdout);
-			for ( auto match : doc.find(selector) ){
-				printf("match: %s / %s\n", match.tag_name(), match.get_attribute("id"));
-			}
-		}
+	for ( auto match : doc.find("#my-div1 b") ){
+		printf("match: %s#%s\n", match.tag_name(), match.get_attribute("id"));
 	}
 
 	return 0;

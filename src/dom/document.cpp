@@ -76,8 +76,16 @@ static int min(int a, int b){
 	return (a<b) ? a : b;
 }
 
+std::vector<Node> Document::find(const char* selector) const {
+	return find(css::Selector(selector), root_node, 0);
+}
+
+std::vector<Node> Document::find(const char* selector, Node node) const {
+	return find(css::Selector(selector), node, 0);
+}
+
 std::vector<Node> Document::find(const css::Selector& selector) const {
-	return find(selector, root_node);
+	return find(selector, root_node, 0);
 }
 
 std::vector<Node> Document::find(const css::Selector& selector, Node node) const {
