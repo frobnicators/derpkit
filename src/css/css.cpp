@@ -160,7 +160,7 @@ void CSS::parse_selector(pANTLR3_BASE_TREE node, Selector& selector) {
 void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 	m_rules.emplace_back();
 	Rule& rule = m_rules.back();
-	traverse_tree(node, [&rule](pANTLR3_BASE_TREE node) {
+	traverse_tree(node, [&rule, this](pANTLR3_BASE_TREE node) {
 		pANTLR3_COMMON_TOKEN token = node->getToken(node);
 		if(token != NULL) {
 			switch(token->getType(token)) {
