@@ -33,6 +33,7 @@ public:
 
 	Node create_element(const char* tag);
 	Node create_element(const char* tag, Node parent);
+	Node create_text(const char* text, Node parent);
 	void set_root(Node root);
 	Node root() const;
 	std::string to_string() const;

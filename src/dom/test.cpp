@@ -28,16 +28,25 @@ int main(){
 	Node div3 = doc.create_element("div", body);
 	div3.set_attribute("id", "my-div3");
 
-	doc.create_element("b", div1).set_attribute("id", "test-1");
+	Node b1 = doc.create_element("b", div1);
+	b1.set_attribute("id", "test-1");
+	doc.create_text("foobar", b1);
+
+	doc.create_text("lorem ipsum", div1);
+
 	doc.create_element("b", div1).set_attribute("id", "test-2");
 	doc.create_element("b", div3).set_attribute("id", "test-3");
 
 	doc.set_root(root);
-	printf("%s\n", doc.to_string().c_str());;
+	printf("%s\n", doc.to_string().c_str());
 
 	for ( auto match : doc.find("#my-div1 b") ){
 		printf("match: %s#%s\n", match.tag_name(), match.get_attribute("id"));
 	}
+
+	doc.prepare_render();
+	doc.prepare_render();
+	doc.prepare_render();
 
 	return 0;
 }

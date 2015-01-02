@@ -21,6 +21,7 @@ public:
 	std::vector<std::string> classes;
 	std::map<std::string,NodeCSSProperty> css_properties;
 	bool invalid;
+	std::string text;
 
 	NodeImpl(const char* tag)
 		: tag(tag)
@@ -112,6 +113,13 @@ Node::Node(const char* tag, Node parent){
 	attach(parent);
 }
 
+Node Node::text(const char* text, Node parent){
+	Node node = Node("", parent);
+	node._impl->text = text;
+	return node;
+}
+
+
 bool Node::exists() const {
 	return _impl.get();
 }
@@ -138,6 +146,11 @@ void Node::set_attribute(const char* key, const char* value) {
 const char* Node::tag_name() const {
 	assert(_impl.get());
 	return _impl->tag.c_str();
+}
+
+const char* Node::text_content() const {
+	assert(_impl.get());
+	return _impl->text.c_str();
 }
 
 std::vector<Node> Node::children() const {

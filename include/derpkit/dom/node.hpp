@@ -29,6 +29,7 @@ public:
 
 	std::vector<Node> children() const;
 	const char* tag_name() const;
+	const char* text_content() const;
 
 	const std::vector<std::string>& classes() const;
 
@@ -49,6 +50,8 @@ private:
 	Node(std::shared_ptr<NodeImpl>);
 	Node(const char* tag);
 	Node(const char* tag, Node parent);
+
+	static Node text(const char* text, Node parent);
 
 	std::shared_ptr<NodeImpl> _impl;
 };

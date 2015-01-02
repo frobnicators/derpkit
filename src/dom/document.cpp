@@ -24,6 +24,10 @@ Node Document::create_element(const char* tag, Node parent){
 	return Node(tag, parent);
 }
 
+Node Document::create_text(const char* text, Node parent){
+	return Node::text(text, parent);
+}
+
 void Document::set_root(Node root){
 	root_node = root;
 }
@@ -38,18 +42,26 @@ std::string Document::to_string() const {
 	traverse([&](TraversalState it){
 		Node node = it.node;
 		int indent = (it.depth-1) * 2;
-		ss << std::string(indent, ' ');
-		ss << '<';
-		if ( it.order == POST_ORDER ){
-			ss << '/';
-		}
-		ss << node.tag_name();
-		if ( it.order == PRE_ORDER ){
-			for ( auto attr: node.attributes() ){
-				ss << ' ' << attr.first << '=' << '"' << attr.second << '"';
+
+		if ( strcmp(node.tag_name(), "") != 0 ){
+			ss << std::string(indent, ' ');
+			ss << '<';
+			if ( it.order == POST_ORDER ){
+				ss << '/';
+			}
+			ss << node.tag_name();
+			if ( it.order == PRE_ORDER ){
+				for ( auto attr: node.attributes() ){
+					ss << ' ' << attr.first << '=' << '"' << attr.second << '"';
+				}
+			}
+			ss << '>' << std::endl;
+		} else {
+			if ( it.order == PRE_ORDER ){
+				ss << std::string(indent, ' ');
+				ss << node.text_content() << std::endl;
 			}
 		}
-		ss << '>' << std::endl;
 	}, BOTH_ORDER);
 
 	return ss.str();
@@ -194,14 +206,22 @@ static void prepare_render(std::function<void(Node node, const State&)> callback
 }
 
 void Document::prepare_render(){
+	if ( !root_node.is_invalidated() ){
+		return;
+	}
+
+	printf("prepare render\n");
+
 	dom::prepare_render([](Node cur, const State& state){
 		printf("tag: %s\n", cur.tag_name());
 		printf("  id: %s\n", cur.get_attribute("id"));
 		printf("  display: %d\n", state.display);
-		printf("  color: %d\n", state.color.val);
-		printf("  background-color: %d\n", state.background_color.val);
+		printf("  color: #%08x\n", state.color.val);
+		printf("  background-color: #%08x\n", state.background_color.val);
 		printf("  width: %f %d\n", state.width.scalar, state.width.unit);
 		printf("  height: %f %d\n", state.height.scalar, state.height.unit);
+
+		cur.clear_invalidated();
 	}, root_node);
 }
 
