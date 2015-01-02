@@ -20,10 +20,12 @@ public:
 	std::map<std::string, std::string> attribute;
 	std::vector<std::string> classes;
 	std::map<std::string,NodeCSSProperty> css_properties;
+	bool invalid;
 
 	NodeImpl(const char* tag)
 		: tag(tag)
-		, parent(){
+		, parent()
+		, invalid(true) {
 
 	}
 
@@ -72,6 +74,14 @@ public:
 
 		if ( it != ptr->children.end() ){
 			ptr->children.erase(it);
+		}
+	}
+
+	void invalidate(){
+		invalid = true;
+		auto ptr = parent.lock();
+		if ( ptr ){
+			ptr->invalidate();
 		}
 	}
 };
@@ -168,6 +178,21 @@ void Node::attach(Node parent){
 void Node::detach(){
 	assert(_impl.get());
 	_impl->detach();
+}
+
+void Node::invalidate(){
+	assert(_impl.get());
+	_impl->invalidate();
+}
+
+void Node::clear_invalidated(){
+	assert(_impl.get());
+	_impl->invalid = false;
+}
+
+bool Node::is_invalidated() const {
+	assert(_impl.get());
+	return _impl->invalid;
 }
 
 }

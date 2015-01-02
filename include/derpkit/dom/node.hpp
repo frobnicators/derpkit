@@ -38,6 +38,10 @@ public:
 	void attach(Node);
 	void detach();
 
+	void invalidate();
+	void clear_invalidated();
+	bool is_invalidated() const;
+
 private:
 	friend class Document;
 
