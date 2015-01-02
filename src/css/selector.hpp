@@ -1,6 +1,7 @@
 #ifndef DERPKIT_CSS_SELECTOR_HPP
 #define DERPKIT_CSS_SELECTOR_HPP
 
+#include "derpkit/export.hpp"
 #include "dom/node.hpp"
 #include <string>
 #include <vector>
@@ -29,8 +30,10 @@ class SelectorAtom {
 
 };
 
-class Selector {
+class DERPKIT_EXPORT Selector {
 	public:
+		Selector() {};
+		Selector(const char* css);
 		bool match(dom::Node node);
 
 		void calculate_specificity();
@@ -43,7 +46,7 @@ class Selector {
 			return m_atoms;
 		}
 
-		void DERPKIT_EXPORT print() const;
+		void print() const;
 	private:
 		std::vector<SelectorAtom> m_atoms;
 		Specificity m_specificity;

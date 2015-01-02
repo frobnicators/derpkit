@@ -23,6 +23,12 @@ int main(int argc, char * argv[]) {
 	css::CSS * css = css::CSS::from_file(argv[1]);
 	css->print();
 
+	printf("Parse selector: \n");
+
+	css::Selector selector("#my-div1 .foobar:first-child");
+	selector.print();
+	printf("\n");
+
 	printf("Build dom\n");
 	dom::Document doc;
 	dom::Node root = doc.create_element("html");

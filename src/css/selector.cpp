@@ -1,4 +1,5 @@
 #include "selector.hpp"
+#include "css/css.hpp"
 
 namespace css {
 
@@ -17,10 +18,16 @@ const char * SelectorAtom::type_as_string() const {
 	return convert[type];
 }
 
+Selector::Selector(const char* css) {
+	CSS::from_source_to_selector(css, *this);
+}
+
+
 void Selector::print() const {
 	for(const auto & atom : m_atoms) {
-			printf(" %s=%s (%s)", atom.type_as_string(), atom.value.c_str(), m_specificity.debug_string().c_str());
+			printf(" %s=%s", atom.type_as_string(), atom.value.c_str());
 	}
+	printf(" (%s)", m_specificity.debug_string().c_str());
 }
 
 void Selector::calculate_specificity() {

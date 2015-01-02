@@ -34,12 +34,17 @@ class CSS {
 	private:
 		CSS(const std::string &filename);
 
+		static void from_source_to_selector(const std::string& source, Selector& out);
+
 		void parse(ANTLR3_INPUT_STREAM_struct * input);
 		void traverse(ANTLR3_BASE_TREE_struct * node);
 		void parse_rule(ANTLR3_BASE_TREE_struct * node);
+		static void parse_selector(ANTLR3_BASE_TREE_struct* node, Selector& out);
 
 		std::string m_filename;
 		std::vector<Rule> m_rules;
+
+		friend class Selector;
 };
 
 }
