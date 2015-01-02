@@ -12,7 +12,11 @@ class Rule {
 		/**
 		 * Debug print
 		 */
-		void print(int indent=0) const;
+		void DERPKIT_EXPORT print(int indent=0) const;
+
+		const std::vector<Selector>& selectors() const {
+			return m_selectors;
+		}
 
 	private:
 		std::vector<Selector> m_selectors;

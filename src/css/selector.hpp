@@ -39,7 +39,11 @@ class Selector {
 			return m_specificity;
 		}
 
-		void print() const;
+		const std::vector<SelectorAtom>& atoms() const {
+			return m_atoms;
+		}
+
+		void DERPKIT_EXPORT print() const;
 	private:
 		std::vector<SelectorAtom> m_atoms;
 		Specificity m_specificity;

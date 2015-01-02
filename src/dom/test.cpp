@@ -1,3 +1,8 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "css/css.hpp"
 #include "dom/document.hpp"
 #include "dom/node.hpp"
 #include <cstdio>
