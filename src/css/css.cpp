@@ -4,6 +4,7 @@
 #include <cassert>
 #include <functional>
 #include <sstream>
+#include <derpkit/utils/string_utils.hpp>
 #include "parser/css3.h"
 
 namespace css {
@@ -143,23 +144,60 @@ void CSS::traverse(pANTLR3_BASE_TREE node) {
 	}
 }
 
-void CSS::parse_selector(pANTLR3_BASE_TREE node, Selector& selector) {
-	traverse_tree(node, [&selector](pANTLR3_BASE_TREE sel_node) {
-		pANTLR3_COMMON_TOKEN sel_token = sel_node->getToken(sel_node);
-		SelectorType type = convert_antlr_selector_type(sel_token->getType(sel_token));
-		if(type == TYPE_UNKNOWN) {
-			printf("[CSS] Warning: Unknown selector type %s\n",
-				sel_token->getText(sel_token)->chars);
-		} else {
-			pANTLR3_BASE_TREE val_node = get_child(sel_node, 0);
-			pANTLR3_COMMON_TOKEN val_token = val_node->getToken(val_node);
-			std::string value = convert_string(val_token->getText(val_token));
+void CSS::parse_selector(pANTLR3_BASE_TREE tree, Selector& selector) {
+	traverse_tree(tree, [&selector](pANTLR3_BASE_TREE node) {
+		pANTLR3_COMMON_TOKEN token = node->getToken(node);
+		if(token->getType(token) == CSS_SELECTOR_UNIT) {
+			selector.m_units.emplace_back();
+			SelectorUnit& unit = selector.m_units.back();
+			traverse_tree(node, [&unit](pANTLR3_BASE_TREE sel_node) {
+				pANTLR3_COMMON_TOKEN sel_token = sel_node->getToken(sel_node);
+				SelectorType type = convert_antlr_selector_type(sel_token->getType(sel_token));
+				if(type == TYPE_UNKNOWN) {
+					printf("[CSS] Warning: Unknown selector type %s\n",
+						sel_token->getText(sel_token)->chars);
+				} else {
+					pANTLR3_BASE_TREE val_node = get_child(sel_node, 0);
+					pANTLR3_COMMON_TOKEN val_token = val_node->getToken(val_node);
+					std::string value = convert_string(val_token->getText(val_token));
 
-			selector.m_atoms.emplace_back(type, value);
+					unit.m_atoms.emplace_back(type, value);
+				}
+			});
+		} else if(token->getType(token) == CSS_SELECTOR_COMBINATOR) {
+			pANTLR3_BASE_TREE cnode = get_child(node, 0);
+			pANTLR3_COMMON_TOKEN ctoken = cnode->getToken(cnode);
+			if(selector.m_units.size() > 0) {
+				SelectorUnit& unit = selector.m_units.back();
+				std::string combinator = str_trim(convert_string(ctoken->getText(ctoken)));
+				if(combinator.length() > 0) {
+					switch(combinator[0]) {
+						case '>':
+							unit.combinator = COMBINATOR_CHILD;
+							break;
+						case '~':
+							unit.combinator = COMBINATOR_GENERAL_SIBLING;
+							break;
+						case '+':
+							unit.combinator = COMBINATOR_ADJACENT_SIBLING;
+							break;
+						default:
+							printf("[CSS] Error: Unknown combinator: %s\n", ctoken->getText(ctoken)->chars);
+					}
+				} else {
+					// Combinator was space (and was trimmed)
+					unit.combinator = COMBINATOR_DESCENDANT;
+				}
+			} else {
+				printf("[CSS] Error: Combinator before any selector: %s\n", ctoken->getText(ctoken)->chars);
+			}
+		} else {
+			printf("[CSS] Error: Unexpected token when parsing selector, got %s\n", token->getText(token)->chars);
 		}
+
 	});
 
-	if(selector.m_atoms.size() > 0) selector.calculate_specificity();
+	if(selector.m_units.size() > 0) selector.calculate_specificity();
 }
 
 void CSS::parse_rule(pANTLR3_BASE_TREE node) {
@@ -174,7 +212,7 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 					rule.m_selectors.emplace_back();
 					Selector& selector = rule.m_selectors.back();
 					parse_selector(node, selector);
-					if(selector.m_atoms.size() == 0) rule.m_selectors.pop_back();
+					if(selector.m_units.size() == 0) rule.m_selectors.pop_back();
 				}
 				break;
 				case CSS_PROPERTY:

@@ -95,17 +95,18 @@ std::vector<Node> Document::find(const css::Selector& selector, Node node) const
 
 std::vector<Node> Document::find(const css::Selector& selector, Node node, int begin) const {
 	std::vector<Node> matches;
-	const auto atoms = selector.atoms();
-	const auto num = atoms.size();
+	const auto units = selector.units();
+	const auto num = units.size();
 	const int next = min(num-1, begin+1);
 	const bool last = (begin+1) == num;
-	const auto atom = atoms[begin];
+	const auto unit = units[begin];
 
 	traverse([&](TraversalState it){
 		Node node = it.node;
 
 		assert(node.exists());
-		if ( atom.match(node) ){
+		if ( unit.match(node) ){
+			// TODO: Check combinator
 			if ( !last ){
 				const auto sub = find(selector, node, next);
 				matches.insert(matches.end(), sub.begin(), sub.end());

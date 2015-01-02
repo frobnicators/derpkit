@@ -14,7 +14,15 @@ enum SelectorType {
 	TYPE_ID,
 	TYPE_PSEUDO,
 	TYPE_ANY,
-	TYPE_UNKNOWN
+	TYPE_UNKNOWN,
+};
+
+enum SelectorCombinator {
+	COMBINATOR_NONE = 0, /* last unit in selector */
+	COMBINATOR_DESCENDANT,
+	COMBINATOR_CHILD,
+	COMBINATOR_ADJACENT_SIBLING,
+	COMBINATOR_GENERAL_SIBLING
 };
 
 class SelectorAtom {
@@ -25,18 +33,37 @@ class SelectorAtom {
 		SelectorType type;
 		std::string value;
 
-	bool match(dom::Node) const;
+		bool match(dom::Node) const;
 
 		/** Debug method */
 		const char * type_as_string() const;
+};
 
+class SelectorUnit {
+	public:
+		SelectorUnit() : combinator(COMBINATOR_NONE) {}
+
+		bool match(dom::Node) const;
+
+		const std::vector<SelectorAtom>& atoms() const {
+			return m_atoms;
+		}
+
+		/**
+		 * How to combinate this with the next unit */
+		SelectorCombinator combinator;
+
+		/** Debug method */
+		const char * combinator_as_string() const;
+	private:
+		std::vector<SelectorAtom> m_atoms;
+		friend class CSS;
 };
 
 class DERPKIT_EXPORT Selector {
 	public:
 		Selector() {};
 		Selector(const char* css);
-		bool match(dom::Node node);
 
 		void calculate_specificity();
 
@@ -44,13 +71,13 @@ class DERPKIT_EXPORT Selector {
 			return m_specificity;
 		}
 
-		const std::vector<SelectorAtom>& atoms() const {
-			return m_atoms;
+		const std::vector<SelectorUnit>& units() const {
+			return m_units;
 		}
 
 		void print() const;
 	private:
-		std::vector<SelectorAtom> m_atoms;
+		std::vector<SelectorUnit> m_units;
 		Specificity m_specificity;
 
 		friend class CSS;

@@ -15,7 +15,7 @@ h1 {
 	color: #428bca;
 }
 
-#baaaaaar {
+.foo #baaaaaar {
 	display: block;
 	color: #aaa;
 }
@@ -66,9 +66,9 @@ input[type*=hai] { }
 }
 
 .foo:not(.bar) { }
-.foo:nth-child(2) { }
-.foo:nth-last-child(2) { }
-.foo:nth-of-type(2) { }
+.foo:nth-child (2n) { }
+.foo:nth-last-child { }
+.foo:nth-of-type { }
 .foo:nth-last-of-type(2) { }
 .foo:first-child { }
 .foo:last-child { }

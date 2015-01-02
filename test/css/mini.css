@@ -1,7 +1,11 @@
-.foo {
+.foo #test {
+	color: red;
+}
+
+.bar#baz {
 	color: #fff;
 }
 
-* {
-	color: #fff;
+h1#haz, .bar #baz, #derp.herp {
+	color: green ;
 }

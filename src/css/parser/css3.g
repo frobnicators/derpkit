@@ -34,6 +34,8 @@ tokens {
 	CSS_PAGE;
 	CSS_RULE;
 	CSS_SELECTOR;
+	CSS_SELECTOR_UNIT;
+	CSS_SELECTOR_COMBINATOR;
 	CSS_ATTRIB;
 	CSS_PSEUDO;
 	CSS_EQUAL;
@@ -100,19 +102,19 @@ media
 
 atRule
 	: '@' CSS_IDENT
-	  (CSS_COMMA selector)* brace_block
+	  (CSS_COMMA selector )* brace_block
 	  -> ^(CSS_AT_RULE CSS_IDENT selector* brace_block)
 	;
 // ---------
 // Medium.  The name of a medim that are particulare set of rules applies to.
 //
 medium
-    : CSS_IDENT s=CSS_IDENT? ( 'and' media_expression )* -> CSS_IDENT $s media_expression*
-	| media_expression ( 'and' media_expression )* -> media_expression+
+    : CSS_IDENT WS? s=CSS_IDENT? ( 'and' WS? media_expression )* -> CSS_IDENT $s media_expression*
+	| media_expression WS? ( 'and' WS? media_expression WS? )* -> media_expression+
     ;
 
 media_expression
-	: CSS_LPAREN CSS_IDENT ( CSS_COLON expr )? CSS_RPAREN
+	: CSS_LPAREN CSS_IDENT WS? ( CSS_COLON WS? expr )? CSS_RPAREN
 	-> ^(CSS_MEDIA_EXPR CSS_IDENT expr)
 	;
 
@@ -143,14 +145,14 @@ expr_operator
     : CSS_SOLIDUS
     | CSS_COMMA
 	| CSS_OPEQ
-    |
+    | WS
     ;
 
 combinator
     : CSS_PLUS
     | CSS_GREATER
 	| CSS_TILDE
-    |
+    | WS
     ;
 
 unaryOperator
@@ -174,13 +176,13 @@ brace_block
 	;
 
 declarations
-	: declaration CSS_SEMI (declaration CSS_SEMI)*
+	: WS? declaration CSS_SEMI (WS? declaration CSS_SEMI)*
 	-> declaration+
 	;
 
 selector
-    : simpleSelector (combinator simpleSelector)*
-	-> ^(CSS_SELECTOR simpleSelector (combinator simpleSelector)* )
+    : WS? simpleSelector (combinator simpleSelector)*
+	-> ^(CSS_SELECTOR ^(CSS_SELECTOR_UNIT simpleSelector) (^(CSS_SELECTOR_COMBINATOR combinator) ^(CSS_SELECTOR_UNIT simpleSelector))* )
     ;
 
 simpleSelector
@@ -195,7 +197,7 @@ esPred
     ;
 
 elementSubsequent
-    : CSS_HASH -> ^(CSS_ID CSS_HASH)
+    : CSS_HASH CSS_IDENT -> ^(CSS_ID CSS_IDENT)
     | cssClass
     | attrib
     | pseudo
@@ -238,8 +240,8 @@ function_args
 		(
 			red_expr
 			|
-			selector
-		)?
+			selector WS?
+		)
 	CSS_RPAREN
 	-> ^(CSS_ARGS red_expr selector)
 ;
@@ -249,7 +251,7 @@ pseudo
     ;
 
 declaration
-    : property CSS_COLON expr prio?
+    : property WS? CSS_COLON WS? expr WS? prio?
 	-> ^(CSS_PROPERTY property expr prio?)
     ;
 
@@ -264,22 +266,16 @@ expr
 
 // Reduced expression, no colors or functions
 red_expr
-	: red_term (expr_operator red_term)*
+	: red_term WS? (expr_operator red_term WS?)*
 	;
 
 // Reduced term
 red_term
     : unaryOperator?
-        (
-              CSS_NUMBER
-            | CSS_PERCENTAGE
-            | CSS_LENGTH
-            | CSS_EMS
-            | CSS_EXS
-            | CSS_ANGLE
-            | CSS_TIME
-            | CSS_FREQ
-        )
+		(
+			CSS_NUMBER
+			| CSS_HEXNUM
+		)
     | CSS_STRING
     | CSS_URI
     ;
@@ -287,11 +283,7 @@ red_term
 term
 	: red_term
 	| CSS_IDENT function_args? -> ^(CSS_IDENT function_args?)
-	| hexColor;
-
-hexColor
-    : CSS_HASH
-    ;
+	| CSS_HASH (CSS_HEXNUM | CSS_IDENT);
 
 // ==============================================================
 // CSS_LEXER
@@ -337,6 +329,8 @@ hexColor
 // the token string.
 //
 
+fragment	CSS_WHITESPACE	: (' '|'\t')+;
+
 fragment    CSS_HEXCHAR     : ('a'..'f'|'A'..'F'|'0'..'9')  ;
 
 fragment    CSS_NONASCII    : '\u0080'..'\uFFFF'            ;   // CSS_NB: Upper bound should be \u4177777
@@ -368,8 +362,6 @@ fragment    CSS_NMCHAR      : '_'
                         | CSS_NONASCII
                         | CSS_ESCAPE
                         ;
-
-fragment    CSS_NAME        : CSS_NMCHAR+   ;
 
 fragment    CSS_URL         : (
                               '['|'!'|'#'|'$'|'%'|'&'|'*'|'-'|'~'
@@ -612,23 +604,24 @@ CSS_STAREQ        : '*='      ;
 CSS_CIREQ	    : '^='      ;
 CSS_DOLLAREQ	    : '$='      ;
 
-CSS_GREATER         : '>'       ;
-CSS_LBRACE          : '{'       ;
-CSS_RBRACE          : '}'       ;
-CSS_LBRACKET        : '['       ;
-CSS_RBRACKET        : ']'       ;
-CSS_OPEQ            : '='       ;
-CSS_SEMI            : ';'       ;
-CSS_COLON           : ':'       ;
-CSS_SOLIDUS         : '/'       ;
-CSS_MINUS           : '-'       ;
-CSS_PLUS            : '+'       ;
-CSS_STAR            : '*'       ;
-CSS_LPAREN          : '('       ;
-CSS_RPAREN          : ')'       ;
-CSS_COMMA           : ','       ;
-CSS_DOT             : '.'       ;
-CSS_TILDE			: '~'		;
+CSS_GREATER         : CSS_WHITESPACE? '>' CSS_WHITESPACE?      ;
+CSS_LBRACE          : CSS_WHITESPACE? '{' CSS_WHITESPACE?      ;
+CSS_RBRACE          : CSS_WHITESPACE? '}' CSS_WHITESPACE?      ;
+CSS_LBRACKET        : CSS_WHITESPACE? '[' CSS_WHITESPACE?      ;
+CSS_RBRACKET        : CSS_WHITESPACE? ']' CSS_WHITESPACE?      ;
+CSS_OPEQ            : CSS_WHITESPACE? '=' CSS_WHITESPACE?      ;
+CSS_SEMI            : CSS_WHITESPACE? ';' CSS_WHITESPACE?      ;
+CSS_COLON           : ':' ;
+CSS_SOLIDUS         : CSS_WHITESPACE? '/' CSS_WHITESPACE?      ;
+CSS_MINUS           : CSS_WHITESPACE? '-' CSS_WHITESPACE?      ;
+CSS_PLUS            : CSS_WHITESPACE? '+' CSS_WHITESPACE?      ;
+CSS_STAR            : CSS_WHITESPACE? '*' CSS_WHITESPACE?      ;
+CSS_LPAREN          : CSS_WHITESPACE? '(' CSS_WHITESPACE?      ;
+CSS_RPAREN          : CSS_WHITESPACE? ')' CSS_WHITESPACE?      ;
+CSS_COMMA           : CSS_WHITESPACE? ',' CSS_WHITESPACE?      ;
+CSS_DOT             : '.' ;
+CSS_TILDE			: CSS_WHITESPACE? '~' CSS_WHITESPACE?      ;
+CSS_HASH            : '#'     ;
 
 // -----------------
 // Literal strings. Delimited by either ' or "
@@ -652,36 +645,15 @@ CSS_STRING          : '\'' ( ~('\n'|'\r'|'\f'|'\'') )*
 //
 CSS_IDENT           : '-'? CSS_NMSTART CSS_NMCHAR*  ;
 
-// -------------
-// Reference.   Reference to an element in the body we are styling, such as <CSS_XXXX id="reference">
-//
-CSS_HASH            : '#' CSS_NAME              ;
+CSS_HEXNUM			: CSS_HEXCHAR+ ;
+
 
 CSS_IMPORT_SYM      : '@' CSS_I CSS_M CSS_P CSS_O CSS_R CSS_T       ;
 CSS_PAGE_SYM        : '@' CSS_P CSS_A CSS_G CSS_E           ;
 CSS_MEDIA_SYM       : '@' CSS_M CSS_E CSS_D CSS_I CSS_A         ;
 CSS_CHARSET_SYM     : '@charset '           ;
 
-CSS_IMPORTANT_SYM   : '!' (CSS_WS|CSS_COMMENT)* CSS_I CSS_M CSS_P CSS_O CSS_R CSS_T CSS_A CSS_N CSS_T   ;
-
-// ---------
-// Numbers. Numbers can be followed by pre-known units or unknown units
-//          as well as '%' it is a precentage. Whitespace cannot be between
-//          the numebr and teh unit or percent. Hence we scan any numeric, then
-//          if we detect one of the lexical sequences for unit tokens, we change
-//          the lexical type dynamically.
-//
-//          Here we first define the various tokens, then we implement the
-//          number parsing rule.
-//
-fragment    CSS_EMS         :;  // 'em'
-fragment    CSS_EXS         :;  // 'ex'
-fragment    CSS_LENGTH      :;  // 'px'. 'cm', 'mm', 'in'. 'pt', 'pc'
-fragment    CSS_ANGLE       :;  // 'deg', 'rad', 'grad'
-fragment    CSS_TIME        :;  // 'ms', 's'
-fragment    CSS_FREQ        :;  // 'khz', 'hz'
-fragment    CSS_DIMENSION   :;  // nnn'Somethingnotyetinvented'
-fragment    CSS_PERCENTAGE  :;  // '%'
+CSS_IMPORTANT_SYM   : '!' (WS|CSS_COMMENT)* CSS_I CSS_M CSS_P CSS_O CSS_R CSS_T CSS_A CSS_N CSS_T   ;
 
 CSS_NUMBER
     :   (
@@ -692,8 +664,8 @@ CSS_NUMBER
               (CSS_E (CSS_M|CSS_X))=>
                 CSS_E
                 (
-                      CSS_M     { $type = CSS_EMS;          }
-                    | CSS_X     { $type = CSS_EXS;          }
+                      CSS_M
+                    | CSS_X
                 )
             | (CSS_P(CSS_X|CSS_T|CSS_C))=>
                 CSS_P
@@ -702,35 +674,32 @@ CSS_NUMBER
                     | CSS_T
                     | CSS_C
                 )
-                            { $type = CSS_LENGTH;       }
             | (CSS_C CSS_M)=>
-                CSS_C CSS_M         { $type = CSS_LENGTH;       }
+                CSS_C CSS_M
             | (CSS_M (CSS_M|CSS_S))=>
                 CSS_M
                 (
-                      CSS_M     { $type = CSS_LENGTH;       }
+                      CSS_M
 
-                    | CSS_S     { $type = CSS_TIME;         }
+                    | CSS_S
                 )
             | (CSS_I CSS_N)=>
-                CSS_I CSS_N         { $type = CSS_LENGTH;       }
+                CSS_I CSS_N
 
             | (CSS_D CSS_E CSS_G)=>
-                CSS_D CSS_E CSS_G       { $type = CSS_ANGLE;        }
+                CSS_D CSS_E CSS_G
             | (CSS_R CSS_A CSS_D)=>
-                CSS_R CSS_A CSS_D       { $type = CSS_ANGLE;        }
+                CSS_R CSS_A CSS_D
 
-            | (CSS_S)=>CSS_S        { $type = CSS_TIME;         }
+            | (CSS_S)=>CSS_S
 
             | (CSS_K? CSS_H CSS_Z)=>
-                CSS_K? CSS_H    CSS_Z   { $type = CSS_FREQ;         }
+                CSS_K? CSS_H    CSS_Z
 
-            | CSS_IDENT         { $type = CSS_DIMENSION;    }
+            | CSS_IDENT
 
-            | '%'           { $type = CSS_PERCENTAGE;   }
-
-            | // Just a number
-        )
+            | '%'
+        ) ?
     ;
 
 // ------------
@@ -738,7 +707,7 @@ CSS_NUMBER
 //
 CSS_URI :   CSS_U CSS_R CSS_L
         '('
-            ((CSS_WS)=>CSS_WS)? (CSS_URL|CSS_STRING) CSS_WS?
+            ((WS)=>WS)? (CSS_URL|CSS_STRING) WS?
         ')'
     ;
 
@@ -747,7 +716,7 @@ CSS_URI :   CSS_U CSS_R CSS_L
 //              that process the whitespace within the parser, CSS_ANTLR does not
 //              need to deal with the whitespace directly in the parser.
 //
-CSS_WS      : (' '|'\t')+           { $channel = HIDDEN;    }   ;
+WS			: CSS_WHITESPACE;
 CSS_NL      : ('\r' '\n'? | '\n')   { $channel = HIDDEN;    }   ;
 
 
