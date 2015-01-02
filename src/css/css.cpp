@@ -70,6 +70,10 @@ static void parse_input(pANTLR3_INPUT_STREAM input, const std::function<void(pcs
 	}
 
 	func(psr);
+
+	psr->free(psr);
+	tstream->free(tstream);
+	lxr->free(lxr);
 }
 
 CSS * CSS::from_source(const std::string &source) {
@@ -106,6 +110,7 @@ void CSS::from_source_to_selector(const std::string& source, Selector& out) {
 			abort();
 		}
 	});
+	input->free(input);
 }
 
 void CSS::parse(pANTLR3_INPUT_STREAM input) {
