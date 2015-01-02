@@ -33,6 +33,9 @@ AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-std=c++0x], [CXXFLAGS="$CXXFLAGS -std=c++0x"], [AC_MSG_ERROR([Support for C++11 is required])])
 AC_LANG_POP
 
+AM_PATH_CPPUNIT(1.9.6,,[AC_MSG_NOTICE([cppunit not found, tests disabled])])
+AM_CONDITIONAL([BUILD_TESTS], [test "x$no_cppunit" != "xyes"])
+
 pkgdatadir="${datadir}/${PACKAGE}"
 AC_SUBST([pkgdatadir])
 

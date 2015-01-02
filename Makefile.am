@@ -9,6 +9,11 @@ lib_LTLIBRARIES = libderpkit.la
 noinst_LTLIBRARIES = libantlr3c.la
 noinst_PROGRAMS = parse domtest
 
+TESTS = test/dom
+if BUILD_TESTS
+check_PROGRAMS = ${TESTS}
+endif
+
 # ANTLR generates code which exhibits warnings, must compile with different flags
 #src/css/parser/libderpkit_la-css3Parser.lo: CFLAGS += -Wno-unused
 #src/css/parser/libderpkit_la-css3Lexer.lo:  CFLAGS += -Wno-unused
@@ -66,6 +71,9 @@ parse_SOURCES = src/main.cpp
 domtest_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include -I${top_srcdir}/src
 domtest_LDADD = libderpkit.la
 domtest_SOURCES = src/dom/test.cpp
+
+test_dom_CXXFLAGS = ${AM_CXXFLAGS} $(CPPUNIT_CFLAGS)
+test_dom_LDADD = libderpkit.la $(CPPUNIT_LIBS)
 
 CLEANFILES = ${top_srcdir}/src/css/parser/css3Lexer.c \
 			 ${top_srcdir}/src/css/parser/css3Lexer.h \
