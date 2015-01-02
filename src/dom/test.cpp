@@ -3,8 +3,8 @@
 #endif
 
 #include "css/css.hpp"
-#include "dom/document.hpp"
-#include "dom/node.hpp"
+#include <derpkit/dom/document.hpp>
+#include <derpkit/dom/node.hpp>
 #include <cstdio>
 #include <string>
 
@@ -40,13 +40,4 @@ int main(){
 	}
 
 	return 0;
-	doc.prepare_render([](Node cur, const State& state){
-		printf("tag: %s\n", cur.tag_name());
-		printf("  id: %s\n", cur.get_attribute("id"));
-		printf("  display: %d\n", state.display);
-		printf("  color: %d\n", state.color.val);
-		printf("  background-color: %d\n", state.background_color.val);
-		printf("  width: %f %d\n", state.width.scalar, state.width.unit);
-		printf("  height: %f %d\n", state.height.scalar, state.height.unit);
-	});
 }

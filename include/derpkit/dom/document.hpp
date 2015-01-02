@@ -1,7 +1,6 @@
 #ifndef DERPKIT_DOM_DOCUMENT_HPP
 #define DERPKIT_DOM_DOCUMENT_HPP
 
-#include "state.hpp"
 #include <functional>
 #include "node.hpp"
 #include "css/selector.hpp"
@@ -55,14 +54,13 @@ public:
 	void traverse(std::function<void(TraversalState& it)>, TraversalOrder order) const;
 	void traverse(std::function<void(TraversalState& it)>, Node node, TraversalOrder order) const;
 
-	void prepare_render(std::function<void(Node node, const State&)>);
+	void prepare_render();
 
 private:
 	std::vector<Node> find(const css::Selector& selector, Node node, int state) const;
 
 	void traverse(std::function<void(TraversalState& it)>, TraversalState& state, TraversalOrder order) const;
 
-	void prepare_render(std::function<void(Node node, const State&)>, Node node, int depth, const State& state);
 	Node root_node;
 };
 

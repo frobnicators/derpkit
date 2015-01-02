@@ -28,8 +28,8 @@ libderpkit_la_SOURCES = \
 	src/css/rule.cpp src/css/rule.hpp \
 	src/css/selector.cpp src/css/selector.hpp \
 	src/css/specificity.cpp src/css/specificity.hpp \
-	src/dom/document.hpp src/dom/document.cpp \
-	src/dom/node.hpp src/dom/node.cpp \
+	include/derpkit/dom/document.hpp src/dom/document.cpp \
+	include/derpkit/dom/node.hpp src/dom/node.cpp \
 	include/derpkit/utils/string.hpp src/utils/string.cpp \
 	include/derpkit/utils/string_utils.hpp src/utils/string_utils.cpp \
 	src/version.cpp include/derpkit/version.hpp

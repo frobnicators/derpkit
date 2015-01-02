@@ -4,8 +4,8 @@
 
 #include "derpkit/version.hpp"
 
-#include "dom/document.hpp"
-#include "dom/node.hpp"
+#include "derpkit/dom/document.hpp"
+#include "derpkit/dom/node.hpp"
 #include "css/css.hpp"
 
 #include <cstdio>

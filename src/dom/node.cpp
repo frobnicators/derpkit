@@ -2,7 +2,7 @@
 #include "config.h"
 #endif
 
-#include "node.hpp"
+#include <derpkit/dom/node.hpp>
 #include <derpkit/utils/string_utils.hpp>
 #include <cstring>
 #include <string>

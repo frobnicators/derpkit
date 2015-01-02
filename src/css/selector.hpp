@@ -2,7 +2,7 @@
 #define DERPKIT_CSS_SELECTOR_HPP
 
 #include "derpkit/export.hpp"
-#include "dom/node.hpp"
+#include "derpkit/dom/node.hpp"
 #include <string>
 #include <vector>
 

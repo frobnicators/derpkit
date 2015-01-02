@@ -4,7 +4,7 @@
 #include <string>
 
 #include "derpkit/export.hpp"
-#include "dom/node.hpp"
+#include "derpkit/dom/node.hpp"
 #include "rule.hpp"
 
 struct ANTLR3_INPUT_STREAM_struct;

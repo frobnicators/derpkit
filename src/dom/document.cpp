@@ -2,7 +2,8 @@
 #include "config.h"
 #endif
 
-#include "document.hpp"
+#include <derpkit/dom/document.hpp>
+#include "state.hpp"
 #include <cassert>
 #include <sstream>
 
@@ -166,18 +167,7 @@ void Document::traverse(std::function<void(TraversalState& it)> callback, Traver
 	}
 }
 
-void Document::prepare_render(std::function<void(Node node, const State&)> callback){
-	State state;
-	state.display = DISPLAY_BLOCK;
-	state.color.val = 0x000000ff;
-	state.background_color.val = 0xffffffff;
-	state.width = {0, UNIT_AUTO};
-	state.height = {0, UNIT_AUTO};
-
-	prepare_render(callback, root_node, 0, state);
-}
-
-void Document::prepare_render(std::function<void(Node node, const State&)> callback, Node node, int depth, const State& parent_state){
+static void prepare_render(std::function<void(Node node, const State&)> callback, Node node, int depth, const State& parent_state){
 	if ( depth >= MAX_DEPTH ){
 		return;
 	}
@@ -189,6 +179,29 @@ void Document::prepare_render(std::function<void(Node node, const State&)> callb
 	}
 
 	callback(node, state);
+}
+
+static void prepare_render(std::function<void(Node node, const State&)> callback, Node node){
+	State state;
+	state.display = DISPLAY_BLOCK;
+	state.color.val = 0x000000ff;
+	state.background_color.val = 0xffffffff;
+	state.width = {0, UNIT_AUTO};
+	state.height = {0, UNIT_AUTO};
+
+	prepare_render(callback, node, 0, state);
+}
+
+void Document::prepare_render(){
+	dom::prepare_render([](Node cur, const State& state){
+		printf("tag: %s\n", cur.tag_name());
+		printf("  id: %s\n", cur.get_attribute("id"));
+		printf("  display: %d\n", state.display);
+		printf("  color: %d\n", state.color.val);
+		printf("  background-color: %d\n", state.background_color.val);
+		printf("  width: %f %d\n", state.width.scalar, state.width.unit);
+		printf("  height: %f %d\n", state.height.scalar, state.height.unit);
+	}, root_node);
 }
 
 }
