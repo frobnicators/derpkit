@@ -102,6 +102,14 @@ Node::Node(const char* tag, Node parent){
 	attach(parent);
 }
 
+bool Node::exists() const {
+	return _impl.get();
+}
+
+const std::map<std::string, std::string>& Node::attributes() const {
+	return _impl->attribute;
+}
+
 const char* Node::get_attribute(const char* key) const {
 	assert(_impl.get());
 	return _impl->get_attribute(key);

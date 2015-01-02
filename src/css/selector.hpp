@@ -25,6 +25,8 @@ class SelectorAtom {
 		SelectorType type;
 		std::string value;
 
+	bool match(dom::Node) const;
+
 		/** Debug method */
 		const char * type_as_string() const;
 

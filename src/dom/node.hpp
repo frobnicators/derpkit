@@ -20,9 +20,12 @@ class DERPKIT_EXPORT Node {
 public:
 	Node(const Node& rhs);
 
+	bool exists() const;
+
 	const char* get_attribute(const char* key) const;
 	bool has_attribute(const char* key) const;
 	void set_attribute(const char* key, const char* value);
+	const std::map<std::string, std::string>& attributes() const;
 
 	std::vector<Node> children() const;
 	const char* tag_name() const;

@@ -22,6 +22,18 @@ Selector::Selector(const char* css) {
 	CSS::from_source_to_selector(css, *this);
 }
 
+bool SelectorAtom::match(dom::Node node) const {
+	switch ( type ){
+	case TYPE_ID:
+	{
+		const char* id = node.get_attribute("id");
+		return id ? id == value.substr(1) : false;
+	}
+	case TYPE_TAG:
+		return node.tag_name() == value;
+	}
+	return false;
+}
 
 void Selector::print() const {
 	for(const auto & atom : m_atoms) {
