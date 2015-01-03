@@ -11,6 +11,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+using namespace dom;
+
 int main(int argc, char * argv[]) {
 	printf("derpkit library version: %s\n", derpkit::version_string());
 
@@ -25,22 +27,31 @@ int main(int argc, char * argv[]) {
 
 	printf("Parse selector: \n");
 
-	css::Selector selector("#my-div1 .foobar:first-child");
-	selector.print();
-	printf("\n");
-
 	printf("Build dom\n");
-	dom::Document doc;
-	dom::Node root = doc.create_element("html");
-	dom::Node body = doc.create_element("body", root);
+	Document doc;
+	Node root = doc.create_element("html");
+	Node body = doc.create_element("body", root);
+	body.set_attribute("id", "body-element");
 
-	dom::Node div1 = doc.create_element("div", body);
-	div1.set_attribute("id", "foo");
+	Node div1 = doc.create_element("div", body);
+	div1.set_attribute("id", "my-div1");
 	div1.set_attribute("class", "bar baz");
 
-	dom::Node div2 = doc.create_element("div");
+	Node div2 = doc.create_element("div");
 	div2.attach(div1);
 	div2.detach();
+
+	Node div3 = doc.create_element("div", body);
+	div3.set_attribute("id", "my-div3");
+
+	Node b1 = doc.create_element("b", div1);
+	b1.set_attribute("id", "test-1");
+	doc.create_text("foobar", b1);
+
+	doc.create_text("lorem ipsum", div1);
+
+	doc.create_element("b", div1).set_attribute("id", "test-2");
+	doc.create_element("b", div3).set_attribute("id", "test-3");
 
 	doc.set_root(root);
 

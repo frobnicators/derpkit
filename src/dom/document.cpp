@@ -60,7 +60,7 @@ std::string Document::to_string(bool inline_css) const {
 			if(inline_css) {
 				ss << " style='";
 				for(const auto& it : node.css_properties()) {
-					ss << it.first << ": " << it.second.value << ";";
+					ss << it.first << ": " << it.second.value << "; ";
 				}
 				ss << "'";
 			}

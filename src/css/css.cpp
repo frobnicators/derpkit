@@ -230,12 +230,12 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 								property.important = true;
 								break;
 							default:
-								value << convert_string(prop_token->getText(prop_token)) << " ";
+								value << str_trim(convert_string(prop_token->getText(prop_token))) << " ";
 								break;
 						}
 					}
 					if(!value.str().empty()) {
-						property.value = value.str();
+						property.value = str_trim(value.str());
 						rule.m_properties.push_back(property);
 					}
 				}
