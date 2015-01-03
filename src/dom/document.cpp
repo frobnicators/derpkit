@@ -36,7 +36,7 @@ Node Document::root() const{
 	return root_node;
 }
 
-std::string Document::to_string() const {
+std::string Document::to_string(bool inline_css) const {
 	std::stringstream ss;
 
 	traverse([&](TraversalState it){
@@ -52,9 +52,19 @@ std::string Document::to_string() const {
 			ss << node.tag_name();
 			if ( it.order == PRE_ORDER ){
 				for ( auto attr: node.attributes() ){
+					if(inline_css && attr.first == "style") continue;
 					ss << ' ' << attr.first << '=' << '"' << attr.second << '"';
 				}
 			}
+
+			if(inline_css) {
+				ss << " style='";
+				for(const auto& it : node.css_properties()) {
+					ss << it.first << ": " << it.second.value << ";";
+				}
+				ss << "'";
+			}
+
 			ss << '>' << std::endl;
 		} else {
 			if ( it.order == PRE_ORDER ){

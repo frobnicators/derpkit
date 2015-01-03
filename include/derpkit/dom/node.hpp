@@ -11,8 +11,12 @@
 namespace dom {
 
 struct NodeCSSProperty {
-	const std::string& property;
+	std::string value;
 	css::Specificity specificity;
+
+	NodeCSSProperty(const std::string& value, const css::Specificity& specificity)
+		: value(value), specificity(specificity)
+	{ }
 };
 
 class NodeImpl;

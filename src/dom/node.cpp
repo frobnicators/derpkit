@@ -176,7 +176,7 @@ const char* Node::get_css_property(const char* property) const {
 		return nullptr;
 	}
 
-	return it->second.property.c_str();
+	return it->second.value.c_str();
 }
 
 void Node::attach(Node parent){

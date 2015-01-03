@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include "derpkit/export.hpp"
-#include "derpkit/dom/node.hpp"
+#include <derpkit/export.hpp>
+#include <derpkit/dom/document.hpp>
 #include "rule.hpp"
 
 struct ANTLR3_INPUT_STREAM_struct;
@@ -30,7 +30,7 @@ class CSS {
 
 		DERPKIT_EXPORT void print() const;
 
-		DERPKIT_EXPORT void apply_to_tree(dom::Node root);
+		DERPKIT_EXPORT void apply_to_document(dom::Document& doc);
 	private:
 		CSS(const std::string &filename);
 

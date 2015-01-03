@@ -5,6 +5,7 @@
 #include <functional>
 #include <sstream>
 #include <derpkit/utils/string_utils.hpp>
+#include <derpkit/dom/node.hpp>
 #include "parser/css3.h"
 
 namespace css {
@@ -159,7 +160,7 @@ void CSS::parse_selector(pANTLR3_BASE_TREE tree, Selector& selector) {
 				} else {
 					pANTLR3_BASE_TREE val_node = get_child(sel_node, 0);
 					pANTLR3_COMMON_TOKEN val_token = val_node->getToken(val_node);
-					std::string value = convert_string(val_token->getText(val_token));
+					std::string value = str_trim(convert_string(val_token->getText(val_token)));
 
 					unit.m_atoms.emplace_back(type, value);
 				}
@@ -244,8 +245,30 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 	});
 }
 
-void CSS::apply_to_tree(dom::Node root) {
+void CSS::apply_to_document(dom::Document& doc) {
+	for(const auto& rule : rules()) {
+		const std::vector<Property>& properties = rule.properties();
+		for(const auto& selector : rule.selectors()) {
+			std::vector<dom::Node> nodes = doc.find(selector);
+			if(nodes.empty()) continue;
 
+			for(const auto& property : properties) {
+				Specificity specificity = selector.specificity();
+				specificity.important = property.important ? 1 : 0;
+				for(auto& node : nodes) {
+					std::map<std::string,dom::NodeCSSProperty>& node_properties = node.css_properties();
+					auto it = node_properties.find(property.property);
+					if(it != node_properties.end()) {
+						if(!(it->second.specificity < specificity)) {
+							it->second = dom::NodeCSSProperty(property.value, specificity);
+						}
+					} else {
+						node_properties.emplace(property.property, dom::NodeCSSProperty(property.value, specificity));
+					}
+				}
+			}
+		}
+	}
 }
 
 void CSS::print() const {

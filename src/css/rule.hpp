@@ -18,6 +18,10 @@ class Rule {
 			return m_selectors;
 		}
 
+		const std::vector<Property>& properties() const {
+			return m_properties;
+		}
+
 	private:
 		std::vector<Selector> m_selectors;
 		std::vector<Property> m_properties;

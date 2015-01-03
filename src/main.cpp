@@ -42,5 +42,9 @@ int main(int argc, char * argv[]) {
 	div2.attach(div1);
 	div2.detach();
 
-	css->apply_to_tree(root);
+	doc.set_root(root);
+
+	css->apply_to_document(doc);
+
+	printf("%s\n", doc.to_string(true).c_str());
 }

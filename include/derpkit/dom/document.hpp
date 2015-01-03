@@ -36,7 +36,7 @@ public:
 	Node create_text(const char* text, Node parent);
 	void set_root(Node root);
 	Node root() const;
-	std::string to_string() const;
+	std::string to_string(bool inline_css=false) const;
 
 	Node getElementById(const char* id) const;
 	Node getElementById(const char* id, Node node) const;
