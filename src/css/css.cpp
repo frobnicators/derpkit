@@ -235,7 +235,7 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 						}
 					}
 					if(!value.str().empty()) {
-						property.value = str_trim(value.str());
+						property.value = lcase(str_trim(value.str()));
 						rule.m_properties.push_back(property);
 					}
 				}

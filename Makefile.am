@@ -29,6 +29,7 @@ libderpkit_la_SOURCES = \
 	src/css/parser/css3Parser.c src/css/parser/css3Parser.h \
 	src/css/parser/css3Lexer.c src/css/parser/css3Lexer.h \
 	src/css/css.cpp src/css/css.hpp \
+	src/css/parsers.cpp src/css/parsers.hpp \
 	src/css/property.cpp src/css/property.hpp \
 	src/css/rule.cpp src/css/rule.hpp \
 	src/css/selector.cpp src/css/selector.hpp \

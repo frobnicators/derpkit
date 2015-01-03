@@ -4,12 +4,15 @@
 
 #include <derpkit/dom/document.hpp>
 #include "state.hpp"
+#include "css/parsers.hpp"
 #include <cassert>
 #include <sstream>
 
 static const int MAX_DEPTH = 200;
 
 namespace dom {
+
+static void apply_css_to_state(Node node, State& state);
 
 Document::Document(){
 
@@ -196,6 +199,7 @@ static void prepare_render(std::function<void(Node node, const State&)> callback
 	}
 
 	State state = parent_state;
+	apply_css_to_state(node, state);
 
 	for ( auto it : node.children() ){
 		prepare_render(callback, it, depth+1, state);
@@ -233,6 +237,14 @@ void Document::prepare_render(){
 
 		cur.clear_invalidated();
 	}, root_node);
+}
+
+static void apply_css_to_state(Node node, State& state) {
+	css::parsers::display(state.display, node.get_css_property("display"));
+	css::parsers::color(state.color, node.get_css_property("color"));
+	css::parsers::color(state.background_color, node.get_css_property("background-color"));
+	css::parsers::length(state.width, node.get_css_property("width"));
+	css::parsers::length(state.height, node.get_css_property("height"));
 }
 
 }
