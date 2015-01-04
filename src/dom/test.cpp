@@ -73,12 +73,12 @@ int main(){
 	}
 
 	#test-2 {
-		color: #0f0;
+		color: #00f;
 		height: 25%;
 	}
 
 	.baz #test-2 {
-		color: #0ff;
+		color: #00fa02;
 	}
 
 	#my-div3 {
