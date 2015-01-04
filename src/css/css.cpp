@@ -264,7 +264,7 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 	});
 }
 
-void CSS::apply_to_document(dom::Document& doc) {
+void CSS::apply_to_document(dom::Document& doc) const {
 	for(const auto& rule : rules()) {
 		const std::vector<Property>& properties = rule.properties();
 		for(const auto& selector : rule.selectors()) {
