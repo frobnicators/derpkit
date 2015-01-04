@@ -42,6 +42,11 @@ public:
 	Node getElementById(const char* id, Node node) const;
 
 	/**
+	 * Apply CSS to tree
+	 */
+	void apply_css(const css::CSS* css);
+
+	/**
 	 * Find nodes from CSS selector.
 	 */
 	std::vector<Node> find(const char* selector) const;

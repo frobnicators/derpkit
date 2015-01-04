@@ -3,6 +3,7 @@
 #endif
 
 #include <derpkit/dom/document.hpp>
+#include <derpkit/css/css.hpp>
 #include "state.hpp"
 #include "css/parsers.hpp"
 #include <cassert>
@@ -191,6 +192,10 @@ void Document::traverse(std::function<void(TraversalState& it)> callback, Traver
 			return;
 		}
 	}
+}
+
+void Document::apply_css(const css::CSS* css) {
+	css->apply_to_document(*this);
 }
 
 static void prepare_render(std::function<void(Node node, const State&)> callback, Node node, int depth, const State& parent_state){
