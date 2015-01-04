@@ -280,7 +280,7 @@ void CSS::apply_to_document(dom::Document& doc) const {
 					std::map<std::string,dom::NodeCSSProperty>& node_properties = node.css_properties();
 					auto it = node_properties.find(property.property);
 					if(it != node_properties.end()) {
-						if(!(it->second.specificity < specificity)) {
+						if(it->second.specificity < specificity) {
 							it->second = dom::NodeCSSProperty(property.value, specificity);
 						}
 					} else {
