@@ -2,9 +2,8 @@
 #include "config.h"
 #endif
 
-#include "parsers.hpp"
 #include <derpkit/utils/string_utils.hpp>
-
+#include "parsers.hpp"
 #include <string>
 
 namespace css {

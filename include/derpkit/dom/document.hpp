@@ -2,8 +2,8 @@
 #define DERPKIT_DOM_DOCUMENT_HPP
 
 #include <functional>
-#include "node.hpp"
-#include "css/selector.hpp"
+#include <derpkit/dom/node.hpp>
+#include <derpkit/css/selector.hpp>
 
 namespace dom {
 

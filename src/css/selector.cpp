@@ -2,8 +2,8 @@
 #include "config.h"
 #endif
 
-#include "selector.hpp"
-#include "css/css.hpp"
+#include <derpkit/css/selector.hpp>
+#include <derpkit/css/css.hpp>
 
 namespace css {
 

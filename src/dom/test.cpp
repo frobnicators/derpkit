@@ -2,7 +2,7 @@
 #include "config.h"
 #endif
 
-#include "css/css.hpp"
+#include <derpkit/css/css.hpp>
 #include <derpkit/dom/document.hpp>
 #include <derpkit/dom/node.hpp>
 #include <cstdio>

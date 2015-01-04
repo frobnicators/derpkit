@@ -2,7 +2,7 @@
 #include "config.h"
 #endif
 
-#include "specificity.hpp"
+#include <derpkit/css/specificity.hpp>
 
 #include <sstream>
 

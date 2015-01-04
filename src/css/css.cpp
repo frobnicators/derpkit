@@ -16,14 +16,16 @@
 #include "config.h"
 #endif
 
-#include "css.hpp"
+#include <derpkit/css/css.hpp>
+
+#include <derpkit/utils/string_utils.hpp>
+#include <derpkit/dom/node.hpp>
+
+#include "parser/css3.h"
 
 #include <cassert>
 #include <functional>
 #include <sstream>
-#include <derpkit/utils/string_utils.hpp>
-#include <derpkit/dom/node.hpp>
-#include "parser/css3.h"
 
 namespace css {
 

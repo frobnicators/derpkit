@@ -1,12 +1,12 @@
 #ifndef DERPKIT_DOM_NODE_HPP
 #define DERPKIT_DOM_NODE_HPP
 
+#include <derpkit/utils/string.hpp>
+#include <derpkit/css/specificity.hpp>
+#include <derpkit/export.hpp>
 #include <vector>
 #include <map>
 #include <memory>
-#include <derpkit/export.hpp>
-#include <derpkit/utils/string.hpp>
-#include "css/specificity.hpp"
 
 namespace dom {
 

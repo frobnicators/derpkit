@@ -1,9 +1,10 @@
 #ifndef DERPKIT_CSS_RULE_HPP
 #define DERPKIT_CSS_RULE_HPP
 
+#include <derpkit/css/selector.hpp>
+#include <derpkit/css/property.hpp>
+
 #include <vector>
-#include "selector.hpp"
-#include "property.hpp"
 
 namespace css {
 

@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include <derpkit/export.hpp>
+#include <derpkit/css/rule.hpp>
 #include <derpkit/dom/document.hpp>
-#include "rule.hpp"
+#include <derpkit/export.hpp>
 
 struct ANTLR3_INPUT_STREAM_struct;
 struct ANTLR3_BASE_TREE_struct;

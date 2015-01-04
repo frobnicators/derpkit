@@ -2,7 +2,7 @@
 #include "config.h"
 #endif
 
-#include "rule.hpp"
+#include <derpkit/css/rule.hpp>
 
 namespace css {
 

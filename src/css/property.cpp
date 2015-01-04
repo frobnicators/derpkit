@@ -2,7 +2,7 @@
 #include "config.h"
 #endif
 
-#include "property.hpp"
+#include <derpkit/css/property.hpp>
 
 namespace css {
 

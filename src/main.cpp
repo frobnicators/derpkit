@@ -2,11 +2,11 @@
 #include "config.h"
 #endif
 
-#include "derpkit/version.hpp"
+#include <derpkit/version.hpp>
 
-#include "derpkit/dom/document.hpp"
-#include "derpkit/dom/node.hpp"
-#include "css/css.hpp"
+#include <derpkit/dom/document.hpp>
+#include <derpkit/dom/node.hpp>
+#include <derpkit/css/css.hpp>
 
 #include <cstdio>
 #include <cstdlib>
