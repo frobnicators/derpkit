@@ -13,24 +13,24 @@ struct ANTLR3_BASE_TREE_struct;
 
 namespace css {
 
-class CSS {
+class DERPKIT_EXPORT CSS {
 	public:
 		~CSS();
 
-		DERPKIT_EXPORT static CSS * from_source(const std::string &source);
-		DERPKIT_EXPORT static CSS * from_file(const std::string &filename);
+		static CSS * from_source(const std::string &source);
+		static CSS * from_file(const std::string &filename);
 
-		DERPKIT_EXPORT const std::string& filename() const {
+		const std::string& filename() const {
 			return m_filename;
 		}
 
-		DERPKIT_EXPORT const std::vector<Rule>& rules() const {
+		const std::vector<Rule>& rules() const {
 			return m_rules;
 		}
 
-		DERPKIT_EXPORT void print() const;
+		void print() const;
 
-		DERPKIT_EXPORT void apply_to_document(dom::Document& doc);
+		void apply_to_document(dom::Document& doc);
 	private:
 		CSS(const std::string &filename);
 
