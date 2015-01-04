@@ -39,11 +39,16 @@ tokens {
 	CSS_ATTRIB;
 	CSS_PSEUDO;
 	CSS_EQUAL;
+	CSS_EXPR;
+	CSS_EXPROP;
 	CSS_CONTAINS;
 	CSS_SELECTOR;
 	CSS_STARTSWITH;
 	CSS_ENDSWITH;
 	CSS_PROPERTY;
+	CSS_NUMTERM;
+	CSS_HEXCOLOR;
+	CSS_ARG;
 	CSS_ARGS;
 	CSS_TAG;
 	CSS_ID;
@@ -144,8 +149,8 @@ pseudoPage
 
 expr_operator
     : CSS_SOLIDUS
-    | CSS_COMMA
-	| CSS_OPEQ
+	| CSS_MINUS
+	| CSS_PLUS
     | WS
     ;
 
@@ -154,11 +159,6 @@ combinator
     | CSS_GREATER
 	| CSS_TILDE
     | WS
-    ;
-
-unaryOperator
-    : CSS_MINUS
-    | CSS_PLUS
     ;
 
 property
@@ -239,12 +239,19 @@ attrib
 function_args
 	: CSS_LPAREN
 		(
-			red_expr
+			(
+				red_expr
+				(
+					CSS_COMMA
+					WS?
+					red_expr
+				)*
+			)
 			|
 			selector WS?
 		)
 	CSS_RPAREN
-	-> ^(CSS_ARGS red_expr selector)
+	-> ^(CSS_ARGS ^(CSS_ARG red_expr)+ selector)
 ;
 
 pseudo
@@ -252,8 +259,8 @@ pseudo
     ;
 
 declaration
-    : property WS? CSS_COLON WS? expr WS? prio?
-	-> ^(CSS_PROPERTY property expr prio?)
+    : property WS? CSS_COLON WS? expr WS? (CSS_COMMA WS? expr WS?)* prio?
+	-> ^(CSS_PROPERTY property expr+ prio?)
     ;
 
 prio
@@ -262,7 +269,7 @@ prio
     ;
 
 expr
-    : term (expr_operator term)*
+    : term (expr_operator term)* -> ^(CSS_EXPR term (^(CSS_EXPROP expr_operator) term)*)
     ;
 
 // Reduced expression, no colors or functions
@@ -272,11 +279,12 @@ red_expr
 
 // Reduced term
 red_term
-    : unaryOperator?
+    :
 		(
 			CSS_NUMBER
 			| CSS_HEXNUM
 		)
+	  -> ^(CSS_NUMTERM CSS_NUMBER CSS_HEXNUM )
     | CSS_STRING
     | CSS_URI
     ;
@@ -284,7 +292,7 @@ red_term
 term
 	: red_term
 	| CSS_IDENT function_args? -> ^(CSS_IDENT function_args?)
-	| CSS_HASH (CSS_HEXNUM | CSS_IDENT);
+	| CSS_HASH (CSS_HEXNUM | CSS_IDENT) -> ^(CSS_HEXCOLOR CSS_HEXNUM CSS_IDENT);
 
 // ==============================================================
 // CSS_LEXER
@@ -581,7 +589,7 @@ CSS_SL_COMMENT
 //                      They comment open is therfore ignored by the CSS parser and we hide
 //                      it from the CSS_ANLTR parser.
 //
-CSS_CDO             : '<!--'
+CSS_CDO             : CSS_WHITESPACE? '<!--' CSS_WHITESPACE?
 
                     {
                         $channel = 3;   // CSS_CDO on channel 3 in case we want it later
@@ -594,16 +602,16 @@ CSS_CDO             : '<!--'
 //                      They comment close is therfore ignored by the CSS parser and we hide
 //                      it from the CSS_ANLTR parser.
 //
-CSS_CDC             : '-->'
+CSS_CDC             : CSS_WHITESPACE? '-->' CSS_WHITESPACE?
 
                     {
                         $channel = 4;   // CSS_CDC on channel 4 in case we want it later
                     }
                 ;
 
-CSS_STAREQ        : '*='      ;
-CSS_CIREQ	    : '^='      ;
-CSS_DOLLAREQ	    : '$='      ;
+CSS_STAREQ	        : CSS_WHITESPACE? '*=' CSS_WHITESPACE?     ;
+CSS_CIREQ			: CSS_WHITESPACE? '^=' CSS_WHITESPACE?     ;
+CSS_DOLLAREQ	    : CSS_WHITESPACE? '$=' CSS_WHITESPACE?     ;
 
 CSS_GREATER         : CSS_WHITESPACE? '>' CSS_WHITESPACE?      ;
 CSS_LBRACE          : CSS_WHITESPACE? '{' CSS_WHITESPACE?      ;
@@ -627,18 +635,9 @@ CSS_HASH            : '#'     ;
 // -----------------
 // Literal strings. Delimited by either ' or "
 //
-//fragment    INVALID :;
-CSS_STRING          : '\'' ( ~('\n'|'\r'|'\f'|'\'') )*
-                    (
-                          '\''
-                        | { $type = INVALID; }
-                    )
+CSS_STRING          : '\'' ( ~('\n'|'\r'|'\f'|'\'') )* '\''
 
-                | '"' ( ~('\n'|'\r'|'\f'|'"') )*
-                    (
-                          '"'
-                        | { $type = INVALID; }
-                    )
+                | '"' ( ~('\n'|'\r'|'\f'|'"') )* '"'
                 ;
 
 // -------------
@@ -656,8 +655,10 @@ CSS_CHARSET_SYM     : '@charset '           ;
 
 CSS_IMPORTANT_SYM   : '!' (WS|CSS_COMMENT)* CSS_I CSS_M CSS_P CSS_O CSS_R CSS_T CSS_A CSS_N CSS_T   ;
 
+// TODO: Handle scientific form (ex 10e-2)
 CSS_NUMBER
-    :   (
+    :   ( '+' | '-') ?
+	    (
               '0'..'9'+ ('.' '0'..'9'+)?
             | '.' '0'..'9'+
         )
@@ -705,6 +706,7 @@ CSS_NUMBER
 
 // ------------
 // url and uri.
+// todo: parse better
 //
 CSS_URI :   CSS_U CSS_R CSS_L
         '('

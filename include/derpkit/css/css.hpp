@@ -4,6 +4,7 @@
 #include <string>
 
 #include <derpkit/css/rule.hpp>
+#include <derpkit/css/expression.hpp>
 #include <derpkit/dom/document.hpp>
 #include <derpkit/export.hpp>
 
@@ -39,6 +40,7 @@ class DERPKIT_EXPORT CSS {
 		void parse(ANTLR3_INPUT_STREAM_struct * input);
 		void traverse(ANTLR3_BASE_TREE_struct * node);
 		void parse_rule(ANTLR3_BASE_TREE_struct * node);
+		void parse_expr(ANTLR3_BASE_TREE_struct * node, Expression& expr);
 		static void parse_selector(ANTLR3_BASE_TREE_struct* node, Selector& out);
 
 		std::string m_filename;

@@ -241,8 +241,7 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 				{
 					pANTLR3_BASE_TREE prop_node = get_child(node, 0);
 					pANTLR3_COMMON_TOKEN prop_token = prop_node->getToken(prop_node);
-					Property property(convert_string(prop_token->getText(prop_token)));
-					std::stringstream value;
+					Property property(lcase(str_trim(convert_string(prop_token->getText(prop_token)))));
 					for(unsigned int i=1; i<node->getChildCount(node); ++i) {
 						pANTLR3_BASE_TREE prop_node = get_child(node, i);
 						pANTLR3_COMMON_TOKEN prop_token = prop_node->getToken(prop_node);
@@ -250,18 +249,103 @@ void CSS::parse_rule(pANTLR3_BASE_TREE node) {
 							case CSS_IMPORTANT:
 								property.important = true;
 								break;
+							case CSS_EXPR:
+								property.expressions.emplace_back();
+								parse_expr(prop_node, property.expressions.back());
+								break;
 							default:
-								value << str_trim(convert_string(prop_token->getText(prop_token))) << " ";
+								printf("In property, unknown token %s\n", convert_string(prop_token->getText(prop_token)).c_str());
 								break;
 						}
 					}
-					if(!value.str().empty()) {
-						property.value = lcase(str_trim(value.str()));
+					if(!property.expressions.empty()) {
 						rule.m_properties.push_back(property);
 					}
 				}
 				break;
 			}
+		}
+	});
+}
+
+void CSS::parse_expr(ANTLR3_BASE_TREE_struct * node, Expression& expr) {
+
+	expr.terms.emplace_back();
+
+	traverse_tree(node, [&](pANTLR3_BASE_TREE term_node) {
+		pANTLR3_COMMON_TOKEN term_token = term_node->getToken(term_node);
+
+		switch(term_token->getType(term_token)) {
+			case CSS_EXPROP:
+				{
+					expr.terms.emplace_back();
+
+					pANTLR3_BASE_TREE op_node = get_child(node, 1);
+					pANTLR3_COMMON_TOKEN op_token = op_node->getToken(op_node);
+
+					switch(op_token->getType(op_token))
+					{
+					case WS:
+						expr.terms.back().op = Term::OP_NONE;
+						break;
+					case CSS_PLUS:
+						expr.terms.back().op = Term::OP_PLUS;
+						break;
+					case CSS_MINUS:
+						expr.terms.back().op = Term::OP_MINUS;
+						break;
+					case CSS_SOLIDUS:
+						expr.terms.back().op = Term::OP_SOLIDUS;
+						break;
+					}
+				}
+				break;
+			case CSS_NUMTERM:
+				{
+					pANTLR3_BASE_TREE n = get_child(term_node, 0);
+					expr.terms.back().value = lcase(str_trim(convert_string(n->getText(n))));
+					expr.terms.back().type = Term::TYPE_NUMBER;
+				}
+				break;
+			case CSS_STRING:
+				{
+					std::string value = str_trim(convert_string(term_token->getText(term_token)));
+					// Trim start ' and "
+					expr.terms.back().value = value.substr(1, value.length() - 2);
+					expr.terms.back().type = Term::TYPE_STRING;
+				}
+				break;
+			case CSS_URI:
+				// TODO: Handle better
+				expr.terms.back().value = str_trim(convert_string(term_token->getText(term_token)));
+				expr.terms.back().type = Term::TYPE_URL;
+				break;
+			case CSS_HEXCOLOR:
+				{
+					pANTLR3_BASE_TREE n = get_child(term_node, 0);
+					expr.terms.back().value = lcase(str_trim(convert_string(n->getText(n))));
+					expr.terms.back().type = Term::TYPE_HEXCOLOR;
+				}
+				break;
+			case CSS_IDENT:
+				{
+					std::string value = str_trim(convert_string(term_token->getText(term_token)));
+					expr.terms.back().value = value;
+					if(term_node->getChildCount(term_node) > 0) {
+						// Function
+						expr.terms.back().type = Term::TYPE_FUNCTION;
+						printf("TODO: Fully implement function parsing\n");
+					} else {
+						expr.terms.back().type = Term::TYPE_STRING;
+					}
+				}
+				break;
+			default:
+				{
+					std::string value = convert_string(term_token->getText(term_token));
+					printf("Unhandled token: %s\n", value.c_str());
+					break;
+				}
 		}
 	});
 }
@@ -281,10 +365,10 @@ void CSS::apply_to_document(dom::Document& doc) const {
 					auto it = node_properties.find(property.property);
 					if(it != node_properties.end()) {
 						if(it->second.specificity < specificity) {
-							it->second = dom::NodeCSSProperty(property.value, specificity);
+							it->second = dom::NodeCSSProperty(&property.expressions, specificity);
 						}
 					} else {
-						node_properties.emplace(property.property, dom::NodeCSSProperty(property.value, specificity));
+						node_properties.emplace(property.property, dom::NodeCSSProperty(&property.expressions, specificity));
 					}
 				}
 			}

@@ -21,5 +21,4 @@ inline std::string lcase(const std::string& str) {
 	return ret;
 }
 
-
 #endif /* DERPKIT_STRING_UTILS_HPP */

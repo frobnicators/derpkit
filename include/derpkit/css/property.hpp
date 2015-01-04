@@ -5,6 +5,8 @@
 #include <vector>
 #include <cstdint>
 
+#include <derpkit/css/expression.hpp>
+
 namespace css {
 
 class Property {
@@ -14,7 +16,7 @@ class Property {
 		void print() const;
 
 		std::string property;
-		std::string value;
+		std::vector<Expression> expressions;
 
 		bool important;
 };

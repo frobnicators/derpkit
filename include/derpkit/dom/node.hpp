@@ -3,6 +3,7 @@
 
 #include <derpkit/utils/string.hpp>
 #include <derpkit/css/specificity.hpp>
+#include <derpkit/css/expression.hpp>
 #include <derpkit/export.hpp>
 #include <vector>
 #include <map>
@@ -11,12 +12,17 @@
 namespace dom {
 
 struct NodeCSSProperty {
-	std::string value;
+	const std::vector<css::Expression>* expressions;
 	css::Specificity specificity;
 
-	NodeCSSProperty(const std::string& value, const css::Specificity& specificity)
-		: value(value), specificity(specificity)
+	NodeCSSProperty(const std::vector<css::Expression>* expressions, const css::Specificity& specificity)
+		: expressions(expressions), specificity(specificity)
 	{ }
+
+	void operator=(const NodeCSSProperty& o) {
+		expressions = o.expressions;
+		specificity = specificity;
+	}
 };
 
 class NodeImpl;
@@ -38,7 +44,8 @@ public:
 	const std::vector<std::string>& classes() const;
 
 	std::map<std::string,NodeCSSProperty>& css_properties();
-	const char* get_css_property(const char* property) const;
+	const css::Expression* get_css_property(const char* property, unsigned int index = 0) const;
+	const css::Expression* get_css_property(const char* property, unsigned int index, unsigned int &count) const;
 
 	void attach(Node);
 	void detach();

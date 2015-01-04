@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 AM_LDFLAGS = -pthread
-AM_CXXFLAGS = -Wall -fvisibility=hidden -I${top_srcdir}/include -I${top_srcdir}/src 
+AM_CXXFLAGS = -Wall -fvisibility=hidden -I${top_srcdir}/include -I${top_srcdir}/src
 AM_CFLAGS = ${AM_CXXFLAGS}
 
 lib_LTLIBRARIES = libderpkit.la
@@ -29,6 +29,7 @@ libderpkit_la_SOURCES = \
 	src/css/parser/css3Parser.c src/css/parser/css3Parser.h \
 	src/css/parser/css3Lexer.c src/css/parser/css3Lexer.h \
 	src/css/css.cpp src/css/css.hpp \
+	src/css/expression.cpp src/css/expression.hpp \
 	src/css/parsers.cpp src/css/parsers.hpp \
 	src/css/property.cpp src/css/property.hpp \
 	src/css/rule.cpp src/css/rule.hpp \

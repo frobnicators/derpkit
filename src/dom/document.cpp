@@ -63,8 +63,17 @@ std::string Document::to_string(bool inline_css) const {
 
 			if(inline_css) {
 				ss << " style='";
-				for(const auto& it : node.css_properties()) {
-					ss << it.first << ": " << it.second.value << "; ";
+				for(const auto& prop : node.css_properties()) {
+					ss << prop.first << ": ";
+					auto it = prop.second.expressions->begin();
+					if(it != prop.second.expressions->end()) {
+						ss << (it++)->to_string();
+					}
+					while ( it != prop.second.expressions->end()) {
+						ss << ", ";
+						ss << (it++)->to_string();
+					}
+					ss << ";";
 				}
 				ss << "'";
 			}

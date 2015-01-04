@@ -170,13 +170,23 @@ std::map<std::string,NodeCSSProperty>& Node::css_properties() {
 	return _impl->css_properties;
 }
 
-const char* Node::get_css_property(const char* property) const {
+const css::Expression* Node::get_css_property(const char* property, unsigned int index) const {
+	unsigned int count;
+	return get_css_property(property, index, count);
+}
+
+const css::Expression* Node::get_css_property(const char* property, unsigned int index, unsigned int &count) const {
 	auto it=_impl->css_properties.find(property);
 	if(it == _impl->css_properties.end()) {
 		return nullptr;
 	}
 
-	return it->second.value.c_str();
+	count = it->second.expressions->size();
+
+	if(it->second.expressions->size() > index)
+		return &((*it->second.expressions)[index]);
+	else
+		return nullptr;
 }
 
 void Node::attach(Node parent){

@@ -9,9 +9,13 @@
 namespace css {
 namespace parsers {
 
-void display(dom::Display& out, const char* val) {
-	if(val == nullptr) return;
-	std::string v = lcase(val);
+void display(dom::Display& out, const Expression* val) {
+	if(val == nullptr || val->terms.empty()) return;
+
+	const Term& term = val->terms[0];
+	if(term.type != Term::TYPE_STRING) return;
+
+	std::string v = lcase(term.value);
 
 	if(v == "none") {
 		out = dom::DISPLAY_NONE;
@@ -24,17 +28,8 @@ void display(dom::Display& out, const char* val) {
 	}
 }
 
-void number(float& out, const char* val) {
-	if(val == nullptr) return;
-
-	out = 0.f;
-
-	sscanf(val,"%f", &out);
-}
-
-void length(dom::Length& out, const char* val) {
-	if(val == nullptr) return;
-	std::string v = lcase(val);
+void length(dom::Length& out, const Expression* val) {
+	if(val == nullptr || val->terms.empty()) return;
 
 	const float px_per_in = 96.f;
 	const float px_per_pt = 96.f / 72.f;
@@ -42,12 +37,16 @@ void length(dom::Length& out, const char* val) {
 	const float px_per_cm = (1.f/2.54f) * px_per_in;
 	const float px_per_mm = px_per_cm / 10.f;
 
-	size_t unit_start = v.find_first_not_of("0123456789.");
-	if(unit_start == 0 && v == "auto") {
+	const Term& term = val->terms[0];
+
+	std::string v = lcase(term.value);
+
+	if(term.type == Term::TYPE_STRING && v == "auto") {
 		out = {0, dom::UNIT_AUTO};
-	} else if(unit_start != 0) {
-		number(out.scalar, val);
+	} else if(term.type == Term::TYPE_NUMBER) {
+		number(out.scalar, term);
 		out.unit = dom::UNIT_PX;
+		size_t unit_start = v.find_first_not_of("0123456789.");
 		if(unit_start != std::string::npos) {
 			std::string unit = v.substr(unit_start);
 			if(unit == "px") {
@@ -71,10 +70,18 @@ void length(dom::Length& out, const char* val) {
 
 }
 
-void color(dom::Color& out, const char* val) {
-	if(val == nullptr) return;
+void color(dom::Color& out, const Expression* val) {
+	if(val == nullptr || val->terms.empty()) return;
 
 }
+
+void number(float& out, const Term& val) {
+	out = 0.f;
+	if(val.type != Term::TYPE_NUMBER) return;
+
+	sscanf(val.value.c_str(),"%f", &out);
+}
+
 
 }
 }

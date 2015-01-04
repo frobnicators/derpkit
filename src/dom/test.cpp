@@ -49,6 +49,10 @@ int main(){
 		display: block;
 	}
 
+	html {
+		display: block;
+	}
+
 	body {
 		display: block;
 		background: white;
@@ -61,6 +65,7 @@ int main(){
 
 	.bar {
 		color: red;
+		background: 0% 0% green;
 	}
 
 	#test-1 {
@@ -77,7 +82,7 @@ int main(){
 	}
 
 	#my-div3 {
-		width: .024cm;
+		width: .024cm + 12;
 		height: 24.54mm;
 	}
 
