@@ -58,7 +58,7 @@ public:
 	void prepare_render();
 
 private:
-	std::vector<Node> find(const css::Selector& selector, Node node, int state) const;
+	std::vector<Node> find(const css::Selector& selector, Node node, size_t state) const;
 
 	void traverse(std::function<void(TraversalState& it)>, TraversalState& state, TraversalOrder order) const;
 

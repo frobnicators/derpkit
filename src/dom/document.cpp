@@ -118,11 +118,11 @@ std::vector<Node> Document::find(const css::Selector& selector, Node node) const
 	return find(selector, node, 0);
 }
 
-std::vector<Node> Document::find(const css::Selector& selector, Node node, int begin) const {
+std::vector<Node> Document::find(const css::Selector& selector, Node node, size_t begin) const {
 	std::vector<Node> matches;
 	const auto units = selector.units();
-	const auto num = units.size();
-	const int next = min(num-1, begin+1);
+	const size_t num = units.size();
+	const size_t next = min(num-1, begin+1);
 	const bool last = (begin+1) == num;
 	const auto unit = units[begin];
 
