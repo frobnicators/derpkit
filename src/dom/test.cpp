@@ -38,7 +38,54 @@ int main(){
 	doc.create_element("b", div3).set_attribute("id", "test-3");
 
 	doc.set_root(root);
-	printf("%s\n", doc.to_string().c_str());
+
+	css::CSS* css = css::CSS::from_source(R"(
+	* {
+		display: inline;
+		color: black;
+	}
+
+	div {
+		display: block;
+	}
+
+	body {
+		display: block;
+		background: white;
+	}
+
+	#my-div1 {
+		width: 800px;
+		height: 120in;
+	}
+
+	.bar {
+		color: red;
+	}
+
+	#test-1 {
+		color: #00f;
+	}
+
+	#test-2 {
+		color: #0f0;
+		height: 25%;
+	}
+
+	.baz #test-2 {
+		color: #0ff;
+	}
+
+	#my-div3 {
+		width: .024cm;
+		height: 24.54mm;
+	}
+
+	)");
+
+	doc.apply_css(css);
+
+	printf("%s\n", doc.to_string(true).c_str());
 
 	for ( auto match : doc.find("#my-div1 b") ){
 		printf("match: %s#%s\n", match.tag_name(), match.get_attribute("id"));
