@@ -29,8 +29,7 @@ void number(float& out, const char* val) {
 
 	out = 0.f;
 
-	// TODO: Does this handle .01 style of writing floats?
-	scanf(val,"%f", &out);
+	sscanf(val,"%f", &out);
 }
 
 void length(dom::Length& out, const char* val) {
