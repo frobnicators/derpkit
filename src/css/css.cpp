@@ -155,8 +155,10 @@ void CSS::traverse(pANTLR3_BASE_TREE node) {
 			case CSS_RULE:
 				parse_rule(node);
 				break;
+			case WS:
+				break;
 			default:
-				printf("[CSS] Warning: Unknown node %s\n", token->getText(token)->chars);
+				printf("[CSS] Warning: Unknown node %s\n", token->toString(token)->chars);
 
 		}
 	} else {

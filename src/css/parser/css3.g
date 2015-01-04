@@ -64,7 +64,8 @@ stylesheet
     :   charSet
         imports*
         bodylist
-     EOF!
+		WS?
+		EOF!
     ;
 
 // -----------------
@@ -711,11 +712,6 @@ CSS_URI :   CSS_U CSS_R CSS_L
         ')'
     ;
 
-// -------------
-// Whitespace.  Though the W3 standard shows a Yacc/Lex style parser and lexer
-//              that process the whitespace within the parser, CSS_ANTLR does not
-//              need to deal with the whitespace directly in the parser.
-//
 WS			: CSS_WHITESPACE;
 CSS_NL      : ('\r' '\n'? | '\n')   { $channel = HIDDEN;    }   ;
 
