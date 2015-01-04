@@ -1,6 +1,23 @@
+#include <antlr3.h>
+
+// ANTLR3 is retarded and includes it's automake config in public headers.
+// Undefine that shit here:
+
+#undef VERSION
+#undef PACKAGE
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_STRING
+#undef PACKAGE_NAME
+#undef PACKAGE_TARNAME
+#undef PACKAGE_URL
+#undef PACKAGE_VERSION
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "css.hpp"
 
-#include <antlr3.h>
 #include <cassert>
 #include <functional>
 #include <sstream>
