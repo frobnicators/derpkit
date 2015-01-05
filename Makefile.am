@@ -6,7 +6,7 @@ AM_CXXFLAGS = -Wall -fvisibility=hidden -I${top_srcdir}/include -I${top_srcdir}/
 AM_CFLAGS = ${AM_CXXFLAGS}
 
 lib_LTLIBRARIES = libderpkit.la
-noinst_LTLIBRARIES = libantlr3c.la
+noinst_LTLIBRARIES = libantlr3c.la libsha1.la libb64.la
 noinst_PROGRAMS = parse domtest
 
 TESTS = test/dom
@@ -18,9 +18,9 @@ endif
 #src/css/parser/libderpkit_la-css3Parser.lo: CFLAGS += -Wno-unused
 #src/css/parser/libderpkit_la-css3Lexer.lo:  CFLAGS += -Wno-unused
 
-libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include
+libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include
 libderpkit_la_CFLAGS = ${libderpkit_la_CXXFLAGS} -Wno-unused
-libderpkit_la_LIBADD = libantlr3c.la
+libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la
 libderpkit_la_SOURCES = \
 	include/derpkit/derpkit.hpp \
 	include/derpkit/export.hpp \
@@ -36,10 +36,16 @@ libderpkit_la_SOURCES = \
 	src/css/rule.cpp src/css/rule.hpp \
 	src/css/selector.cpp src/css/selector.hpp \
 	src/css/specificity.cpp src/css/specificity.hpp \
+	src/ffs_compat.cpp src/ffs_compat.hpp \
 	include/derpkit/dom/document.hpp src/dom/document.cpp \
 	include/derpkit/dom/node.hpp src/dom/node.cpp \
+	include/derpkit/utils/logging.hpp src/utils/logging.cpp \
+	include/derpkit/utils/base64.hpp src/utils/base64.cpp \
+	include/derpkit/utils/file.hpp src/utils/file.cpp \
 	include/derpkit/utils/string.hpp src/utils/string.cpp \
 	include/derpkit/utils/string_utils.hpp src/utils/string_utils.cpp \
+	include/derpkit/utils/network/socket.hpp src/utils/network/socket.cpp \
+	include/derpkit/utils/network/websocket.hpp src/utils/network/websocket.cpp \
 	src/version.cpp include/derpkit/version.hpp
 
 libantlr3c_la_CFLAGS  = -fvisibility=hidden -w -I${top_srcdir}/vendor/antlr3/include
@@ -66,6 +72,13 @@ libantlr3c_la_SOURCES	=	vendor/antlr3/src/antlr3baserecognizer.c		\
 							vendor/antlr3/src/antlr3string.c				\
 							vendor/antlr3/src/antlr3tokenstream.c			\
 							vendor/antlr3/src/antlr3treeparser.c
+
+libsha1_la_CXXFLAGS = -I${top_srcdir}/vendor/sha1/include
+libsha1_la_SOURCES = vendor/sha1/src/sha1.cpp vendor/sha1/include/sha1.h
+
+libb64_la_CXXFLAGS =
+libb64_la_CFLAGS = ${VENDOR_CFLAGS} -I${top_srcdir}/vendor/b64/include
+libb64_la_SOURCES = vendor/b64/src/cdecode.c vendor/b64/src/cencode.c vendor/b64/include/b64/cdecode.h vendor/b64/include/b64/cencode.h
 
 parse_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include
 parse_LDADD = libderpkit.la
