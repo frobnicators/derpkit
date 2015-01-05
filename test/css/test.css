@@ -1,0 +1,25 @@
+* {
+	display: inline;
+	color: black;
+}
+
+body {
+	display: block;
+	background: white;
+}
+
+.bar {
+	background: green, red;
+	width: func(2 + 3);
+}
+
+#test-1 {
+	color: rgba(255, 200, 154, 200);
+	background-image: url("http://derp.com/foo.jpg");
+}
+
+/*
+#test-2 {
+	background-image: url(http://derp.com/foo.png); TODO!
+}
+*/

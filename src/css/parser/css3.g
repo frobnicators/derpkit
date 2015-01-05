@@ -4,7 +4,7 @@
 // This grammar is free to use providing you retain everyhting in this header comment
 // section.
 //
-// Author      : Jim Idle, Temporal Wave CSS_LLC.
+// Author      : Jim Idle, Temporal Wave CSS_LLC & Andreas Tarandi, Frobnicators
 // Contact     : jimi@temporal-wave.com
 // Website     : http://www.temporal-wave.com
 // License     : CSS_ANTLR Free CSS_BSD License
@@ -12,7 +12,7 @@
 // Please visit our Web site at http://www.temporal-wave.com and try our commercial
 // parsers for CSS_SQL, CSS_C#, CSS_VB.Net and more.
 //
-// This grammar was modified for CSS 3 by Andreas Tarandi for frobnicators derpkit:
+// This grammar was (heavily) modified for CSS 3 by Andreas Tarandi for frobnicators derpkit:
 // https://github.com/frobnicators/derpkit
 //
 // This grammar is free to use providing you retain everything in this header comment
@@ -274,7 +274,7 @@ expr
 
 // Reduced expression, no colors or functions
 red_expr
-	: red_term WS? (expr_operator red_term WS?)*
+	: red_term WS? (expr_operator red_term WS?)* -> red_term (^(CSS_EXPROP expr_operator) red_term)*
 	;
 
 // Reduced term

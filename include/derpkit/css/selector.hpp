@@ -1,10 +1,9 @@
 #ifndef DERPKIT_CSS_SELECTOR_HPP
 #define DERPKIT_CSS_SELECTOR_HPP
 
-#include <derpkit/dom/node.hpp>
-#include <derpkit/export.hpp>
 #include <string>
 #include <vector>
+#include <derpkit/dom/node.hpp>
 
 namespace css {
 

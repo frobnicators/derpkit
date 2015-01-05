@@ -4,7 +4,6 @@
 #include <derpkit/utils/string.hpp>
 #include <derpkit/css/specificity.hpp>
 #include <derpkit/css/expression.hpp>
-#include <derpkit/export.hpp>
 #include <vector>
 #include <map>
 #include <memory>

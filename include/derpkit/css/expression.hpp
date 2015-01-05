@@ -8,6 +8,7 @@ namespace css {
 
 class DERPKIT_EXPORT Term {
 	public:
+
 		enum Operator {
 			OP_NONE,
 			OP_PLUS,
@@ -25,12 +26,18 @@ class DERPKIT_EXPORT Term {
 			/*...*/
 		};
 
-		Term() : op(OP_NONE), type(TYPE_INVALID) {};
+		Term(Term&& term);
+		Term(const Term& term);
+		Term() : op(OP_NONE), type(TYPE_INVALID), function_args(nullptr) {};
+		~Term();
 
 		/** How to combine this with previous term */
 		Operator op;
 		Type type;
 		std::string value;
+
+		/** Only used for type==TYPE_FUNCTION */
+		struct FunctionArgs* function_args;
 
 		void print() const;
 

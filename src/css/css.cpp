@@ -20,6 +20,7 @@
 
 #include <derpkit/utils/string_utils.hpp>
 #include <derpkit/dom/node.hpp>
+#include <derpkit/css/function_args.hpp>
 
 #include "parser/css3.h"
 
@@ -332,9 +333,28 @@ void CSS::parse_expr(ANTLR3_BASE_TREE_struct * node, Expression& expr) {
 					std::string value = str_trim(convert_string(term_token->getText(term_token)));
 					expr.terms.back().value = value;
 					if(term_node->getChildCount(term_node) > 0) {
-						// Function
 						expr.terms.back().type = Term::TYPE_FUNCTION;
-						printf("TODO: Fully implement function parsing\n");
+						pANTLR3_BASE_TREE args_node = get_child(term_node, 0);
+						if(args_node != nullptr) {
+							pANTLR3_COMMON_TOKEN args_token = args_node->getToken(args_node);
+							if(args_token->getType(args_token) == CSS_ARGS) {
+								FunctionArgs* args = expr.terms.back().function_args = new FunctionArgs();
+								traverse_tree(args_node, [&](pANTLR3_BASE_TREE arg_node) {
+									pANTLR3_COMMON_TOKEN t = arg_node->getToken(arg_node);
+									if(t->getType(t) == CSS_ARG) {
+										args->expressions.emplace_back();
+										parse_expr(arg_node, args->expressions.back());
+									} else if(t->getType(t) == CSS_SELECTOR) {
+										parse_selector(arg_node, args->selector);
+									} else {
+										printf("[CSS] Error: Unknown token %s\n", convert_string(t->getText(t)).c_str());
+									}
+								});
+							} else {
+								printf("[CSS] Error: Function arguments must start with CSS_ARGS. (got %s)\n", convert_string(args_token->getText(args_token)).c_str());
+
+							}
+						}
 					} else {
 						expr.terms.back().type = Term::TYPE_STRING;
 					}
@@ -343,7 +363,7 @@ void CSS::parse_expr(ANTLR3_BASE_TREE_struct * node, Expression& expr) {
 			default:
 				{
 					std::string value = convert_string(term_token->getText(term_token));
-					printf("Unhandled token: %s\n", value.c_str());
+					printf("[CSS] Unhandled token in expression: `%s' (%d)\n", value.c_str(), term_token->getType(term_token));
 					break;
 				}
 		}
