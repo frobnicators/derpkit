@@ -10,8 +10,6 @@
 
 #include <cstdlib>
 
-#include <set>
-
 namespace dom {
 
 static long file_size(FILE* fp){
@@ -33,22 +31,22 @@ class InspectorImpl {
 		~InspectorImpl();
 
 		void update();
-		void register_document(const dom::Document& doc);
-		void unregister_document(const dom::Document& doc);
+		void set_document(const dom::Document* doc);
 	private:
-		//std::set<const dom::Document&> m_documents;
+		const dom::Document* m_doc;
 		WebSocket m_ws;
+		int m_port;
 
 		/* callbacks */
 		void message(const std::string& data);
 		void connected();
 
-		void on_http(const std::map<std::string,std::string>& headers, const std::vector<std::string>&);
+		void on_http(const std::map<std::string,std::string>& headers, const std::string&);
 };
 
 /* Implementation */
 
-InspectorImpl::InspectorImpl(int port) : m_ws(port) {
+InspectorImpl::InspectorImpl(int port) : m_doc(nullptr), m_ws(port), m_port(port) {
 	using namespace std::placeholders;
 	m_ws.set_connected_callback(std::bind(&InspectorImpl::connected, this));
 	m_ws.set_text_data_callback(std::bind(&InspectorImpl::message, this, _1));
@@ -64,10 +62,8 @@ void InspectorImpl::update() {
 	m_ws.update();
 }
 
-void InspectorImpl::register_document(const dom::Document& doc) {
-}
-
-void InspectorImpl::unregister_document(const dom::Document& doc) {
+void InspectorImpl::set_document(const dom::Document* doc) {
+	m_doc = doc;
 }
 
 void InspectorImpl::message(const std::string& data) {
@@ -79,9 +75,19 @@ void InspectorImpl::connected() {
 }
 
 static void serve_file(WebSocket& ws, std::string filename) {
-	// TOTALY FUCKING UNSAFE
-	if(filename == "/") filename = "/index.html";
-	std::string _filename = srcdir "/data/inspector" + filename;
+
+	size_t start = filename.find_first_of("/")+1;
+	size_t end = filename.find_first_of("?");
+	if(end == std::string::npos) end = filename.length();
+	int len = end - start;
+	if(start > end || len < 0) {
+		Logging::error("Invalid filename: %s\n", filename.c_str());
+		return;
+	}
+
+	filename = filename.substr(start, len);
+
+	std::string _filename = srcdir "/data/inspector/" + filename;
 	FILE* file = fopen(_filename.c_str(), "rb");
 	if(file) {
 		size_t filelen = file_size(file);
@@ -106,16 +112,29 @@ static void serve_file(WebSocket& ws, std::string filename) {
 	}
 }
 
-void InspectorImpl::on_http(const std::map<std::string,std::string>& headers, const std::vector<std::string>& data) {
-	if(data.size() > 0) {
-		std::vector<std::string> get = str_split(lcase(data[0]), " ");
-		if(get[0] == "get" && get[2] == "http/1.1")  {
-			serve_file(m_ws, get[1]);
+void InspectorImpl::on_http(const std::map<std::string,std::string>& headers, const std::string& request) {
+	std::vector<std::string> get = str_split(request, " ");
+	if(get[0] == "GET" && get[2] == "HTTP/1.1")  {
+		if(get[1] == "/") {
+			char buffer[256];
+			// TODO: replace localhost
+			sprintf(buffer, "HTTP/1.1 307 Temprary Redirect\r\n"
+				"Location: http://localhost:%d/devtools.html?ws=ws://localhost:%d/\r\n"
+				"Connection: close\r\n"
+				"\r\n", m_port, m_port);
+
+			m_ws.send_raw(buffer, strlen(buffer));
+		} else if(get[1] == "/json/list") {
+			// Build document list response
+			json_object* jobj = json_object_new_object();
+			json_object* docs = json_object_new_array();
+
+
 		} else {
-			Logging::error("[Inspector] Invalid http: %s\n", data[0].c_str());
+			serve_file(m_ws, get[1]);
 		}
 	} else {
-		Logging::error("[Inspector] No http data\n");
+		Logging::error("[Inspector] Not a get request: %s\n", request.c_str());
 	}
 	m_ws.close();
 }
@@ -134,13 +153,9 @@ void Inspector::update() {
 	m_pimpl->update();
 }
 
-void Inspector::register_document(const dom::Document& doc) {
-	m_pimpl->register_document(doc);
+void Inspector::set_document(const dom::Document* doc) {
+	m_pimpl->set_document(doc);
 }
-void Inspector::unregister_document(const dom::Document& doc) {
-	m_pimpl->register_document(doc);
-}
-
 void Inspector::initialize() {
 	Socket::initialize();
 }

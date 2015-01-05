@@ -18,7 +18,9 @@ endif
 #src/css/parser/libderpkit_la-css3Parser.lo: CFLAGS += -Wno-unused
 #src/css/parser/libderpkit_la-css3Lexer.lo:  CFLAGS += -Wno-unused
 
-libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Dsrcdir=\"${top_srcdir}\" -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include
+#TODO: Remove srcdir define (used for inspector file include)
+
+libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Dsrcdir=\"${top_srcdir}\" -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include ${json_CXXFLAGS}
 libderpkit_la_CFLAGS = ${libderpkit_la_CXXFLAGS} -Wno-unused
 libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la
 libderpkit_la_SOURCES = \
@@ -83,11 +85,11 @@ libb64_la_CFLAGS = ${VENDOR_CFLAGS} -I${top_srcdir}/vendor/b64/include
 libb64_la_SOURCES = vendor/b64/src/cdecode.c vendor/b64/src/cencode.c vendor/b64/include/b64/cdecode.h vendor/b64/include/b64/cencode.h
 
 parse_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include
-parse_LDADD = libderpkit.la
+parse_LDADD = libderpkit.la ${json_LIBS}
 parse_SOURCES = src/main.cpp
 
 domtest_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include -I${top_srcdir}/src
-domtest_LDADD = libderpkit.la
+domtest_LDADD = libderpkit.la ${json_LIBS}
 domtest_SOURCES = src/dom/test.cpp
 
 test_dom_CXXFLAGS = ${AM_CXXFLAGS} $(CPPUNIT_CFLAGS)
