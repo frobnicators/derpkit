@@ -331,8 +331,8 @@ void CSS::parse_expr(ANTLR3_BASE_TREE_struct * node, Expression& expr) {
 			case CSS_IDENT:
 				{
 					std::string value = str_trim(convert_string(term_token->getText(term_token)));
-					expr.terms.back().value = value;
 					if(term_node->getChildCount(term_node) > 0) {
+						expr.terms.back().value = lcase(value);
 						expr.terms.back().type = Term::TYPE_FUNCTION;
 						pANTLR3_BASE_TREE args_node = get_child(term_node, 0);
 						if(args_node != nullptr) {
@@ -356,6 +356,7 @@ void CSS::parse_expr(ANTLR3_BASE_TREE_struct * node, Expression& expr) {
 							}
 						}
 					} else {
+						expr.terms.back().value = value;
 						expr.terms.back().type = Term::TYPE_STRING;
 					}
 				}

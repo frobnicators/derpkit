@@ -3,6 +3,7 @@
 #endif
 
 #include <derpkit/utils/string_utils.hpp>
+#include <derpkit/css/function_args.hpp>
 #include "parsers.hpp"
 #include "colors.hpp"
 #include <string>
@@ -12,6 +13,13 @@ namespace parsers {
 
 static uint8_t parse_color_val(const char* v, size_t count, int base) {
 	return static_cast<uint8_t>(stoi(std::string(v, count), nullptr, base));
+}
+
+static uint8_t parse_color(const Expression& expr) {
+	if(expr.terms.empty()) return 0;
+	if(expr.terms[0].type != Term::TYPE_NUMBER) return 0;
+
+	return static_cast<uint8_t>(stoi(expr.terms[0].value));
 }
 
 void display(dom::Display& out, const Expression* val) {
@@ -98,6 +106,7 @@ void color(dom::Color& out, const Expression* val) {
 		}
 	} else if(term.type == Term::TYPE_STRING) {
 		std::string str = lcase(term.value);
+
 		if(str == "transparent") {
 			out.r = 0;
 			out.g = 0;
@@ -115,7 +124,33 @@ void color(dom::Color& out, const Expression* val) {
 			}
 		}
 	} else if(term.type == Term::TYPE_FUNCTION) {
-		printf("TODO: func color %s\n", term.value.c_str());
+		if(term.function_args != nullptr) {
+			std::vector<Expression>& cexpr = term.function_args->expressions;
+			if(term.function_args->expressions.size() > 0 && cexpr.size() >= 3) {
+				if(term.value == "rgb") {
+					out.r = parse_color(cexpr[0]);
+					out.g = parse_color(cexpr[1]);
+					out.b = parse_color(cexpr[2]);
+					out.a = 255;
+				} else if(term.value == "rgba") {
+					out.r = parse_color(cexpr[0]);
+					out.g = parse_color(cexpr[1]);
+					out.b = parse_color(cexpr[2]);
+					if(cexpr.size() > 3) {
+						out.a = parse_color(cexpr[3]);
+					} else {
+						printf("[CSS] Error: Not enough arguments for color function %s\n", term.value.c_str());
+					}
+				} else {
+					// TODO: Implement hsl
+					printf("[CSS] Error: Unknown color function %s.\n", term.value.c_str());
+				}
+			} else {
+				printf("[CSS] Error: Not enough arguments for color function %s\n", term.value.c_str());
+			}
+		} else {
+			printf("[CSS] Error: No arguments for color function %s\n", term.value.c_str());
+		}
 	} else {
 		printf("[CSS] Error: Invalid color type (for %s)\n", term.value.c_str());
 	}

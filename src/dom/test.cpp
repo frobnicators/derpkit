@@ -84,11 +84,14 @@ int main(){
 	#my-div3 {
 		width: .024cm + 12;
 		height: 24.54mm;
+		background-color: rgba(200, 50, 24, 125);
 	}
 
 	)");
 
 	doc.apply_css(css);
+
+	css->print();
 
 	printf("%s\n", doc.to_string(true).c_str());
 
