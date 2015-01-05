@@ -18,8 +18,6 @@ static const char* magic_string = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
 WebSocket::WebSocket(int port)
 	: m_socket(Socket::TCP, Socket::REUSE_ADDR, 1024)
-	, m_client(nullptr)
-	, m_established(false)
 	, m_port(port)
 	, m_binary_data_callback(nullptr)
 	, m_text_data_callback(nullptr)
@@ -28,23 +26,25 @@ WebSocket::WebSocket(int port)
 }
 
 WebSocket::~WebSocket() {
-	close();
-	delete m_client;
+	for(auto* client : m_clients) {
+		close(client);
+		delete client;
+	}
 }
 
-void WebSocket::set_binary_data_callback(std::function<void(const void* data, size_t size)> callback) {
+void WebSocket::set_binary_data_callback(std::function<void(Client* client,const void* data, size_t size)> callback) {
 	m_binary_data_callback = callback;
 }
 
-void WebSocket::set_text_data_callback(std::function<void(const std::string& data)> callback) {
+void WebSocket::set_text_data_callback(std::function<void(Client* client,const std::string& data)> callback) {
 	m_text_data_callback = callback;
 }
 
-void WebSocket::set_connected_callback(std::function<void(void)> callback) {
+void WebSocket::set_connected_callback(std::function<void(Client* client)> callback) {
 	m_connected_callback = callback;
 }
 
-void WebSocket::set_http_callback(std::function<void(const std::map<std::string, std::string>& headers, const std::string&)> callback) {
+void WebSocket::set_http_callback(std::function<void(Client* client,const std::map<std::string, std::string>& headers, const std::string&)> callback) {
 	m_http_callback = callback;
 }
 
@@ -52,24 +52,35 @@ void WebSocket::listen() {
 	m_socket.listen(m_port);
 }
 
-void WebSocket::close() {
-	if(m_client && m_established) {
-		send_frame(0x8, nullptr, 0);
+void WebSocket::close(Client* client) {
+	if(client->established) {
+		send_frame(client, 0x8, nullptr, 0);
 	}
-	delete m_client;
-	m_client = nullptr;
-	m_established = false;
+	delete client->sck;
+	client->sck = nullptr;
+	m_closed_clients.push_back(client);
 }
 
 void WebSocket::update() {
-	if(m_client) {
-		if(m_established) {
-			ssize_t s = m_client->read();
+	// Erase closed clients
+	for(auto* client : m_closed_clients) {
+		for(auto it=m_clients.begin(); it != m_clients.end(); ++it) {
+			if(*it == client) {
+				m_clients.erase(it);
+				break;
+			}
+		}
+	}
+	m_closed_clients.clear();
+
+	for(auto* client : m_clients) {
+		if(client->established) {
+			ssize_t s = client->sck->read();
 			if(s == -2) {
 				Logging::warning(websocket_log, "Connection lost\n");
-				close();
+				close(client);
 			} else if(s > 0) {
-				const unsigned char* data = (const unsigned char*)m_client->buffer();
+				const unsigned char* data = (const unsigned char*)client->sck->buffer();
 
 				// Read frame
 				char fin = (data[0] >> 7) & 0x1;
@@ -82,7 +93,7 @@ void WebSocket::update() {
 
 				if(rsv != 0) {
 					Logging::error(websocket_log, "RSV must be 0!\n");
-					close();
+					close(client);
 					return;
 				}
 
@@ -95,7 +106,7 @@ void WebSocket::update() {
 				if(mask_bit != 1) {
 					// RFC requires clients to always use MASK
 					Logging::error(websocket_log, "Mask bit was not set!\n");
-					close();
+					close(client);
 					return;
 				}
 
@@ -103,7 +114,7 @@ void WebSocket::update() {
 
 				if(payload_length < 0) {
 					Logging::error(websocket_log, "Invalid payload: %d\n", payload_length);
-					close();
+					close(client);
 					return;
 				} else if(payload_length < 126) {
 					payload_size = payload_length;
@@ -116,7 +127,7 @@ void WebSocket::update() {
 				} else if(payload_length == 127) {
 					// 64 bit payload size? Madness!
 					Logging::error(websocket_log, "64 bit payload length not supported\n");
-					close();
+					close(client);
 					return;
 				}
 
@@ -144,7 +155,7 @@ void WebSocket::update() {
 							// text
 							std::string msg(payload, payload_size);
 							if(m_text_data_callback) {
-								m_text_data_callback(msg);
+								m_text_data_callback(client, msg);
 							} else {
 								Logging::warning(websocket_log, "Got text message, but no text data callback registered (%s).\n", msg.c_str());
 							}
@@ -152,7 +163,7 @@ void WebSocket::update() {
 						break;
 					case 0x2:
 						if(m_binary_data_callback) {
-							m_binary_data_callback(payload, payload_size);
+							m_binary_data_callback(client, payload, payload_size);
 						} else {
 							Logging::warning(websocket_log, "Got binary message, but no binary data callback registered.\n");
 						}
@@ -160,10 +171,10 @@ void WebSocket::update() {
 					// Control frames:
 					case 0x8:
 						Logging::info(websocket_log, "Client closed connection.\n");
-						close();
+						close(client);
 						break;
 					case 0x9:
-						send_frame(0xA, payload, static_cast<uint16_t>(payload_size));
+						send_frame(client, 0xA, payload, static_cast<uint16_t>(payload_size));
 						break;
 					case 0xA:
 						// pong (whatever)
@@ -174,11 +185,11 @@ void WebSocket::update() {
 			}
 		} else {
 			// Handle handshake
-			ssize_t s = m_client->read();
+			ssize_t s = client->sck->read();
 			if(s == -2) {
-				close();
+				close(client);
 			} else if(s > 0) {
-				std::string msg = std::string((const char*)m_client->buffer());
+				std::string msg = std::string((const char*)client->sck->buffer());
 				std::vector<std::string> lines = str_split(msg, "\r\n", SPLIT_TRIM | SPLIT_IGNORE_EMPTY);
 				std::map<std::string,std::string> headers;
 				std::string request;
@@ -189,7 +200,7 @@ void WebSocket::update() {
 				auto it = lines.begin();
 				if(it == lines.end()) {
 					Logging::error(websocket_log, "WebSocket: No data.\n");
-					close();
+					close(client);
 					return;
 				}
 				request = *(it++);
@@ -206,7 +217,7 @@ void WebSocket::update() {
 								is_websocket = true;
 							} else {
 								Logging::error(websocket_log, "Incorrect upgrade %s, (must be 'websocket')\n", data.c_str());
-								close();
+								close(client);
 								return;
 							}
 						} else if(key == "Sec-WebSocket-Key") {
@@ -217,15 +228,15 @@ void WebSocket::update() {
 				}
 				if(!is_websocket) {
 					if(m_http_callback) {
-						m_http_callback(headers, request);
+						m_http_callback(client, headers, request);
 					} else {
 						Logging::error(websocket_log, "Client is not using websockets.\n");
-						close();
+						close(client);
 					}
 					return;
 				} else if(!key_found) {
 					Logging::error(websocket_log, "Sec-WebSocket-Key not found in header.\n");
-					close();
+					close(client);
 					return;
 				}
 
@@ -245,35 +256,36 @@ void WebSocket::update() {
 						"\r\n"
 						, b64.c_str());
 
-					m_established = true;
-					m_client->send(buffer, strlen(buffer));
-					if(m_connected_callback) m_connected_callback();
+					client->established = true;
+					client->sck->send(buffer, strlen(buffer));
+					if(m_connected_callback) m_connected_callback(client);
 
 				}
 
 			}
 		}
-	} else {
-		m_client = m_socket.accept();
-		m_established = false;
-		if(m_client) update();
+	}
+
+	Socket* new_client = m_socket.accept();
+	if(new_client) {
+		m_clients.push_back(new Client(new_client));
 	}
 }
 
-void WebSocket::send_raw(const char* data, size_t size) {
-	m_client->send(data, size);
+void WebSocket::send_raw(Client* client, const char* data, size_t size) {
+	client->sck->send(data, size);
 }
 
-void WebSocket::send_binary(const void* data, size_t size) {
-	send_frame(0x2, data, static_cast<uint16_t>(size));
+void WebSocket::send_binary(Client* client, const void* data, size_t size) {
+	send_frame(client, 0x2, data, static_cast<uint16_t>(size));
 }
 
-void WebSocket::send_text(const std::string& text) {
-	send_frame(0x1, text.c_str(), static_cast<uint16_t>(text.length()));
+void WebSocket::send_text(Client* client, const std::string& text) {
+	send_frame(client, 0x1, text.c_str(), static_cast<uint16_t>(text.length()));
 }
 
-void WebSocket::send_frame(int opcode, const void* payload, uint16_t payload_length) {
-	if(m_client && m_established) {
+void WebSocket::send_frame(Client* client, int opcode, const void* payload, uint16_t payload_length) {
+	if(client->sck && client->established) {
 		size_t msg_size = 2 + payload_length;
 		char pl;
 
@@ -300,7 +312,7 @@ void WebSocket::send_frame(int opcode, const void* payload, uint16_t payload_len
 
 		memcpy(msg + next_byte, payload, payload_length);
 
-		if(!m_client->send(msg, msg_size)) {
+		if(!client->sck->send(msg, msg_size)) {
 			Logging::error(websocket_log, "Failed to send message.\n");
 		}
 	} else {
