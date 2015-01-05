@@ -4,9 +4,11 @@
 
 #include <derpkit/version.hpp>
 
+#include <derpkit/utils/utils.hpp>
 #include <derpkit/dom/document.hpp>
 #include <derpkit/dom/node.hpp>
 #include <derpkit/css/css.hpp>
+#include <derpkit/dom/inspector.hpp>
 
 #include <cstdio>
 #include <cstdlib>
@@ -16,19 +18,17 @@ using namespace dom;
 int main(int argc, char * argv[]) {
 	printf("derpkit library version: %s\n", derpkit::version_string());
 
-	if(argc != 2) {
-		printf("Requires exactly one argument: %s css-file\n", argv[0]);
-		exit(1);
-	}
+	//if(argc != 2) {
+		//printf("Requires exactly one argument: %s css-file\n", argv[0]);
+		//exit(1);
+	//}
 
-	printf("Parse CSS\n");
-	css::CSS * css = css::CSS::from_file(argv[1]);
-	css->print();
-
-	printf("Parse selector: \n");
-
-	printf("Build dom\n");
+	Inspector::initialize();
 	Document doc;
+
+	//css::CSS * css = css::CSS::from_file(argv[1]);
+	//css->print();
+
 	Node root = doc.create_element("html");
 	Node body = doc.create_element("body", root);
 	body.set_attribute("id", "body-element");
@@ -55,7 +55,71 @@ int main(int argc, char * argv[]) {
 
 	doc.set_root(root);
 
-	css->apply_to_document(doc);
+	css::CSS* css = css::CSS::from_source(R"(
+	* {
+		display: inline;
+		color: black;
+	}
+
+	div {
+		display: block;
+	}
+
+	html {
+		display: block;
+	}
+
+	body {
+		display: block;
+		background: white;
+	}
+
+	#my-div1 {
+		width: 800px;
+		height: 120in;
+	}
+
+	.bar {
+		color: red;
+		background: 0% 0% green;
+	}
+
+	#test-1 {
+		color: #00f;
+	}
+
+	#test-2 {
+		color: #00f;
+		height: 25%;
+	}
+
+	.baz #test-2 {
+		color: #00fa02;
+	}
+
+	#my-div3 {
+		width: .024cm + 12;
+		height: 24.54mm;
+		background-color: rgba(200, 50, 24, 125);
+	}
+
+	)");
+
+	doc.apply_css(css);
+
+	css->print();
 
 	printf("%s\n", doc.to_string(true).c_str());
+
+	{
+		Inspector inspector;
+		inspector.register_document(doc);
+
+		while(true) {
+			utils::usleep(100);
+			inspector.update();
+		}
+	}
+
+	Inspector::cleanup();
 }

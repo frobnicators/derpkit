@@ -21,4 +21,9 @@ inline std::string lcase(const std::string& str) {
 	return ret;
 }
 
+/**
+ * Replace part of a string.
+ **/
+std::string str_replace(std::string search, std::string replace, std::string subject);
+
 #endif /* DERPKIT_STRING_UTILS_HPP */

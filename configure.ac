@@ -10,7 +10,6 @@ AM_SILENT_RULES([yes])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile libderpkit.pc])
-AC_CHECK_FUNCS([access stat])
 AH_BOTTOM([
 #include "platform.hpp"
 #include <derpkit/forward.hpp>
@@ -38,6 +37,10 @@ AC_LANG_POP
 
 AM_PATH_CPPUNIT(1.9.6,,[AC_MSG_NOTICE([cppunit not found, tests disabled])])
 AM_CONDITIONAL([BUILD_TESTS], [test "x$no_cppunit" != "xyes"])
+
+AC_CHECK_FUNCS([access stat gettimeofday usleep setitimer])
+AC_SEARCH_LIBS([clock_gettime], [rt])
+AC_CHECK_HEADERS([sys/time.h])
 
 pkgdatadir="${datadir}/${PACKAGE}"
 AC_SUBST([pkgdatadir])

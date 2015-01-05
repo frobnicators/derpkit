@@ -48,3 +48,15 @@ std::vector<std::string> str_split(const std::string &str, const std::string &se
 	}
 	return res;
 }
+
+std::string str_replace(std::string search, std::string replace, std::string subject){
+	if ( subject.empty() ) return subject;
+
+	size_t start_pos = 0;
+	while( ( start_pos = subject.find(search, start_pos) ) != std::string::npos ){
+		subject.replace(start_pos, search.length(), replace);
+		start_pos += replace.length();
+	}
+
+	return subject;
+}
