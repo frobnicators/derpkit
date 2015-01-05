@@ -82,106 +82,113 @@ void WebSocket::update() {
 			} else if(s > 0) {
 				const unsigned char* data = (const unsigned char*)client->sck->buffer();
 
-				// Read frame
-				char fin = (data[0] >> 7) & 0x1;
-				char rsv = (data[0] >> 4) & 0x7;
+				while(s > 0) {
+					// Read frame
+					char fin = (data[0] >> 7) & 0x1;
+					char rsv = (data[0] >> 4) & 0x7;
 
-				if(fin != 0x1) {
-					Logging::error(websocket_log, "Fragmented messages are not supported\n");
-					return;
-				}
-
-				if(rsv != 0) {
-					Logging::error(websocket_log, "RSV must be 0!\n");
-					close(client);
-					return;
-				}
-
-				size_t payload_size;
-
-				char opcode = data[0] & 0xF;
-				char mask_bit = (data[1] >> 7) & 0x1;
-				char payload_length = data[1] & 0x7f;
-
-				if(mask_bit != 1) {
-					// RFC requires clients to always use MASK
-					Logging::error(websocket_log, "Mask bit was not set!\n");
-					close(client);
-					return;
-				}
-
-				int next_byte = 2;
-
-				if(payload_length < 0) {
-					Logging::error(websocket_log, "Invalid payload: %d\n", payload_length);
-					close(client);
-					return;
-				} else if(payload_length < 126) {
-					payload_size = payload_length;
-				} else if(payload_length == 126) {
-					uint16_t pl;
-					char* p = (char*)&pl;
-					p[0] = data[next_byte++];
-					p[1] = data[next_byte++];
-					payload_size = network::network_to_host_order(pl);
-				} else if(payload_length == 127) {
-					// 64 bit payload size? Madness!
-					Logging::error(websocket_log, "64 bit payload length not supported\n");
-					close(client);
-					return;
-				}
-
-				uint32_t mask;
-				char* mask_ptr = (char*)&mask;
-				mask_ptr[0] = data[next_byte++];
-				mask_ptr[1] = data[next_byte++];
-				mask_ptr[2] = data[next_byte++];
-				mask_ptr[3] = data[next_byte++];
-
-				char* payload = new char[payload_size];
-				memcpy(payload, data + next_byte, payload_size);
-
-				// Unmask
-				for(size_t i=0; i<payload_size; ++i) {
-					payload[i] ^= mask_ptr[i % 4];
-				}
-
-				switch(opcode) {
-					case 0x0:
-						Logging::error(websocket_log, "Continuation frames not supported\n");
+					if(fin != 0x1) {
+						Logging::error(websocket_log, "Fragmented messages are not supported\n");
 						return;
-					case 0x1:
-						{
-							// text
-							std::string msg(payload, payload_size);
-							if(m_text_data_callback) {
-								m_text_data_callback(client, msg);
-							} else {
-								Logging::warning(websocket_log, "Got text message, but no text data callback registered (%s).\n", msg.c_str());
-							}
-						}
-						break;
-					case 0x2:
-						if(m_binary_data_callback) {
-							m_binary_data_callback(client, payload, payload_size);
-						} else {
-							Logging::warning(websocket_log, "Got binary message, but no binary data callback registered.\n");
-						}
-						break;
-					// Control frames:
-					case 0x8:
-						Logging::info(websocket_log, "Client closed connection.\n");
-						close(client);
-						break;
-					case 0x9:
-						send_frame(client, 0xA, payload, static_cast<uint16_t>(payload_size));
-						break;
-					case 0xA:
-						// pong (whatever)
-						break;
-				}
+					}
 
-				delete[] payload;
+					if(rsv != 0) {
+						Logging::error(websocket_log, "RSV must be 0!\n");
+						close(client);
+						return;
+					}
+
+					size_t payload_size;
+
+					char opcode = data[0] & 0xF;
+					char mask_bit = (data[1] >> 7) & 0x1;
+					char payload_length = data[1] & 0x7f;
+
+					if(mask_bit != 1) {
+						// RFC requires clients to always use MASK
+						Logging::error(websocket_log, "Mask bit was not set!\n");
+						close(client);
+						return;
+					}
+
+					int next_byte = 2;
+
+					if(payload_length < 0) {
+						Logging::error(websocket_log, "Invalid payload: %d\n", payload_length);
+						close(client);
+						return;
+					} else if(payload_length < 126) {
+						payload_size = payload_length;
+					} else if(payload_length == 126) {
+						uint16_t pl;
+						char* p = (char*)&pl;
+						p[0] = data[next_byte++];
+						p[1] = data[next_byte++];
+						payload_size = network::network_to_host_order(pl);
+					} else if(payload_length == 127) {
+						// 64 bit payload size? Madness!
+						Logging::error(websocket_log, "64 bit payload length not supported\n");
+						close(client);
+						return;
+					}
+
+					uint32_t mask;
+					char* mask_ptr = (char*)&mask;
+					mask_ptr[0] = data[next_byte++];
+					mask_ptr[1] = data[next_byte++];
+					mask_ptr[2] = data[next_byte++];
+					mask_ptr[3] = data[next_byte++];
+
+					char* payload = new char[payload_size];
+					memcpy(payload, data + next_byte, payload_size);
+
+					// Unmask
+					for(size_t i=0; i<payload_size; ++i) {
+						payload[i] ^= mask_ptr[i % 4];
+					}
+
+					switch(opcode) {
+						case 0x0:
+							Logging::error(websocket_log, "Continuation frames not supported\n");
+							return;
+						case 0x1:
+							{
+								// text
+								std::string msg(payload, payload_size);
+								if(m_text_data_callback) {
+									m_text_data_callback(client, msg);
+								} else {
+									Logging::warning(websocket_log, "Got text message, but no text data callback registered (%s).\n", msg.c_str());
+								}
+							}
+							break;
+						case 0x2:
+							if(m_binary_data_callback) {
+								m_binary_data_callback(client, payload, payload_size);
+							} else {
+								Logging::warning(websocket_log, "Got binary message, but no binary data callback registered.\n");
+							}
+							break;
+						// Control frames:
+						case 0x8:
+							Logging::info(websocket_log, "Client closed connection.\n");
+							close(client);
+							break;
+						case 0x9:
+							send_frame(client, 0xA, payload, static_cast<uint16_t>(payload_size));
+							break;
+						case 0xA:
+							// pong (whatever)
+							break;
+					}
+
+					delete[] payload;
+
+					s -= (next_byte);
+					s -= payload_size;
+
+					data += (next_byte + payload_size);
+				}
 			}
 		} else {
 			// Handle handshake
