@@ -10,8 +10,11 @@ AM_SILENT_RULES([yes])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile libderpkit.pc])
+AC_CHECK_FUNCS([access stat])
 AH_BOTTOM([
-#include "derpkit/forward.hpp"
+#include "platform.hpp"
+#include <derpkit/forward.hpp>
+#include <derpkit/export.hpp>
 using namespace derpkit;
 ])
 
