@@ -24,6 +24,41 @@ static long file_size(FILE* fp){
 
 	return bytes;
 }
+class JsonCall {
+	public:
+		JsonCall();
+		JsonCall(const JsonCall&) = delete;
+		virtual ~JsonCall();
+
+		void set(const char* key, const char* val);
+		void set(const char* key, int val);
+		void set(const char* key, float val);
+		void set(const char* key, bool val);
+		void set(const char* key, json_object* obj);
+
+		const char* str() const;
+	protected:
+		json_object* m_json;
+		json_object* m_data;
+
+		void create_data();
+
+		virtual const char* data_name() const = 0;
+};
+
+class JsonRequest : public JsonCall {
+	public:
+		JsonRequest(const std::string& method_name);
+	protected:
+		virtual const char* data_name() const { return "params"; }
+};
+
+class JsonResponse : public JsonCall {
+	public:
+		JsonResponse(int id);
+	protected:
+		virtual const char* data_name() const { return "result"; }
+};
 
 class InspectorImpl {
 	public:
@@ -32,7 +67,9 @@ class InspectorImpl {
 
 		void update();
 		void set_document(const dom::Document* doc);
-	private:
+
+		void send(WebSocket::Client* client, const JsonCall* call);
+
 		const dom::Document* m_doc;
 		WebSocket m_ws;
 		int m_port;
@@ -42,7 +79,62 @@ class InspectorImpl {
 		void connected(WebSocket::Client* client);
 
 		void on_http(WebSocket::Client* client, const std::map<std::string,std::string>& headers, const std::string&);
+
+		static std::map<std::string,std::function<void(InspectorImpl*,json_object*,JsonResponse& response)>> s_method_mapping;
 };
+
+JsonRequest::JsonRequest(const std::string& method_name) {
+	json_object_object_add(m_json, "method", json_object_new_string(method_name.c_str()));
+}
+
+JsonResponse::JsonResponse(int id) {
+	json_object_object_add(m_json, "id", json_object_new_int(id));
+	create_data(); // Always send result object
+}
+
+JsonCall::JsonCall() : m_data(nullptr) {
+	m_json = json_object_new_object();
+}
+
+JsonCall::~JsonCall() {
+	json_object_put(m_json);
+}
+
+const char* JsonCall::str() const {
+	return json_object_to_json_string(m_json);
+}
+
+void JsonCall::create_data() {
+	if(m_data == nullptr) {
+		m_data = json_object_new_object();
+		json_object_object_add(m_json, data_name(), m_data);
+	}
+}
+
+void JsonCall::set(const char* key, const char* val) {
+	create_data();
+	json_object_object_add(m_data, key, json_object_new_string(val));
+}
+
+void JsonCall::set(const char* key, int val) {
+	create_data();
+	json_object_object_add(m_data, key, json_object_new_int(val));
+}
+
+void JsonCall::set(const char* key, float val) {
+	create_data();
+	json_object_object_add(m_data, key, json_object_new_double(val));
+}
+
+void JsonCall::set(const char* key, bool val) {
+	create_data();
+	json_object_object_add(m_data, key, json_object_new_boolean(val));
+}
+
+void JsonCall::set(const char* key, json_object* obj) {
+	create_data();
+	json_object_object_add(m_data, key, obj);
+}
 
 /* Implementation */
 
@@ -67,14 +159,36 @@ void InspectorImpl::set_document(const dom::Document* doc) {
 
 void InspectorImpl::message(WebSocket::Client* client, const std::string& data) {
 	printf("Got message: %s\n", data.c_str());
+
+	json_object* json = json_tokener_parse(data.c_str());
+	if(json != nullptr) {
+		json_object* idobj = json_object_object_get(json, "id");
+		json_object* methodobj = json_object_object_get(json, "method");
+		if(idobj == nullptr) {
+			Logging::error("[Inspector] Id is null\n");
+		} else if(methodobj == nullptr) {
+			Logging::error("[Inspector] Method is null\n");
+		} else {
+			int id = json_object_get_int(idobj);
+			std::string method(json_object_get_string(methodobj));
+			JsonResponse response(id);
+			auto it = s_method_mapping.find(method);
+			if(it != s_method_mapping.end()) {
+				json_object* params = json_object_object_get(json, "params");
+				it->second(this, params, response);
+			}
+			send(client, &response);
+		}
+	} else {
+		Logging::error("[Inspector] Invalid json: %s\n", data.c_str());
+	}
+	json_object_put(json);
 }
 
 void InspectorImpl::connected(WebSocket::Client* client) {
-	printf("Connected!\n");
 }
 
 static void serve_file(WebSocket& ws, WebSocket::Client* client, std::string filename) {
-
 	size_t start = filename.find_first_of("/")+1;
 	size_t end = filename.find_first_of("?");
 	if(end == std::string::npos) end = filename.length();
@@ -132,6 +246,10 @@ void InspectorImpl::on_http(WebSocket::Client* client, const std::map<std::strin
 	m_ws.close(client);
 }
 
+void InspectorImpl::send(WebSocket::Client* client, const JsonCall* call) {
+	m_ws.send_text(client, call->str());
+}
+
 /* Wrapper */
 
 Inspector::Inspector(int port) {
@@ -155,5 +273,12 @@ void Inspector::initialize() {
 void Inspector::cleanup() {
 	Socket::cleanup();
 }
+
+/* Methods */
+
+/* method mapping */
+
+std::map<std::string,std::function<void(InspectorImpl*,json_object*,JsonResponse& response)>> InspectorImpl::s_method_mapping = {
+};
 
 }
