@@ -113,7 +113,7 @@ int main(int argc, char * argv[]) {
 
 	{
 		Inspector inspector;
-		inspector.register_document(doc);
+		inspector.set_document(&doc);
 
 		while(true) {
 			utils::usleep(100);

@@ -44,7 +44,7 @@ void WebSocket::set_connected_callback(std::function<void(void)> callback) {
 	m_connected_callback = callback;
 }
 
-void WebSocket::set_http_callback(std::function<void(const std::map<std::string, std::string>& headers, const std::vector<std::string>&)> callback) {
+void WebSocket::set_http_callback(std::function<void(const std::map<std::string, std::string>& headers, const std::string&)> callback) {
 	m_http_callback = callback;
 }
 
@@ -181,12 +181,21 @@ void WebSocket::update() {
 				std::string msg = std::string((const char*)m_client->buffer());
 				std::vector<std::string> lines = str_split(msg, "\r\n", SPLIT_TRIM | SPLIT_IGNORE_EMPTY);
 				std::map<std::string,std::string> headers;
-				std::vector<std::string> data;
+				std::string request;
 
 				bool is_websocket = false;
 				bool key_found = false;
 				std::string ws_key;
-				for(const std::string& line : lines) {
+				auto it = lines.begin();
+				if(it == lines.end()) {
+					Logging::error(websocket_log, "WebSocket: No data.\n");
+					close();
+					return;
+				}
+				request = *(it++);
+
+				for(;it!=lines.end(); ++it) {
+					std::string& line = *it;
 					std::vector<std::string> key_data = str_split(line, ":", SPLIT_TRIM, 1);
 					if(key_data.size() == 2) {
 						std::string key = key_data[0];
@@ -204,13 +213,11 @@ void WebSocket::update() {
 							ws_key = data;
 							key_found = true;
 						}
-					} else {
-						data.push_back(line);
 					}
 				}
 				if(!is_websocket) {
 					if(m_http_callback) {
-						m_http_callback(headers, data);
+						m_http_callback(headers, request);
 					} else {
 						Logging::error(websocket_log, "Client is not using websockets.\n");
 						close();

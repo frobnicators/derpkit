@@ -24,7 +24,7 @@ class WebSocket {
 		 * Called each time the client uses normal http, and doesn't upgrade.
 		 * Default behaviour: Close.
 		 */
-		void set_http_callback(std::function<void(const std::map<std::string, std::string>& headers, const std::vector<std::string>& data)> callback);
+		void set_http_callback(std::function<void(const std::map<std::string, std::string>& headers, const std::string& request)> callback);
 
 		void listen();
 		bool connected() const { return m_established; }
@@ -48,7 +48,7 @@ class WebSocket {
 		std::function<void(const void* data, size_t size)> m_binary_data_callback;
 		std::function<void(const std::string& data)> m_text_data_callback;
 		std::function<void(void)> m_connected_callback;
-		std::function<void(const std::map<std::string, std::string>&, const std::vector<std::string>& )> m_http_callback;
+		std::function<void(const std::map<std::string, std::string>&, const std::string& )> m_http_callback;
 
 		void send_frame(int opcode, const void* payload, uint16_t payload_length);
 };
