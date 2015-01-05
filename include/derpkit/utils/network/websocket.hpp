@@ -16,41 +16,54 @@ class WebSocket {
 		WebSocket(int port);
 		~WebSocket();
 
-		void set_binary_data_callback(std::function<void(const void* data, size_t size)> callback);
-		void set_text_data_callback(std::function<void(const std::string& data)> callback);
-		void set_connected_callback(std::function<void(void)> callback);
+		struct Client {
+			Socket* sck;
+			bool established;
+			Client(const Client&) = delete;
+
+			bool connected() const { return established; }
+
+			Client(Socket* sck) : sck(sck), established(false) {}
+			~Client() {
+				delete sck;
+			}
+		};
+
+		void set_binary_data_callback(std::function<void(Client* client, const void* data, size_t size)> callback);
+		void set_text_data_callback(std::function<void(Client* client, const std::string& data)> callback);
+		void set_connected_callback(std::function<void(Client* client)> callback);
 
 		/**
 		 * Called each time the client uses normal http, and doesn't upgrade.
 		 * Default behaviour: Close.
 		 */
-		void set_http_callback(std::function<void(const std::map<std::string, std::string>& headers, const std::string& request)> callback);
+		void set_http_callback(std::function<void(Client* client, const std::map<std::string, std::string>& headers, const std::string& request)> callback);
 
 		void listen();
-		bool connected() const { return m_established; }
+
+		void close(Client* client);
 
 		void update();
-		void send_binary(const void* data, size_t size);
-		void send_text(const std::string& text);
+		void send_binary(Client* client, const void* data, size_t size);
+		void send_text(Client* client, const std::string& text);
 
 		/**
 		 * Send raw data on the socket (bypass websocket protocol)
 		 */
-		void send_raw(const char* data, size_t size);
-
-		void close();
+		void send_raw(Client* client, const char* data, size_t size);
 	private:
 		Socket m_socket;
-		Socket* m_client;
-		bool m_established;
+
+		std::vector<Client*> m_clients;
+		std::vector<Client*> m_closed_clients;
 		const int m_port;
 
-		std::function<void(const void* data, size_t size)> m_binary_data_callback;
-		std::function<void(const std::string& data)> m_text_data_callback;
-		std::function<void(void)> m_connected_callback;
-		std::function<void(const std::map<std::string, std::string>&, const std::string& )> m_http_callback;
+		std::function<void(Client* client,const void* data, size_t size)> m_binary_data_callback;
+		std::function<void(Client* client,const std::string& data)> m_text_data_callback;
+		std::function<void(Client* client)> m_connected_callback;
+		std::function<void(Client* client,const std::map<std::string, std::string>&, const std::string& )> m_http_callback;
 
-		void send_frame(int opcode, const void* payload, uint16_t payload_length);
+		void send_frame(Client* client, int opcode, const void* payload, uint16_t payload_length);
 };
 
 #endif

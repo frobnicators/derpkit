@@ -38,24 +38,23 @@ class InspectorImpl {
 		int m_port;
 
 		/* callbacks */
-		void message(const std::string& data);
-		void connected();
+		void message(WebSocket::Client* client, const std::string& data);
+		void connected(WebSocket::Client* client);
 
-		void on_http(const std::map<std::string,std::string>& headers, const std::string&);
+		void on_http(WebSocket::Client* client, const std::map<std::string,std::string>& headers, const std::string&);
 };
 
 /* Implementation */
 
 InspectorImpl::InspectorImpl(int port) : m_doc(nullptr), m_ws(port), m_port(port) {
 	using namespace std::placeholders;
-	m_ws.set_connected_callback(std::bind(&InspectorImpl::connected, this));
-	m_ws.set_text_data_callback(std::bind(&InspectorImpl::message, this, _1));
-	m_ws.set_http_callback(std::bind(&InspectorImpl::on_http, this, _1, _2));
+	m_ws.set_connected_callback(std::bind(&InspectorImpl::connected, this, _1));
+	m_ws.set_text_data_callback(std::bind(&InspectorImpl::message, this, _1, _2));
+	m_ws.set_http_callback(std::bind(&InspectorImpl::on_http, this, _1, _2, _3));
 	m_ws.listen();
 }
 
 InspectorImpl::~InspectorImpl() {
-	m_ws.close();
 }
 
 void InspectorImpl::update() {
@@ -66,15 +65,15 @@ void InspectorImpl::set_document(const dom::Document* doc) {
 	m_doc = doc;
 }
 
-void InspectorImpl::message(const std::string& data) {
+void InspectorImpl::message(WebSocket::Client* client, const std::string& data) {
 	printf("Got message: %s\n", data.c_str());
 }
 
-void InspectorImpl::connected() {
+void InspectorImpl::connected(WebSocket::Client* client) {
 	printf("Connected!\n");
 }
 
-static void serve_file(WebSocket& ws, std::string filename) {
+static void serve_file(WebSocket& ws, WebSocket::Client* client, std::string filename) {
 
 	size_t start = filename.find_first_of("/")+1;
 	size_t end = filename.find_first_of("?");
@@ -97,11 +96,11 @@ static void serve_file(WebSocket& ws, std::string filename) {
 			"Content-Length: %lu\r\n"
 			"\r\n", filelen);
 
-		ws.send_raw(buffer, strlen(buffer));
+		ws.send_raw(client, buffer, strlen(buffer));
 
 		char* tmp = (char*)malloc(filelen);
 		if(fread(tmp, 1, filelen, file) == filelen) {
-			ws.send_raw(tmp, filelen);
+			ws.send_raw(client, tmp, filelen);
 		} else {
 			Logging::error("[Inspector] Failed to read all bytes from file %s.\n", _filename.c_str());
 		}
@@ -112,7 +111,7 @@ static void serve_file(WebSocket& ws, std::string filename) {
 	}
 }
 
-void InspectorImpl::on_http(const std::map<std::string,std::string>& headers, const std::string& request) {
+void InspectorImpl::on_http(WebSocket::Client* client, const std::map<std::string,std::string>& headers, const std::string& request) {
 	std::vector<std::string> get = str_split(request, " ");
 	if(get[0] == "GET" && get[2] == "HTTP/1.1")  {
 		if(get[1] == "/") {
@@ -123,20 +122,14 @@ void InspectorImpl::on_http(const std::map<std::string,std::string>& headers, co
 				"Connection: close\r\n"
 				"\r\n", m_port, m_port);
 
-			m_ws.send_raw(buffer, strlen(buffer));
-		} else if(get[1] == "/json/list") {
-			// Build document list response
-			json_object* jobj = json_object_new_object();
-			json_object* docs = json_object_new_array();
-
-
+			m_ws.send_raw(client, buffer, strlen(buffer));
 		} else {
-			serve_file(m_ws, get[1]);
+			serve_file(m_ws, client, get[1]);
 		}
 	} else {
 		Logging::error("[Inspector] Not a get request: %s\n", request.c_str());
 	}
-	m_ws.close();
+	m_ws.close(client);
 }
 
 /* Wrapper */
