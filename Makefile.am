@@ -14,7 +14,7 @@ if BUILD_TESTS
 check_PROGRAMS = ${TESTS}
 endif
 
-libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include
+libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Dsrcdir=\"${top_srcdir}\" -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include
 libderpkit_la_CFLAGS = ${libderpkit_la_CXXFLAGS} -Wno-unused
 libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la
 libderpkit_la_SOURCES = \
@@ -33,8 +33,10 @@ libderpkit_la_SOURCES = \
 	src/css/selector.cpp src/css/selector.hpp \
 	src/css/specificity.cpp src/css/specificity.hpp \
 	src/ffs_compat.cpp src/ffs_compat.hpp \
+	src/dom/inspector.cpp include/derpkit/dom/inspector.hpp \
 	include/derpkit/dom/document.hpp src/dom/document.cpp \
 	include/derpkit/dom/node.hpp src/dom/node.cpp \
+	include/derpkit/utils/utils.hpp src/utils/utils.cpp \
 	include/derpkit/utils/logging.hpp src/utils/logging.cpp \
 	include/derpkit/utils/base64.hpp src/utils/base64.cpp \
 	include/derpkit/utils/file.hpp src/utils/file.cpp \

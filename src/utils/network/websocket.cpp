@@ -44,6 +44,10 @@ void WebSocket::set_connected_callback(std::function<void(void)> callback) {
 	m_connected_callback = callback;
 }
 
+void WebSocket::set_http_callback(std::function<void(const std::map<std::string, std::string>& headers, const std::vector<std::string>&)> callback) {
+	m_http_callback = callback;
+}
+
 void WebSocket::listen() {
 	m_socket.listen(m_port);
 }
@@ -176,6 +180,9 @@ void WebSocket::update() {
 			} else if(s > 0) {
 				std::string msg = std::string((const char*)m_client->buffer());
 				std::vector<std::string> lines = str_split(msg, "\r\n", SPLIT_TRIM | SPLIT_IGNORE_EMPTY);
+				std::map<std::string,std::string> headers;
+				std::vector<std::string> data;
+
 				bool is_websocket = false;
 				bool key_found = false;
 				std::string ws_key;
@@ -184,6 +191,7 @@ void WebSocket::update() {
 					if(key_data.size() == 2) {
 						std::string key = key_data[0];
 						std::string data = key_data[1];
+						headers[key] = data;
 						if(key == "Upgrade") {
 							if(data == "websocket") {
 								is_websocket = true;
@@ -196,14 +204,19 @@ void WebSocket::update() {
 							ws_key = data;
 							key_found = true;
 						}
+					} else {
+						data.push_back(line);
 					}
 				}
 				if(!is_websocket) {
-					Logging::error(websocket_log, "Client is not using websockets.\n");
-					close();
+					if(m_http_callback) {
+						m_http_callback(headers, data);
+					} else {
+						Logging::error(websocket_log, "Client is not using websockets.\n");
+						close();
+					}
 					return;
-				}
-				if(!key_found) {
+				} else if(!key_found) {
 					Logging::error(websocket_log, "Sec-WebSocket-Key not found in header.\n");
 					close();
 					return;
@@ -238,6 +251,10 @@ void WebSocket::update() {
 		m_established = false;
 		if(m_client) update();
 	}
+}
+
+void WebSocket::send_raw(const char* data, size_t size) {
+	m_client->send(data, size);
 }
 
 void WebSocket::send_binary(const void* data, size_t size) {
