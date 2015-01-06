@@ -21,6 +21,7 @@ public:
 	std::map<std::string, std::string> attribute;
 	std::vector<std::string> classes;
 	std::map<std::string,NodeCSSProperty> css_properties;
+	std::map<const css::Rule*, std::vector<int>> matched_css_rules;
 	bool invalid;
 	std::string text;
 
@@ -174,6 +175,10 @@ const std::vector<std::string>& Node::classes() const {
 
 std::map<std::string,NodeCSSProperty>& Node::css_properties() {
 	return _impl->css_properties;
+}
+
+std::map<const css::Rule*, std::vector<int>>& Node::matched_css_rules() {
+	return _impl->matched_css_rules;
 }
 
 const css::Expression* Node::get_css_property(const char* property, unsigned int index) const {

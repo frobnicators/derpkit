@@ -75,6 +75,8 @@ class DERPKIT_EXPORT Selector {
 		}
 
 		void print() const;
+
+		std::string to_string() const;
 	private:
 		std::vector<SelectorUnit> m_units;
 		Specificity m_specificity;

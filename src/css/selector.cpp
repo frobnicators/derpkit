@@ -4,6 +4,7 @@
 
 #include <derpkit/css/selector.hpp>
 #include <derpkit/css/css.hpp>
+#include <sstream>
 
 namespace css {
 
@@ -127,6 +128,12 @@ std::ostream& operator<<(std::ostream& os, const SelectorAtom& atom) {
 			break;
 	}
 	return os;
+}
+
+std::string Selector::to_string() const {
+	std::stringstream ss;
+	ss << *this;
+	return ss.str();
 }
 
 std::ostream& operator<<(std::ostream& os, const SelectorUnit& unit) {
