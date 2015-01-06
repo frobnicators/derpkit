@@ -8,6 +8,10 @@
 #include <map>
 #include <memory>
 
+namespace css {
+	class Rule;
+};
+
 namespace dom {
 
 struct NodeCSSProperty {
@@ -50,6 +54,11 @@ public:
 	std::map<std::string,NodeCSSProperty>& css_properties();
 	const css::Expression* get_css_property(const char* property, unsigned int index = 0) const;
 	const css::Expression* get_css_property(const char* property, unsigned int index, unsigned int &count) const;
+
+	/**
+	 * Map from rule to list of matched selector indices
+	 */
+	std::map<const css::Rule*, std::vector<int>>& matched_css_rules();
 
 	void attach(Node);
 	void detach();

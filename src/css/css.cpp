@@ -374,15 +374,17 @@ void CSS::parse_expr(ANTLR3_BASE_TREE_struct * node, Expression& expr) {
 void CSS::apply_to_document(dom::Document& doc) const {
 	for(const auto& rule : rules()) {
 		const std::vector<Property>& properties = rule.properties();
-		for(const auto& selector : rule.selectors()) {
+		for(unsigned int s = 0; s<rule.selectors().size(); ++s) {
+			const auto& selector = rule.selectors()[s];
 			std::vector<dom::Node> nodes = doc.find(selector);
 			if(nodes.empty()) continue;
 
-			for(const auto& property : properties) {
-				Specificity specificity = selector.specificity();
-				specificity.important = property.important ? 1 : 0;
-				for(auto& node : nodes) {
-					std::map<std::string,dom::NodeCSSProperty>& node_properties = node.css_properties();
+			for(auto& node : nodes) {
+				node.matched_css_rules()[&rule].push_back(static_cast<int>(s));
+				std::map<std::string,dom::NodeCSSProperty>& node_properties = node.css_properties();
+				for(const auto& property : properties) {
+					Specificity specificity = selector.specificity();
+					specificity.important = property.important ? 1 : 0;
 					auto it = node_properties.find(property.property);
 					if(it != node_properties.end()) {
 						if(it->second.specificity < specificity) {
