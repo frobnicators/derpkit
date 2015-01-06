@@ -1,10 +1,11 @@
 WebInspector.ProfileType=function(id,name)
-{WebInspector.Object.call(this);this._id=id;this._name=name;this._profiles=[];this._profileBeingRecorded=null;this._nextProfileUid=1;window.addEventListener("unload",this._clearTempStorage.bind(this),false);}
+{WebInspector.Object.call(this);this._id=id;this._name=name;this._profiles=[];this._profileBeingRecorded=null;this._nextProfileUid=1;if(!window.opener)
+window.addEventListener("unload",this._clearTempStorage.bind(this),false);}
 WebInspector.ProfileType.Events={AddProfileHeader:"add-profile-header",ProfileComplete:"profile-complete",RemoveProfileHeader:"remove-profile-header",ViewUpdated:"view-updated"}
 WebInspector.ProfileType.prototype={nextProfileUid:function()
 {return this._nextProfileUid;},hasTemporaryView:function()
 {return false;},fileExtension:function()
-{return null;},get statusBarItems()
+{return null;},statusBarItems:function()
 {return[];},get buttonTooltip()
 {return"";},get id()
 {return this._id;},get treeItemTitle()
@@ -31,8 +32,8 @@ return;this._profiles.splice(index,1);this._disposeProfile(profile);},_clearTemp
 this._profiles[i].removeTempFile();},profileBeingRecorded:function()
 {return this._profileBeingRecorded;},setProfileBeingRecorded:function(profile)
 {if(this._profileBeingRecorded&&this._profileBeingRecorded.target())
-WebInspector.profilingLock().release();if(profile&&profile.target())
-WebInspector.profilingLock().acquire();this._profileBeingRecorded=profile;},profileBeingRecordedRemoved:function()
+WebInspector.targetManager.resumeAllTargets();if(profile&&profile.target())
+WebInspector.targetManager.suspendAllTargets();this._profileBeingRecorded=profile;},profileBeingRecordedRemoved:function()
 {},_reset:function()
 {var profiles=this._profiles.slice(0);for(var i=0;i<profiles.length;++i)
 this._disposeProfile(profiles[i]);this._profiles=[];this._nextProfileUid=1;},_disposeProfile:function(profile)
@@ -53,7 +54,6 @@ WebInspector.ProfileHeader.prototype={target:function()
 {throw new Error("Not implemented.");},removeTempFile:function()
 {if(this._tempFile)
 this._tempFile.remove();},dispose:function()
-{},load:function(callback)
 {},canSaveToFile:function()
 {return false;},saveToFile:function()
 {throw new Error("Needs implemented");},loadFromFile:function(file)
@@ -61,10 +61,10 @@ this._tempFile.remove();},dispose:function()
 {return this._fromFile;},setFromFile:function()
 {this._fromFile=true;},__proto__:WebInspector.Object.prototype}
 WebInspector.ProfilesPanel=function()
-{WebInspector.PanelWithSidebarTree.call(this,"profiles");this.registerRequiredCSS("panelEnablerView.css");this.registerRequiredCSS("heapProfiler.css");this.registerRequiredCSS("profilesPanel.css");this._searchableView=new WebInspector.SearchableView(this);var mainView=new WebInspector.VBox();this._searchableView.show(mainView.element);mainView.show(this.mainElement());this.profilesItemTreeElement=new WebInspector.ProfilesSidebarTreeElement(this);this.sidebarTree.appendChild(this.profilesItemTreeElement);this.profileViews=document.createElement("div");this.profileViews.id="profile-views";this.profileViews.classList.add("vbox");this._searchableView.element.appendChild(this.profileViews);var statusBarContainer=document.createElementWithClass("div","profiles-status-bar");mainView.element.insertBefore(statusBarContainer,mainView.element.firstChild);this._statusBarElement=statusBarContainer.createChild("div","status-bar");this.sidebarElement().classList.add("profiles-sidebar-tree-box");var statusBarContainerLeft=document.createElementWithClass("div","profiles-status-bar");this.sidebarElement().insertBefore(statusBarContainerLeft,this.sidebarElement().firstChild);this._statusBarButtons=statusBarContainerLeft.createChild("div","status-bar");this.recordButton=new WebInspector.StatusBarButton("","record-profile-status-bar-item");this.recordButton.addEventListener("click",this.toggleRecordButton,this);this._statusBarButtons.appendChild(this.recordButton.element);this.clearResultsButton=new WebInspector.StatusBarButton(WebInspector.UIString("Clear all profiles."),"clear-status-bar-item");this.clearResultsButton.addEventListener("click",this._reset,this);this._statusBarButtons.appendChild(this.clearResultsButton.element);this._profileTypeStatusBarItemsContainer=this._statusBarElement.createChild("div");this._profileViewStatusBarItemsContainer=this._statusBarElement.createChild("div");this._profileGroups={};this._launcherView=new WebInspector.MultiProfileLauncherView(this);this._launcherView.addEventListener(WebInspector.MultiProfileLauncherView.EventTypes.ProfileTypeSelected,this._onProfileTypeSelected,this);this._profileToView=[];this._typeIdToSidebarSection={};var types=WebInspector.ProfileTypeRegistry.instance.profileTypes();for(var i=0;i<types.length;i++)
-this._registerProfileType(types[i]);this._launcherView.restoreSelectedProfileType();this.profilesItemTreeElement.select();this._showLauncherView();this._createFileSelectorElement();this.element.addEventListener("contextmenu",this._handleContextMenuEvent.bind(this),true);this._registerShortcuts();WebInspector.profilingLock().addEventListener(WebInspector.Lock.Events.StateChanged,this._onProfilingStateChanged,this);}
+{WebInspector.PanelWithSidebarTree.call(this,"profiles");this.registerRequiredCSS("ui/panelEnablerView.css");this.registerRequiredCSS("profiler/heapProfiler.css");this.registerRequiredCSS("profiler/profilesPanel.css");var mainView=new WebInspector.VBox();this.splitView().setMainView(mainView);this.profilesItemTreeElement=new WebInspector.ProfilesSidebarTreeElement(this);this.sidebarTree.appendChild(this.profilesItemTreeElement);this.profileViews=createElement("div");this.profileViews.id="profile-views";this.profileViews.classList.add("vbox");mainView.element.appendChild(this.profileViews);this._statusBarElement=createElementWithClass("div","profiles-status-bar");mainView.element.insertBefore(this._statusBarElement,mainView.element.firstChild);this.panelSidebarElement().classList.add("profiles-sidebar-tree-box");var statusBarContainerLeft=createElementWithClass("div","profiles-status-bar");this.panelSidebarElement().insertBefore(statusBarContainerLeft,this.panelSidebarElement().firstChild);var statusBar=new WebInspector.StatusBar(statusBarContainerLeft);this.recordButton=new WebInspector.StatusBarButton("","record-status-bar-item");this.recordButton.addEventListener("click",this.toggleRecordButton,this);statusBar.appendStatusBarItem(this.recordButton);this.clearResultsButton=new WebInspector.StatusBarButton(WebInspector.UIString("Clear all profiles."),"clear-status-bar-item");this.clearResultsButton.addEventListener("click",this._reset,this);statusBar.appendStatusBarItem(this.clearResultsButton);this._profileTypeStatusBar=new WebInspector.StatusBar(this._statusBarElement);this._profileViewStatusBar=new WebInspector.StatusBar(this._statusBarElement);this._profileGroups={};this._launcherView=new WebInspector.MultiProfileLauncherView(this);this._launcherView.addEventListener(WebInspector.MultiProfileLauncherView.EventTypes.ProfileTypeSelected,this._onProfileTypeSelected,this);this._profileToView=[];this._typeIdToSidebarSection={};var types=WebInspector.ProfileTypeRegistry.instance.profileTypes();for(var i=0;i<types.length;i++)
+this._registerProfileType(types[i]);this._launcherView.restoreSelectedProfileType();this.profilesItemTreeElement.select();this._showLauncherView();this._createFileSelectorElement();this.element.addEventListener("contextmenu",this._handleContextMenuEvent.bind(this),true);this._registerShortcuts();WebInspector.targetManager.addEventListener(WebInspector.TargetManager.Events.SuspendStateChanged,this._onSuspendStateChanged,this);}
 WebInspector.ProfilesPanel.prototype={searchableView:function()
-{return this._searchableView;},_createFileSelectorElement:function()
+{return this.visibleView&&this.visibleView.searchableView?this.visibleView.searchableView():null;},_createFileSelectorElement:function()
 {if(this._fileSelectorElement)
 this.element.removeChild(this._fileSelectorElement);this._fileSelectorElement=WebInspector.createFileSelectorElement(this._loadFromFile.bind(this));this.element.appendChild(this._fileSelectorElement);},_findProfileTypeByExtension:function(fileName)
 {var types=WebInspector.ProfileTypeRegistry.instance.profileTypes();for(var i=0;i<types.length;i++){var type=types[i];var extension=type.fileExtension();if(!extension)
@@ -80,22 +80,20 @@ profileType.loadFromFile(file);},toggleRecordButton:function()
 {if(!this.recordButton.enabled())
 return true;var type=this._selectedProfileType;var isProfiling=type.buttonClicked();this._updateRecordButton(isProfiling);if(isProfiling){this._launcherView.profileStarted();if(type.hasTemporaryView())
 this.showProfile(type.profileBeingRecorded());}else{this._launcherView.profileFinished();}
-return true;},_onProfilingStateChanged:function()
-{this._updateRecordButton(this.recordButton.toggled);},_updateRecordButton:function(toggled)
-{if(Runtime.experiments.isEnabled("disableAgentsWhenProfile"))
-WebInspector.inspectorView.setCurrentPanelLocked(toggled);var isAcquiredInSomeTarget=WebInspector.profilingLock().isAcquired();var enable=toggled||!isAcquiredInSomeTarget;this.recordButton.setEnabled(enable);this.recordButton.toggled=toggled;if(enable)
-this.recordButton.title=this._selectedProfileType?this._selectedProfileType.buttonTooltip:"";else
-this.recordButton.title=WebInspector.anotherProfilerActiveLabel();if(this._selectedProfileType)
+return true;},_onSuspendStateChanged:function()
+{this._updateRecordButton(this.recordButton.toggled());},_updateRecordButton:function(toggled)
+{var enable=toggled||!WebInspector.targetManager.allTargetsSuspended();this.recordButton.setEnabled(enable);this.recordButton.setToggled(toggled);if(enable)
+this.recordButton.setTitle(this._selectedProfileType?this._selectedProfileType.buttonTooltip:"");else
+this.recordButton.setTitle(WebInspector.anotherProfilerActiveLabel());if(this._selectedProfileType)
 this._launcherView.updateProfileType(this._selectedProfileType,enable);},_profileBeingRecordedRemoved:function()
 {this._updateRecordButton(false);this._launcherView.profileFinished();},_onProfileTypeSelected:function(event)
 {this._selectedProfileType=(event.data);this._updateProfileTypeSpecificUI();},_updateProfileTypeSpecificUI:function()
-{this._updateRecordButton(this.recordButton.toggled);this._profileTypeStatusBarItemsContainer.removeChildren();var statusBarItems=this._selectedProfileType.statusBarItems;if(statusBarItems){for(var i=0;i<statusBarItems.length;++i)
-this._profileTypeStatusBarItemsContainer.appendChild(statusBarItems[i]);}},_reset:function()
+{this._updateRecordButton(this.recordButton.toggled());this._profileTypeStatusBar.removeStatusBarItems();var statusBarItems=this._selectedProfileType.statusBarItems();for(var i=0;i<statusBarItems.length;++i)
+this._profileTypeStatusBar.appendStatusBarItem(statusBarItems[i]);},_reset:function()
 {WebInspector.Panel.prototype.reset.call(this);var types=WebInspector.ProfileTypeRegistry.instance.profileTypes();for(var i=0;i<types.length;i++)
-types[i]._reset();delete this.visibleView;delete this.currentQuery;this.searchCanceled();this._profileGroups={};this._updateRecordButton(false);this._launcherView.profileFinished();this.sidebarTree.element.classList.remove("some-expandable");this._launcherView.detach();this.profileViews.removeChildren();this._profileViewStatusBarItemsContainer.removeChildren();this.removeAllListeners();this.recordButton.visible=true;this._profileViewStatusBarItemsContainer.classList.remove("hidden");this.clearResultsButton.element.classList.remove("hidden");this.profilesItemTreeElement.select();this._showLauncherView();},_showLauncherView:function()
-{this.closeVisibleView();this._profileViewStatusBarItemsContainer.removeChildren();this._launcherView.show(this.profileViews);this.visibleView=this._launcherView;},_registerProfileType:function(profileType)
-{this._launcherView.addProfileType(profileType);var profileTypeSection=new WebInspector.ProfileTypeSidebarSection(this,profileType);this._typeIdToSidebarSection[profileType.id]=profileTypeSection
-this.sidebarTree.appendChild(profileTypeSection);profileTypeSection.childrenListElement.addEventListener("contextmenu",this._handleContextMenuEvent.bind(this),true);function onAddProfileHeader(event)
+types[i]._reset();delete this.visibleView;this._profileGroups={};this._updateRecordButton(false);this._launcherView.profileFinished();this.sidebarTree.element.classList.remove("some-expandable");this._launcherView.detach();this.profileViews.removeChildren();this._profileViewStatusBar.removeStatusBarItems();this.removeAllListeners();this.recordButton.setVisible(true);this._profileViewStatusBar.element.classList.remove("hidden");this.clearResultsButton.element.classList.remove("hidden");this.profilesItemTreeElement.select();this._showLauncherView();},_showLauncherView:function()
+{this.closeVisibleView();this._profileViewStatusBar.removeStatusBarItems();this._launcherView.show(this.profileViews);this.visibleView=this._launcherView;},_registerProfileType:function(profileType)
+{this._launcherView.addProfileType(profileType);var profileTypeSection=new WebInspector.ProfileTypeSidebarSection(this,profileType);this._typeIdToSidebarSection[profileType.id]=profileTypeSection;this.sidebarTree.appendChild(profileTypeSection);profileTypeSection.childrenListElement.addEventListener("contextmenu",this._handleContextMenuEvent.bind(this),true);function onAddProfileHeader(event)
 {this._addProfileHeader((event.data));}
 function onRemoveProfileHeader(event)
 {this._removeProfileHeader((event.data));}
@@ -107,7 +105,7 @@ this._addProfileHeader(profiles[i]);},_handleContextMenuEvent:function(event)
 element=element.parentElement;if(!element)
 return;if(element.treeElement&&element.treeElement.handleContextMenuEvent){element.treeElement.handleContextMenuEvent(event,this);return;}
 var contextMenu=new WebInspector.ContextMenu(event);if(this.visibleView instanceof WebInspector.HeapSnapshotView){this.visibleView.populateContextMenu(contextMenu,event);}
-if(element!==this.element||event.srcElement===this.sidebarElement()){contextMenu.appendItem(WebInspector.UIString("Load\u2026"),this._fileSelectorElement.click.bind(this._fileSelectorElement));}
+if(element!==this.element||event.srcElement===this.panelSidebarElement()){contextMenu.appendItem(WebInspector.UIString("Load\u2026"),this._fileSelectorElement.click.bind(this._fileSelectorElement));}
 contextMenu.show();},showLoadFromFileDialog:function()
 {this._fileSelectorElement.click();},_addProfileHeader:function(profile)
 {var profileType=profile.profileType();var typeId=profileType.id;this._typeIdToSidebarSection[typeId].addProfileHeader(profile);if(!this.visibleView||this.visibleView===this._launcherView)
@@ -117,33 +115,16 @@ this._profileBeingRecordedRemoved();var i=this._indexOfViewForProfile(profile);i
 this._profileToView.splice(i,1);var profileType=profile.profileType();var typeId=profileType.id;var sectionIsEmpty=this._typeIdToSidebarSection[typeId].removeProfileHeader(profile);if(sectionIsEmpty){this.profilesItemTreeElement.select();this._showLauncherView();}},showProfile:function(profile)
 {if(!profile||(profile.profileType().profileBeingRecorded()===profile)&&!profile.profileType().hasTemporaryView())
 return null;var view=this._viewForProfile(profile);if(view===this.visibleView)
-return view;this.closeVisibleView();view.show(this.profileViews);this.visibleView=view;var profileTypeSection=this._typeIdToSidebarSection[profile.profileType().id];var sidebarElement=profileTypeSection.sidebarElementForProfile(profile);sidebarElement.revealAndSelect();this._profileViewStatusBarItemsContainer.removeChildren();var statusBarItems=view.statusBarItems;if(statusBarItems)
-for(var i=0;i<statusBarItems.length;++i)
-this._profileViewStatusBarItemsContainer.appendChild(statusBarItems[i]);return view;},showObject:function(snapshotObjectId,perspectiveName)
-{var heapProfiles=WebInspector.ProfileTypeRegistry.instance.heapSnapshotProfileType.getProfiles();for(var i=0;i<heapProfiles.length;i++){var profile=heapProfiles[i];if(profile.maxJSObjectId>=snapshotObjectId){this.showProfile(profile);var view=this._viewForProfile(profile);view.highlightLiveObject(perspectiveName,snapshotObjectId);break;}}},_viewForProfile:function(profile)
+return view;this.closeVisibleView();view.show(this.profileViews);view.focus();this.visibleView=view;var profileTypeSection=this._typeIdToSidebarSection[profile.profileType().id];var sidebarElement=profileTypeSection.sidebarElementForProfile(profile);sidebarElement.revealAndSelect();this._profileViewStatusBar.removeStatusBarItems();var statusBarItems=view.statusBarItems();for(var i=0;i<statusBarItems.length;++i)
+this._profileViewStatusBar.appendStatusBarItem(statusBarItems[i]);return view;},showObject:function(snapshotObjectId,perspectiveName)
+{var heapProfiles=WebInspector.ProfileTypeRegistry.instance.heapSnapshotProfileType.getProfiles();for(var i=0;i<heapProfiles.length;i++){var profile=heapProfiles[i];if(profile.maxJSObjectId>=snapshotObjectId){this.showProfile(profile);var view=this._viewForProfile(profile);view.selectLiveObject(perspectiveName,snapshotObjectId);break;}}},_viewForProfile:function(profile)
 {var index=this._indexOfViewForProfile(profile);if(index!==-1)
 return this._profileToView[index].view;var view=profile.createView(this);view.element.classList.add("profile-view");this._profileToView.push({profile:profile,view:view});return view;},_indexOfViewForProfile:function(profile)
 {for(var i=0;i<this._profileToView.length;i++){if(this._profileToView[i].profile===profile)
 return i;}
 return-1;},closeVisibleView:function()
 {if(this.visibleView)
-this.visibleView.detach();delete this.visibleView;},performSearch:function(query,shouldJump,jumpBackwards)
-{this.searchCanceled();var visibleView=this.visibleView;if(!visibleView)
-return;function finishedCallback(view,searchMatches)
-{if(!searchMatches)
-return;this._searchableView.updateSearchMatchesCount(searchMatches);this._searchResultsView=view;if(shouldJump){if(jumpBackwards)
-view.jumpToLastSearchResult();else
-view.jumpToFirstSearchResult();this._searchableView.updateCurrentMatchIndex(view.currentSearchResultIndex());}}
-visibleView.currentQuery=query;visibleView.performSearch(query,finishedCallback.bind(this));},jumpToNextSearchResult:function()
-{if(!this._searchResultsView)
-return;if(this._searchResultsView!==this.visibleView)
-return;this._searchResultsView.jumpToNextSearchResult();this._searchableView.updateCurrentMatchIndex(this._searchResultsView.currentSearchResultIndex());},jumpToPreviousSearchResult:function()
-{if(!this._searchResultsView)
-return;if(this._searchResultsView!==this.visibleView)
-return;this._searchResultsView.jumpToPreviousSearchResult();this._searchableView.updateCurrentMatchIndex(this._searchResultsView.currentSearchResultIndex());},searchCanceled:function()
-{if(this._searchResultsView){if(this._searchResultsView.searchCanceled)
-this._searchResultsView.searchCanceled();this._searchResultsView.currentQuery=null;this._searchResultsView=null;}
-this._searchableView.updateSearchMatchesCount(0);},appendApplicableItems:function(event,contextMenu,target)
+this.visibleView.detach();delete this.visibleView;},appendApplicableItems:function(event,contextMenu,target)
 {if(!(target instanceof WebInspector.RemoteObject))
 return;if(WebInspector.inspectorView.currentPanel()!==this)
 return;var object=(target);var objectId=object.objectId;if(!objectId)
@@ -154,7 +135,7 @@ function didReceiveHeapObjectId(viewName,error,result)
 {if(WebInspector.inspectorView.currentPanel()!==this)
 return;if(!error)
 this.showObject(result,viewName);}
-contextMenu.appendItem(WebInspector.UIString(WebInspector.useLowerCaseMenuTitles()?"Reveal in Summary view":"Reveal in Summary View"),revealInView.bind(this,"Summary"));},__proto__:WebInspector.PanelWithSidebarTree.prototype}
+contextMenu.appendItem(WebInspector.UIString.capitalize("Reveal in Summary ^view"),revealInView.bind(this,"Summary"));},__proto__:WebInspector.PanelWithSidebarTree.prototype}
 WebInspector.ProfileTypeSidebarSection=function(dataDisplayDelegate,profileType)
 {WebInspector.SidebarSectionTreeElement.call(this,profileType.treeItemTitle,null,true);this._dataDisplayDelegate=dataDisplayDelegate;this._profileTreeElements=[];this._profileGroups={};this.hidden=true;}
 WebInspector.ProfileTypeSidebarSection.ProfileGroup=function()
@@ -178,7 +159,7 @@ return-1;},__proto__:WebInspector.SidebarSectionTreeElement.prototype}
 WebInspector.ProfilesPanel.ContextMenuProvider=function()
 {}
 WebInspector.ProfilesPanel.ContextMenuProvider.prototype={appendApplicableItems:function(event,contextMenu,target)
-{WebInspector.inspectorView.panel("profiles").appendApplicableItems(event,contextMenu,target);}}
+{WebInspector.ProfilesPanel._instance().appendApplicableItems(event,contextMenu,target);}}
 WebInspector.ProfileSidebarTreeElement=function(dataDisplayDelegate,profile,className)
 {this._dataDisplayDelegate=dataDisplayDelegate;this.profile=profile;WebInspector.SidebarTreeElement.call(this,className,profile.title,"",profile,false);this.refreshTitles();profile.addEventListener(WebInspector.ProfileHeader.Events.UpdateStatus,this._updateStatus,this);if(profile.canSaveToFile())
 this._createSaveLink();else
@@ -204,8 +185,17 @@ WebInspector.ProfilesSidebarTreeElement=function(panel)
 {this._panel=panel;this.small=false;WebInspector.SidebarTreeElement.call(this,"profile-launcher-view-tree-item",WebInspector.UIString("Profiles"),"",null,false);}
 WebInspector.ProfilesSidebarTreeElement.prototype={onselect:function()
 {this._panel._showLauncherView();return true;},get selectable()
-{return true;},__proto__:WebInspector.SidebarTreeElement.prototype};WebInspector.ProfileDataGridNode=function(profileNode,owningTree,hasChildren)
-{this.profileNode=profileNode;WebInspector.DataGridNode.call(this,null,hasChildren);this.tree=owningTree;this.childrenByCallUID={};this.lastComparator=null;this.callUID=profileNode.callUID;this.selfTime=profileNode.selfTime;this.totalTime=profileNode.totalTime;this.functionName=WebInspector.CPUProfileDataModel.beautifyFunctionName(profileNode.functionName);this._deoptReason=(!profileNode.deoptReason||profileNode.deoptReason==="no reason")?"":profileNode.deoptReason;this.url=profileNode.url;}
+{return true;},__proto__:WebInspector.SidebarTreeElement.prototype}
+WebInspector.ProfilesPanel.show=function()
+{WebInspector.inspectorView.setCurrentPanel(WebInspector.ProfilesPanel._instance());}
+WebInspector.ProfilesPanel._instance=function()
+{if(!WebInspector.ProfilesPanel._instanceObject)
+WebInspector.ProfilesPanel._instanceObject=new WebInspector.ProfilesPanel();return WebInspector.ProfilesPanel._instanceObject;}
+WebInspector.ProfilesPanelFactory=function()
+{}
+WebInspector.ProfilesPanelFactory.prototype={createPanel:function()
+{return WebInspector.ProfilesPanel._instance();}};WebInspector.ProfileDataGridNode=function(profileNode,owningTree,hasChildren)
+{this.profileNode=profileNode;WebInspector.DataGridNode.call(this,null,hasChildren);this.tree=owningTree;this.childrenByCallUID={};this.lastComparator=null;this.callUID=profileNode.callUID;this.selfTime=profileNode.selfTime;this.totalTime=profileNode.totalTime;this.functionName=WebInspector.beautifyFunctionName(profileNode.functionName);this._deoptReason=(!profileNode.deoptReason||profileNode.deoptReason==="no reason")?"":profileNode.deoptReason;this.url=profileNode.url;}
 WebInspector.ProfileDataGridNode.prototype={createCell:function(columnIdentifier)
 {var cell=this._createValueCell(columnIdentifier)||WebInspector.DataGridNode.prototype.createCell.call(this,columnIdentifier);if(columnIdentifier==="self"&&this._searchMatchedSelfColumn)
 cell.classList.add("highlight");else if(columnIdentifier==="total"&&this._searchMatchedTotalColumn)
@@ -215,13 +205,13 @@ cell.classList.add("not-optimized");if(this._searchMatchedFunctionColumn)
 cell.classList.add("highlight");if(this.profileNode.scriptId!=="0"){var lineNumber=this.profileNode.lineNumber?this.profileNode.lineNumber-1:0;var columnNumber=this.profileNode.columnNumber?this.profileNode.columnNumber-1:0;var target=this.tree.profileView.target();var urlElement=this.tree.profileView._linkifier.linkifyScriptLocation(target,this.profileNode.scriptId,this.profileNode.url,lineNumber,columnNumber,"profile-node-file");urlElement.style.maxWidth="75%";cell.insertBefore(urlElement,cell.firstChild);}
 return cell;},_createValueCell:function(columnIdentifier)
 {if(columnIdentifier!=="self"&&columnIdentifier!=="total")
-return null;var cell=document.createElement("td");cell.className="numeric-column";var div=document.createElement("div");var valueSpan=document.createElement("span");valueSpan.textContent=this.data[columnIdentifier];div.appendChild(valueSpan);var percentColumn=columnIdentifier+"-percent";if(percentColumn in this.data){var percentSpan=document.createElement("span");percentSpan.className="percent-column";percentSpan.textContent=this.data[percentColumn];div.appendChild(percentSpan);div.classList.add("profile-multiple-values");}
+return null;var cell=createElement("td");cell.className="numeric-column";var div=createElement("div");var valueSpan=createElement("span");valueSpan.textContent=this.data[columnIdentifier];div.appendChild(valueSpan);var percentColumn=columnIdentifier+"-percent";if(percentColumn in this.data){var percentSpan=createElement("span");percentSpan.className="percent-column";percentSpan.textContent=this.data[percentColumn];div.appendChild(percentSpan);div.classList.add("profile-multiple-values");}
 cell.appendChild(div);return cell;},buildData:function()
 {function formatMilliseconds(time)
 {return WebInspector.UIString("%.1f\u2009ms",time);}
 function formatPercent(value)
 {return WebInspector.UIString("%.2f\u2009%",value);}
-var functionName;if(this._deoptReason){var content=document.createDocumentFragment();var marker=content.createChild("span","profile-warn-marker");marker.title=WebInspector.UIString("Not optimized: %s",this._deoptReason);content.createTextChild(this.functionName);functionName=content;}else{functionName=this.functionName;}
+var functionName;if(this._deoptReason){var content=createDocumentFragment();var marker=content.createChild("span","profile-warn-marker");marker.title=WebInspector.UIString("Not optimized: %s",this._deoptReason);content.createTextChild(this.functionName);functionName=content;}else{functionName=this.functionName;}
 this.data={"function":functionName,"self-percent":formatPercent(this.selfPercent),"self":formatMilliseconds(this.selfTime),"total-percent":formatPercent(this.totalPercent),"total":formatMilliseconds(this.totalTime),};},select:function(supressSelectedEvent)
 {WebInspector.DataGridNode.prototype.select.call(this,supressSelectedEvent);this.tree.profileView._dataGridNodeSelected(this);},deselect:function(supressDeselectedEvent)
 {WebInspector.DataGridNode.prototype.deselect.call(this,supressDeselectedEvent);this.tree.profileView._dataGridNodeDeselected(this);},sort:function(comparator,force)
@@ -229,8 +219,8 @@ this.data={"function":functionName,"self-percent":formatPercent(this.selfPercent
 gridNode.shouldRefreshChildren=true;continue;}
 gridNode.lastComparator=comparator;var children=gridNode.children;var childCount=children.length;if(childCount){children.sort(comparator);for(var childIndex=0;childIndex<childCount;++childIndex)
 children[childIndex].recalculateSiblings(childIndex);gridNodeGroups.push(children);}}}},insertChild:function(profileDataGridNode,index)
-{WebInspector.DataGridNode.prototype.insertChild.call(this,profileDataGridNode,index);this.childrenByCallUID[profileDataGridNode.callUID]=profileDataGridNode;},removeChild:function(profileDataGridNode)
-{WebInspector.DataGridNode.prototype.removeChild.call(this,profileDataGridNode);delete this.childrenByCallUID[profileDataGridNode.callUID];},removeChildren:function()
+{WebInspector.DataGridNode.prototype.insertChild.call(this,profileDataGridNode,index);this.childrenByCallUID[profileDataGridNode.callUID]=(profileDataGridNode);},removeChild:function(profileDataGridNode)
+{WebInspector.DataGridNode.prototype.removeChild.call(this,profileDataGridNode);delete this.childrenByCallUID[(profileDataGridNode).callUID];},removeChildren:function()
 {WebInspector.DataGridNode.prototype.removeChildren.call(this);this.childrenByCallUID={};},findChild:function(node)
 {if(!node)
 return null;return this.childrenByCallUID[node.callUID];},get selfPercent()
@@ -266,15 +256,51 @@ WebInspector.ProfileDataGridTree.prototype={get expanded()
 return;this._savedTotalTime=this.totalTime;this._savedChildren=this.children.slice();},restore:function()
 {if(!this._savedChildren)
 return;this.children=this._savedChildren;this.totalTime=this._savedTotalTime;var children=this.children;var count=children.length;for(var index=0;index<count;++index)
-children[index].restore();this._savedChildren=null;}}
+children[index].restore();this._savedChildren=null;},performSearch:function(searchConfig,shouldJump,jumpBackwards)
+{this.searchCanceled();var query=searchConfig.query.trim();if(!query.length)
+return 0;var greaterThan=(query.startsWith(">"));var lessThan=(query.startsWith("<"));var equalTo=(query.startsWith("=")||((greaterThan||lessThan)&&query.indexOf("=")===1));var percentUnits=(query.endsWith("%"));var millisecondsUnits=(query.length>2&&query.endsWith("ms"));var secondsUnits=(!millisecondsUnits&&query.endsWith("s"));var queryNumber=parseFloat(query);if(greaterThan||lessThan||equalTo){if(equalTo&&(greaterThan||lessThan))
+queryNumber=parseFloat(query.substring(2));else
+queryNumber=parseFloat(query.substring(1));}
+var queryNumberMilliseconds=(secondsUnits?(queryNumber*1000):queryNumber);if(!isNaN(queryNumber)&&!(greaterThan||lessThan))
+equalTo=true;var matcher=createPlainTextSearchRegex(query,"i");function matchesQuery(profileDataGridNode)
+{delete profileDataGridNode._searchMatchedSelfColumn;delete profileDataGridNode._searchMatchedTotalColumn;delete profileDataGridNode._searchMatchedFunctionColumn;if(percentUnits){if(lessThan){if(profileDataGridNode.selfPercent<queryNumber)
+profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalPercent<queryNumber)
+profileDataGridNode._searchMatchedTotalColumn=true;}else if(greaterThan){if(profileDataGridNode.selfPercent>queryNumber)
+profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalPercent>queryNumber)
+profileDataGridNode._searchMatchedTotalColumn=true;}
+if(equalTo){if(profileDataGridNode.selfPercent==queryNumber)
+profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalPercent==queryNumber)
+profileDataGridNode._searchMatchedTotalColumn=true;}}else if(millisecondsUnits||secondsUnits){if(lessThan){if(profileDataGridNode.selfTime<queryNumberMilliseconds)
+profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalTime<queryNumberMilliseconds)
+profileDataGridNode._searchMatchedTotalColumn=true;}else if(greaterThan){if(profileDataGridNode.selfTime>queryNumberMilliseconds)
+profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalTime>queryNumberMilliseconds)
+profileDataGridNode._searchMatchedTotalColumn=true;}
+if(equalTo){if(profileDataGridNode.selfTime==queryNumberMilliseconds)
+profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalTime==queryNumberMilliseconds)
+profileDataGridNode._searchMatchedTotalColumn=true;}}
+if(profileDataGridNode.functionName.match(matcher)||(profileDataGridNode.url&&profileDataGridNode.url.match(matcher)))
+profileDataGridNode._searchMatchedFunctionColumn=true;if(profileDataGridNode._searchMatchedSelfColumn||profileDataGridNode._searchMatchedTotalColumn||profileDataGridNode._searchMatchedFunctionColumn){profileDataGridNode.refresh();return true;}
+return false;}
+var current=this.children[0];this._searchResults=[];while(current){if(matchesQuery(current))
+this._searchResults.push({profileNode:current});current=current.traverseNextNode(false,null,false);}
+this._searchResultIndex=jumpBackwards?0:this._searchResults.length-1;return this._searchResults.length;},searchCanceled:function()
+{if(this._searchResults){for(var i=0;i<this._searchResults.length;++i){var profileNode=this._searchResults[i].profileNode;delete profileNode._searchMatchedSelfColumn;delete profileNode._searchMatchedTotalColumn;delete profileNode._searchMatchedFunctionColumn;profileNode.refresh();}}
+this._searchResults=[];this._searchResultIndex=-1;},jumpToNextSearchResult:function()
+{if(!this._searchResults||!this._searchResults.length)
+return;this._searchResultIndex=(this._searchResultIndex+1)%this._searchResults.length;this._jumpToSearchResult(this._searchResultIndex);},jumpToPreviousSearchResult:function()
+{if(!this._searchResults||!this._searchResults.length)
+return;this._searchResultIndex=(this._searchResultIndex-1+this._searchResults.length)%this._searchResults.length;this._jumpToSearchResult(this._searchResultIndex);},currentSearchResultIndex:function()
+{return this._searchResultIndex;},_jumpToSearchResult:function(index)
+{var searchResult=this._searchResults[index];if(!searchResult)
+return;var profileNode=searchResult.profileNode;profileNode.revealAndSelect();}}
 WebInspector.ProfileDataGridTree.propertyComparators=[{},{}];WebInspector.ProfileDataGridTree.propertyComparator=function(property,isAscending)
 {var comparator=WebInspector.ProfileDataGridTree.propertyComparators[(isAscending?1:0)][property];if(!comparator){if(isAscending){comparator=function(lhs,rhs)
 {if(lhs[property]<rhs[property])
 return-1;if(lhs[property]>rhs[property])
-return 1;return 0;}}else{comparator=function(lhs,rhs)
+return 1;return 0;};}else{comparator=function(lhs,rhs)
 {if(lhs[property]>rhs[property])
 return-1;if(lhs[property]<rhs[property])
-return 1;return 0;}}
+return 1;return 0;};}
 WebInspector.ProfileDataGridTree.propertyComparators[(isAscending?1:0)][property]=comparator;}
 return comparator;};WebInspector.BottomUpProfileDataGridNode=function(profileNode,owningTree)
 {WebInspector.ProfileDataGridNode.call(this,profileNode,owningTree,this._willHaveChildren(profileNode));this._remainingNodeInfos=[];}
@@ -299,11 +325,9 @@ for(var i=0;i<container.children.length;++i)
 container.children[i].buildData();delete container._remainingNodeInfos;}
 WebInspector.BottomUpProfileDataGridTree=function(profileView,rootProfileNode)
 {WebInspector.ProfileDataGridTree.call(this,profileView,rootProfileNode);var profileNodeUIDs=0;var profileNodeGroups=[[],[rootProfileNode]];var visitedProfileNodesForCallUID={};this._remainingNodeInfos=[];for(var profileNodeGroupIndex=0;profileNodeGroupIndex<profileNodeGroups.length;++profileNodeGroupIndex){var parentProfileNodes=profileNodeGroups[profileNodeGroupIndex];var profileNodes=profileNodeGroups[++profileNodeGroupIndex];var count=profileNodes.length;for(var index=0;index<count;++index){var profileNode=profileNodes[index];if(!profileNode.UID)
-profileNode.UID=++profileNodeUIDs;if(profileNode.parent){var visitedNodes=visitedProfileNodesForCallUID[profileNode.callUID];var totalTimeAccountedFor=false;if(!visitedNodes){visitedNodes={}
-visitedProfileNodesForCallUID[profileNode.callUID]=visitedNodes;}else{var parentCount=parentProfileNodes.length;for(var parentIndex=0;parentIndex<parentCount;++parentIndex){if(visitedNodes[parentProfileNodes[parentIndex].UID]){totalTimeAccountedFor=true;break;}}}
+profileNode.UID=++profileNodeUIDs;if(profileNode.parent){var visitedNodes=visitedProfileNodesForCallUID[profileNode.callUID];var totalTimeAccountedFor=false;if(!visitedNodes){visitedNodes={};visitedProfileNodesForCallUID[profileNode.callUID]=visitedNodes;}else{var parentCount=parentProfileNodes.length;for(var parentIndex=0;parentIndex<parentCount;++parentIndex){if(visitedNodes[parentProfileNodes[parentIndex].UID]){totalTimeAccountedFor=true;break;}}}
 visitedNodes[profileNode.UID]=true;this._remainingNodeInfos.push({ancestor:profileNode,focusNode:profileNode,totalTimeAccountedFor:totalTimeAccountedFor});}
-var children=profileNode.children;if(children.length){profileNodeGroups.push(parentProfileNodes.concat([profileNode]))
-profileNodeGroups.push(children);}}}
+var children=profileNode.children;if(children.length){profileNodeGroups.push(parentProfileNodes.concat([profileNode]));profileNodeGroups.push(children);}}}
 WebInspector.ProfileDataGridNode.populate(this);return this;}
 WebInspector.BottomUpProfileDataGridTree.prototype={focus:function(profileDataGridNode)
 {if(!profileDataGridNode)
@@ -348,9 +372,7 @@ WebInspector.CPUFlameChartDataProvider.prototype={barHeight:function()
 {return this._cpuProfile.profileStartTime;},totalTime:function()
 {return this._cpuProfile.profileHead.totalTime;},maxStackDepth:function()
 {return this._maxStackDepth;},timelineData:function()
-{return this._timelineData||this._calculateTimelineData();},markerColor:function(index)
-{throw new Error("Unreachable.");},markerTitle:function(index)
-{throw new Error("Unreachable.");},_calculateTimelineData:function()
+{return this._timelineData||this._calculateTimelineData();},_calculateTimelineData:function()
 {function ChartEntry(depth,duration,startTime,selfTime,node)
 {this.depth=depth;this.duration=duration;this.startTime=startTime;this.selfTime=selfTime;this.node=node;}
 var entries=[];var stack=[];var maxDepth=5;function onOpenFrame()
@@ -365,13 +387,13 @@ return WebInspector.UIString("%.1f\u2009ms",ms);return Number.secondsToString(ms
 {var timelineData=this._timelineData;var node=this._entryNodes[entryIndex];if(!node)
 return null;var entryInfo=[];function pushEntryInfoRow(title,text)
 {var row={};row.title=title;row.text=text;entryInfo.push(row);}
-var name=WebInspector.CPUProfileDataModel.beautifyFunctionName(node.functionName);pushEntryInfoRow(WebInspector.UIString("Name"),name);var selfTime=this._millisecondsToString(this._entrySelfTimes[entryIndex]);var totalTime=this._millisecondsToString(timelineData.entryTotalTimes[entryIndex]);pushEntryInfoRow(WebInspector.UIString("Self time"),selfTime);pushEntryInfoRow(WebInspector.UIString("Total time"),totalTime);var text=this._target?WebInspector.Linkifier.liveLocationText(this._target,node.scriptId,node.lineNumber,node.columnNumber):node.url;pushEntryInfoRow(WebInspector.UIString("URL"),text);pushEntryInfoRow(WebInspector.UIString("Aggregated self time"),Number.secondsToString(node.selfTime/1000,true));pushEntryInfoRow(WebInspector.UIString("Aggregated total time"),Number.secondsToString(node.totalTime/1000,true));if(node.deoptReason&&node.deoptReason!=="no reason")
+var name=WebInspector.beautifyFunctionName(node.functionName);pushEntryInfoRow(WebInspector.UIString("Name"),name);var selfTime=this._millisecondsToString(this._entrySelfTimes[entryIndex]);var totalTime=this._millisecondsToString(timelineData.entryTotalTimes[entryIndex]);pushEntryInfoRow(WebInspector.UIString("Self time"),selfTime);pushEntryInfoRow(WebInspector.UIString("Total time"),totalTime);var text=this._target?WebInspector.Linkifier.liveLocationText(this._target,node.scriptId,node.lineNumber,node.columnNumber):node.url;pushEntryInfoRow(WebInspector.UIString("URL"),text);pushEntryInfoRow(WebInspector.UIString("Aggregated self time"),Number.secondsToString(node.selfTime/1000,true));pushEntryInfoRow(WebInspector.UIString("Aggregated total time"),Number.secondsToString(node.totalTime/1000,true));if(node.deoptReason&&node.deoptReason!=="no reason")
 pushEntryInfoRow(WebInspector.UIString("Not optimized"),node.deoptReason);return entryInfo;},canJumpToEntry:function(entryIndex)
 {return this._entryNodes[entryIndex].scriptId!=="0";},entryTitle:function(entryIndex)
-{var node=this._entryNodes[entryIndex];return WebInspector.CPUProfileDataModel.beautifyFunctionName(node.functionName);},entryFont:function(entryIndex)
+{var node=this._entryNodes[entryIndex];return WebInspector.beautifyFunctionName(node.functionName);},entryFont:function(entryIndex)
 {if(!this._font){this._font=(this.barHeight()-4)+"px "+WebInspector.fontFamily();this._boldFont="bold "+this._font;}
 var node=this._entryNodes[entryIndex];var reason=node.deoptReason;return(reason&&reason!=="no reason")?this._boldFont:this._font;},entryColor:function(entryIndex)
-{var node=this._entryNodes[entryIndex];return this._colorGenerator.colorForID(node.functionName+":"+node.url);},decorateEntry:function(entryIndex,context,text,barX,barY,barWidth,barHeight,timeToPosition)
+{var node=this._entryNodes[entryIndex];return this._colorGenerator.colorForID(node.functionName+":"+node.url);},decorateEntry:function(entryIndex,context,text,barX,barY,barWidth,barHeight)
 {return false;},forceDecoration:function(entryIndex)
 {return false;},highlightTimeRange:function(entryIndex)
 {var startTime=this._timelineData.entryStartTimes[entryIndex];return{startTime:startTime,endTime:startTime+this._timelineData.entryTotalTimes[entryIndex]};},paddingLeft:function()
@@ -381,12 +403,22 @@ WebInspector.CPUFlameChartDataProvider.colorGenerator=function()
 {if(!WebInspector.CPUFlameChartDataProvider._colorGenerator){var colorGenerator=new WebInspector.FlameChart.ColorGenerator({min:180,max:310,count:7},{min:50,max:80,count:5},{min:80,max:90,count:3});colorGenerator.setColorForID("(idle):","hsl(0, 0%, 94%)");colorGenerator.setColorForID("(program):","hsl(0, 0%, 80%)");colorGenerator.setColorForID("(garbage collector):","hsl(0, 0%, 80%)");WebInspector.CPUFlameChartDataProvider._colorGenerator=colorGenerator;}
 return WebInspector.CPUFlameChartDataProvider._colorGenerator;}
 WebInspector.CPUProfileFlameChart=function(dataProvider)
-{WebInspector.VBox.call(this);this.registerRequiredCSS("flameChart.css");this.element.id="cpu-flame-chart";this._overviewPane=new WebInspector.CPUProfileFlameChart.OverviewPane(dataProvider);this._overviewPane.show(this.element);this._mainPane=new WebInspector.FlameChart(dataProvider,this._overviewPane,true);this._mainPane.show(this.element);this._mainPane.addEventListener(WebInspector.FlameChart.Events.EntrySelected,this._onEntrySelected,this);this._overviewPane.addEventListener(WebInspector.OverviewGrid.Events.WindowChanged,this._onWindowChanged,this);}
-WebInspector.CPUProfileFlameChart.prototype={_onWindowChanged:function(event)
+{WebInspector.VBox.call(this);this.element.id="cpu-flame-chart";this._overviewPane=new WebInspector.CPUProfileFlameChart.OverviewPane(dataProvider);this._overviewPane.show(this.element);this._mainPane=new WebInspector.FlameChart(dataProvider,this._overviewPane,true);this._mainPane.show(this.element);this._mainPane.addEventListener(WebInspector.FlameChart.Events.EntrySelected,this._onEntrySelected,this);this._overviewPane.addEventListener(WebInspector.OverviewGrid.Events.WindowChanged,this._onWindowChanged,this);this._dataProvider=dataProvider;this._searchResults=[];}
+WebInspector.CPUProfileFlameChart.prototype={focus:function()
+{this._mainPane.focus();},_onWindowChanged:function(event)
 {var windowLeft=event.data.windowTimeLeft;var windowRight=event.data.windowTimeRight;this._mainPane.setWindowTimes(windowLeft,windowRight);},selectRange:function(timeLeft,timeRight)
 {this._overviewPane._selectRange(timeLeft,timeRight);},_onEntrySelected:function(event)
 {this.dispatchEventToListeners(WebInspector.FlameChart.Events.EntrySelected,event.data);},update:function()
-{this._overviewPane.update();this._mainPane.update();},__proto__:WebInspector.VBox.prototype};WebInspector.CPUProfileFlameChart.OverviewCalculator=function()
+{this._overviewPane.update();this._mainPane.update();},performSearch:function(searchConfig,shouldJump,jumpBackwards)
+{var matcher=createPlainTextSearchRegex(searchConfig.query,searchConfig.caseSensitive?"":"i");var selectedEntryIndex=this._searchResultIndex!==-1?this._searchResults[this._searchResultIndex]:-1;this._searchResults=[];var entriesCount=this._dataProvider._entryNodes.length;for(var index=0;index<entriesCount;++index){if(this._dataProvider.entryTitle(index).match(matcher))
+this._searchResults.push(index);}
+if(this._searchResults.length){this._searchResultIndex=this._searchResults.indexOf(selectedEntryIndex);if(this._searchResultIndex===-1)
+this._searchResultIndex=jumpBackwards?this._searchResults.length-1:0;this._mainPane.setSelectedEntry(this._searchResults[this._searchResultIndex]);}else
+this.searchCanceled();return this._searchResults.length;},searchCanceled:function()
+{this._mainPane.setSelectedEntry(-1);this._searchResults=[];this._searchResultIndex=-1;},jumpToNextSearchResult:function()
+{this._searchResultIndex=(this._searchResultIndex+1)%this._searchResults.length;this._mainPane.setSelectedEntry(this._searchResults[this._searchResultIndex]);},jumpToPreviousSearchResult:function()
+{this._searchResultIndex=(this._searchResultIndex-1+this._searchResults.length)%this._searchResults.length;this._mainPane.setSelectedEntry(this._searchResults[this._searchResultIndex]);},currentSearchResultIndex:function()
+{return this._searchResultIndex;},__proto__:WebInspector.VBox.prototype};WebInspector.CPUProfileFlameChart.OverviewCalculator=function()
 {}
 WebInspector.CPUProfileFlameChart.OverviewCalculator.prototype={paddingLeft:function()
 {return 0;},_updateBoundaries:function(overviewPane)
@@ -398,15 +430,16 @@ WebInspector.CPUProfileFlameChart.OverviewCalculator.prototype={paddingLeft:func
 {return this._minimumBoundaries;},boundarySpan:function()
 {return this._maximumBoundaries-this._minimumBoundaries;}}
 WebInspector.CPUProfileFlameChart.OverviewPane=function(dataProvider)
-{WebInspector.VBox.call(this);this.element.classList.add("flame-chart-overview-pane");this._overviewContainer=this.element.createChild("div","overview-container");this._overviewGrid=new WebInspector.OverviewGrid("flame-chart");this._overviewGrid.element.classList.add("fill");this._overviewCanvas=this._overviewContainer.createChild("canvas","flame-chart-overview-canvas");this._overviewContainer.appendChild(this._overviewGrid.element);this._overviewCalculator=new WebInspector.CPUProfileFlameChart.OverviewCalculator();this._dataProvider=dataProvider;this._overviewGrid.addEventListener(WebInspector.OverviewGrid.Events.WindowChanged,this._onWindowChanged,this);}
+{WebInspector.VBox.call(this);this.element.classList.add("cpu-profile-flame-chart-overview-pane");this._overviewContainer=this.element.createChild("div","cpu-profile-flame-chart-overview-container");this._overviewGrid=new WebInspector.OverviewGrid("cpu-profile-flame-chart");this._overviewGrid.element.classList.add("fill");this._overviewCanvas=this._overviewContainer.createChild("canvas","cpu-profile-flame-chart-overview-canvas");this._overviewContainer.appendChild(this._overviewGrid.element);this._overviewCalculator=new WebInspector.CPUProfileFlameChart.OverviewCalculator();this._dataProvider=dataProvider;this._overviewGrid.addEventListener(WebInspector.OverviewGrid.Events.WindowChanged,this._onWindowChanged,this);}
 WebInspector.CPUProfileFlameChart.OverviewPane.prototype={requestWindowTimes:function(windowStartTime,windowEndTime)
-{this._selectRange(windowStartTime,windowEndTime);},_selectRange:function(timeLeft,timeRight)
+{this._selectRange(windowStartTime,windowEndTime);},updateBoxSelection:function(startTime,endTime)
+{},_selectRange:function(timeLeft,timeRight)
 {var startTime=this._dataProvider.minimumBoundary();var totalTime=this._dataProvider.totalTime();this._overviewGrid.setWindow((timeLeft-startTime)/totalTime,(timeRight-startTime)/totalTime);},_onWindowChanged:function(event)
 {var startTime=this._dataProvider.minimumBoundary();var totalTime=this._dataProvider.totalTime();var data={windowTimeLeft:startTime+this._overviewGrid.windowLeft()*totalTime,windowTimeRight:startTime+this._overviewGrid.windowRight()*totalTime};this.dispatchEventToListeners(WebInspector.OverviewGrid.Events.WindowChanged,data);},_timelineData:function()
 {return this._dataProvider.timelineData();},onResize:function()
 {this._scheduleUpdate();},_scheduleUpdate:function()
 {if(this._updateTimerId)
-return;this._updateTimerId=requestAnimationFrame(this.update.bind(this));},update:function()
+return;this._updateTimerId=this.element.window().requestAnimationFrame(this.update.bind(this));},update:function()
 {this._updateTimerId=0;var timelineData=this._timelineData();if(!timelineData)
 return;this._resetCanvas(this._overviewContainer.clientWidth,this._overviewContainer.clientHeight-WebInspector.FlameChart.DividersBarHeight);this._overviewCalculator._updateBoundaries(this);this._overviewGrid.updateDividers(this._overviewCalculator);this._drawOverviewCanvas();},_drawOverviewCanvas:function()
 {var canvasWidth=this._overviewCanvas.width;var canvasHeight=this._overviewCanvas.height;var drawData=this._calculateDrawData(canvasWidth);var context=this._overviewCanvas.getContext("2d");var ratio=window.devicePixelRatio;var offsetFromBottom=ratio;var lineWidth=1;var yScaleFactor=canvasHeight/(this._dataProvider.maxStackDepth()*1.1);context.lineWidth=lineWidth;context.translate(0.5,0.5);context.strokeStyle="rgba(20,0,0,0.4)";context.fillStyle="rgba(214,225,254,0.8)";context.moveTo(-lineWidth,canvasHeight+lineWidth);context.lineTo(-lineWidth,Math.round(canvasHeight-drawData[0]*yScaleFactor-offsetFromBottom));var value;for(var x=0;x<canvasWidth;++x){value=Math.round(canvasHeight-drawData[x]*yScaleFactor-offsetFromBottom);context.lineTo(x,value);}
@@ -415,13 +448,19 @@ context.lineTo(canvasWidth+lineWidth,value);context.lineTo(canvasWidth+lineWidth
 drawData[x]=Math.max(drawData[x],entryLevels[entryIndex]+1);}
 return drawData;},_resetCanvas:function(width,height)
 {var ratio=window.devicePixelRatio;this._overviewCanvas.width=width*ratio;this._overviewCanvas.height=height*ratio;this._overviewCanvas.style.width=width+"px";this._overviewCanvas.style.height=height+"px";},__proto__:WebInspector.VBox.prototype};WebInspector.CPUProfileView=function(profileHeader)
-{WebInspector.VBox.call(this);this.element.classList.add("cpu-profile-view");this._viewType=WebInspector.settings.createSetting("cpuProfilerView",WebInspector.CPUProfileView._TypeHeavy);var columns=[];columns.push({id:"self",title:WebInspector.UIString("Self"),width:"120px",sort:WebInspector.DataGrid.Order.Descending,sortable:true});columns.push({id:"total",title:WebInspector.UIString("Total"),width:"120px",sortable:true});columns.push({id:"function",title:WebInspector.UIString("Function"),disclosure:true,sortable:true});this.dataGrid=new WebInspector.DataGrid(columns);this.dataGrid.addEventListener(WebInspector.DataGrid.Events.SortingChanged,this._sortProfile,this);this.dataGrid.show(this.element);this.viewSelectComboBox=new WebInspector.StatusBarComboBox(this._changeView.bind(this));var options={};options[WebInspector.CPUProfileView._TypeFlame]=this.viewSelectComboBox.createOption(WebInspector.UIString("Chart"),"",WebInspector.CPUProfileView._TypeFlame);options[WebInspector.CPUProfileView._TypeHeavy]=this.viewSelectComboBox.createOption(WebInspector.UIString("Heavy (Bottom Up)"),"",WebInspector.CPUProfileView._TypeHeavy);options[WebInspector.CPUProfileView._TypeTree]=this.viewSelectComboBox.createOption(WebInspector.UIString("Tree (Top Down)"),"",WebInspector.CPUProfileView._TypeTree);var optionName=this._viewType.get()||WebInspector.CPUProfileView._TypeFlame;var option=options[optionName]||options[WebInspector.CPUProfileView._TypeFlame];this.viewSelectComboBox.select(option);this._statusBarButtonsElement=document.createElement("span");this.focusButton=new WebInspector.StatusBarButton(WebInspector.UIString("Focus selected function."),"focus-profile-node-status-bar-item");this.focusButton.setEnabled(false);this.focusButton.addEventListener("click",this._focusClicked,this);this._statusBarButtonsElement.appendChild(this.focusButton.element);this.excludeButton=new WebInspector.StatusBarButton(WebInspector.UIString("Exclude selected function."),"exclude-profile-node-status-bar-item");this.excludeButton.setEnabled(false);this.excludeButton.addEventListener("click",this._excludeClicked,this);this._statusBarButtonsElement.appendChild(this.excludeButton.element);this.resetButton=new WebInspector.StatusBarButton(WebInspector.UIString("Restore all functions."),"reset-profile-status-bar-item");this.resetButton.visible=false;this.resetButton.addEventListener("click",this._resetClicked,this);this._statusBarButtonsElement.appendChild(this.resetButton.element);this._profileHeader=profileHeader;this._linkifier=new WebInspector.Linkifier(new WebInspector.Linkifier.DefaultFormatter(30));this.profile=new WebInspector.CPUProfileDataModel(profileHeader._profile||profileHeader.protocolProfile());this._changeView();if(this._flameChart)
+{WebInspector.VBox.call(this);this.element.classList.add("cpu-profile-view");this._searchableView=new WebInspector.SearchableView(this);this._searchableView.show(this.element);this._viewType=WebInspector.settings.createSetting("cpuProfilerView",WebInspector.CPUProfileView._TypeHeavy);var columns=[];columns.push({id:"self",title:WebInspector.UIString("Self"),width:"120px",sort:WebInspector.DataGrid.Order.Descending,sortable:true});columns.push({id:"total",title:WebInspector.UIString("Total"),width:"120px",sortable:true});columns.push({id:"function",title:WebInspector.UIString("Function"),disclosure:true,sortable:true});this.dataGrid=new WebInspector.DataGrid(columns);this.dataGrid.addEventListener(WebInspector.DataGrid.Events.SortingChanged,this._sortProfile,this);this.viewSelectComboBox=new WebInspector.StatusBarComboBox(this._changeView.bind(this));var options={};options[WebInspector.CPUProfileView._TypeFlame]=this.viewSelectComboBox.createOption(WebInspector.UIString("Chart"),"",WebInspector.CPUProfileView._TypeFlame);options[WebInspector.CPUProfileView._TypeHeavy]=this.viewSelectComboBox.createOption(WebInspector.UIString("Heavy (Bottom Up)"),"",WebInspector.CPUProfileView._TypeHeavy);options[WebInspector.CPUProfileView._TypeTree]=this.viewSelectComboBox.createOption(WebInspector.UIString("Tree (Top Down)"),"",WebInspector.CPUProfileView._TypeTree);var optionName=this._viewType.get()||WebInspector.CPUProfileView._TypeFlame;var option=options[optionName]||options[WebInspector.CPUProfileView._TypeFlame];this.viewSelectComboBox.select(option);this.focusButton=new WebInspector.StatusBarButton(WebInspector.UIString("Focus selected function."),"focus-status-bar-item");this.focusButton.setEnabled(false);this.focusButton.addEventListener("click",this._focusClicked,this);this.excludeButton=new WebInspector.StatusBarButton(WebInspector.UIString("Exclude selected function."),"delete-status-bar-item");this.excludeButton.setEnabled(false);this.excludeButton.addEventListener("click",this._excludeClicked,this);this.resetButton=new WebInspector.StatusBarButton(WebInspector.UIString("Restore all functions."),"refresh-status-bar-item");this.resetButton.setVisible(false);this.resetButton.addEventListener("click",this._resetClicked,this);this._profileHeader=profileHeader;this._linkifier=new WebInspector.Linkifier(new WebInspector.Linkifier.DefaultFormatter(30));this.profile=new WebInspector.CPUProfileDataModel(profileHeader._profile||profileHeader.protocolProfile());this._changeView();if(this._flameChart)
 this._flameChart.update();}
-WebInspector.CPUProfileView._TypeFlame="Flame";WebInspector.CPUProfileView._TypeTree="Tree";WebInspector.CPUProfileView._TypeHeavy="Heavy";WebInspector.CPUProfileView.prototype={target:function()
+WebInspector.CPUProfileView._TypeFlame="Flame";WebInspector.CPUProfileView._TypeTree="Tree";WebInspector.CPUProfileView._TypeHeavy="Heavy";WebInspector.CPUProfileView.Searchable=function()
+{}
+WebInspector.CPUProfileView.Searchable.prototype={jumpToNextSearchResult:function(){},jumpToPreviousSearchResult:function(){},searchCanceled:function(){},performSearch:function(searchConfig,shouldJump,jumpBackwards){},currentSearchResultIndex:function(){}}
+WebInspector.CPUProfileView.prototype={focus:function()
+{if(this._flameChart)
+this._flameChart.focus();else
+WebInspector.View.prototype.focus.call(this);},target:function()
 {return this._profileHeader.target();},selectRange:function(timeLeft,timeRight)
 {if(!this._flameChart)
-return;this._flameChart.selectRange(timeLeft,timeRight);},get statusBarItems()
-{return[this.viewSelectComboBox.element,this._statusBarButtonsElement];},_getBottomUpProfileDataGridTree:function()
+return;this._flameChart.selectRange(timeLeft,timeRight);},statusBarItems:function()
+{return[this.viewSelectComboBox,this.focusButton,this.excludeButton,this.resetButton];},_getBottomUpProfileDataGridTree:function()
 {if(!this._bottomUpProfileDataGridTree)
 this._bottomUpProfileDataGridTree=new WebInspector.BottomUpProfileDataGridTree(this,(this.profile.profileHead));return this._bottomUpProfileDataGridTree;},_getTopDownProfileDataGridTree:function()
 {if(!this._topDownProfileDataGridTree)
@@ -430,68 +469,28 @@ this._topDownProfileDataGridTree=new WebInspector.TopDownProfileDataGridTree(thi
 {var selectedProfileNode=this.dataGrid.selectedNode?this.dataGrid.selectedNode.profileNode:null;this.dataGrid.rootNode().removeChildren();var children=this.profileDataGridTree.children;var count=children.length;for(var index=0;index<count;++index)
 this.dataGrid.rootNode().appendChild(children[index]);if(selectedProfileNode)
 selectedProfileNode.selected=true;},refreshVisibleData:function()
-{var child=this.dataGrid.rootNode().children[0];while(child){child.refresh();child=child.traverseNextNode(false,null,true);}},searchCanceled:function()
-{if(this._searchResults){for(var i=0;i<this._searchResults.length;++i){var profileNode=this._searchResults[i].profileNode;delete profileNode._searchMatchedSelfColumn;delete profileNode._searchMatchedTotalColumn;delete profileNode._searchMatchedFunctionColumn;profileNode.refresh();}}
-delete this._searchFinishedCallback;this._currentSearchResultIndex=-1;this._searchResults=[];},performSearch:function(query,finishedCallback)
-{this.searchCanceled();query=query.trim();if(!query.length)
-return;this._searchFinishedCallback=finishedCallback;var greaterThan=(query.startsWith(">"));var lessThan=(query.startsWith("<"));var equalTo=(query.startsWith("=")||((greaterThan||lessThan)&&query.indexOf("=")===1));var percentUnits=(query.lastIndexOf("%")===(query.length-1));var millisecondsUnits=(query.length>2&&query.lastIndexOf("ms")===(query.length-2));var secondsUnits=(!millisecondsUnits&&query.lastIndexOf("s")===(query.length-1));var queryNumber=parseFloat(query);if(greaterThan||lessThan||equalTo){if(equalTo&&(greaterThan||lessThan))
-queryNumber=parseFloat(query.substring(2));else
-queryNumber=parseFloat(query.substring(1));}
-var queryNumberMilliseconds=(secondsUnits?(queryNumber*1000):queryNumber);if(!isNaN(queryNumber)&&!(greaterThan||lessThan))
-equalTo=true;var matcher=createPlainTextSearchRegex(query,"i");function matchesQuery(profileDataGridNode)
-{delete profileDataGridNode._searchMatchedSelfColumn;delete profileDataGridNode._searchMatchedTotalColumn;delete profileDataGridNode._searchMatchedFunctionColumn;if(percentUnits){if(lessThan){if(profileDataGridNode.selfPercent<queryNumber)
-profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalPercent<queryNumber)
-profileDataGridNode._searchMatchedTotalColumn=true;}else if(greaterThan){if(profileDataGridNode.selfPercent>queryNumber)
-profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalPercent>queryNumber)
-profileDataGridNode._searchMatchedTotalColumn=true;}
-if(equalTo){if(profileDataGridNode.selfPercent==queryNumber)
-profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalPercent==queryNumber)
-profileDataGridNode._searchMatchedTotalColumn=true;}}else if(millisecondsUnits||secondsUnits){if(lessThan){if(profileDataGridNode.selfTime<queryNumberMilliseconds)
-profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalTime<queryNumberMilliseconds)
-profileDataGridNode._searchMatchedTotalColumn=true;}else if(greaterThan){if(profileDataGridNode.selfTime>queryNumberMilliseconds)
-profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalTime>queryNumberMilliseconds)
-profileDataGridNode._searchMatchedTotalColumn=true;}
-if(equalTo){if(profileDataGridNode.selfTime==queryNumberMilliseconds)
-profileDataGridNode._searchMatchedSelfColumn=true;if(profileDataGridNode.totalTime==queryNumberMilliseconds)
-profileDataGridNode._searchMatchedTotalColumn=true;}}
-if(profileDataGridNode.functionName.match(matcher)||(profileDataGridNode.url&&profileDataGridNode.url.match(matcher)))
-profileDataGridNode._searchMatchedFunctionColumn=true;if(profileDataGridNode._searchMatchedSelfColumn||profileDataGridNode._searchMatchedTotalColumn||profileDataGridNode._searchMatchedFunctionColumn)
-{profileDataGridNode.refresh();return true;}
-return false;}
-var current=this.profileDataGridTree.children[0];while(current){if(matchesQuery(current)){this._searchResults.push({profileNode:current});}
-current=current.traverseNextNode(false,null,false);}
-finishedCallback(this,this._searchResults.length);},jumpToFirstSearchResult:function()
-{if(!this._searchResults||!this._searchResults.length)
-return;this._currentSearchResultIndex=0;this._jumpToSearchResult(this._currentSearchResultIndex);},jumpToLastSearchResult:function()
-{if(!this._searchResults||!this._searchResults.length)
-return;this._currentSearchResultIndex=(this._searchResults.length-1);this._jumpToSearchResult(this._currentSearchResultIndex);},jumpToNextSearchResult:function()
-{if(!this._searchResults||!this._searchResults.length)
-return;if(++this._currentSearchResultIndex>=this._searchResults.length)
-this._currentSearchResultIndex=0;this._jumpToSearchResult(this._currentSearchResultIndex);},jumpToPreviousSearchResult:function()
-{if(!this._searchResults||!this._searchResults.length)
-return;if(--this._currentSearchResultIndex<0)
-this._currentSearchResultIndex=(this._searchResults.length-1);this._jumpToSearchResult(this._currentSearchResultIndex);},showingFirstSearchResult:function()
-{return(this._currentSearchResultIndex===0);},showingLastSearchResult:function()
-{return(this._searchResults&&this._currentSearchResultIndex===(this._searchResults.length-1));},currentSearchResultIndex:function(){return this._currentSearchResultIndex;},_jumpToSearchResult:function(index)
-{var searchResult=this._searchResults[index];if(!searchResult)
-return;var profileNode=searchResult.profileNode;profileNode.revealAndSelect();},_ensureFlameChartCreated:function()
+{var child=this.dataGrid.rootNode().children[0];while(child){child.refresh();child=child.traverseNextNode(false,null,true);}},searchableView:function()
+{return this._searchableView;},supportsCaseSensitiveSearch:function()
+{return true;},supportsRegexSearch:function()
+{return false;},searchCanceled:function()
+{this._searchableElement.searchCanceled();},performSearch:function(searchConfig,shouldJump,jumpBackwards)
+{var matchesCount=this._searchableElement.performSearch(searchConfig,shouldJump,jumpBackwards);this._searchableView.updateSearchMatchesCount(matchesCount);this._searchableView.updateCurrentMatchIndex(this._searchableElement.currentSearchResultIndex());},jumpToNextSearchResult:function()
+{this._searchableElement.jumpToNextSearchResult();this._searchableView.updateCurrentMatchIndex(this._searchableElement.currentSearchResultIndex());},jumpToPreviousSearchResult:function()
+{this._searchableElement.jumpToPreviousSearchResult();this._searchableView.updateCurrentMatchIndex(this._searchableElement.currentSearchResultIndex());},_ensureFlameChartCreated:function()
 {if(this._flameChart)
 return;this._dataProvider=new WebInspector.CPUFlameChartDataProvider(this.profile,this._profileHeader.target());this._flameChart=new WebInspector.CPUProfileFlameChart(this._dataProvider);this._flameChart.addEventListener(WebInspector.FlameChart.Events.EntrySelected,this._onEntrySelected.bind(this));},_onEntrySelected:function(event)
 {var entryIndex=event.data;var node=this._dataProvider._entryNodes[entryIndex];var target=this._profileHeader.target();if(!node||!node.scriptId||!target)
-return;var script=target.debuggerModel.scriptForId(node.scriptId)
-if(!script)
+return;var script=target.debuggerModel.scriptForId(node.scriptId);if(!script)
 return;var location=(script.target().debuggerModel.createRawLocation(script,node.lineNumber,0));WebInspector.Revealer.reveal(WebInspector.debuggerWorkspaceBinding.rawLocationToUILocation(location));},_changeView:function()
 {if(!this.profile)
-return;switch(this.viewSelectComboBox.selectedOption().value){case WebInspector.CPUProfileView._TypeFlame:this._ensureFlameChartCreated();this.dataGrid.detach();this._flameChart.show(this.element);this._viewType.set(WebInspector.CPUProfileView._TypeFlame);this._statusBarButtonsElement.classList.toggle("hidden",true);return;case WebInspector.CPUProfileView._TypeTree:this.profileDataGridTree=this._getTopDownProfileDataGridTree();this._sortProfile();this._viewType.set(WebInspector.CPUProfileView._TypeTree);break;case WebInspector.CPUProfileView._TypeHeavy:this.profileDataGridTree=this._getBottomUpProfileDataGridTree();this._sortProfile();this._viewType.set(WebInspector.CPUProfileView._TypeHeavy);break;}
-this._statusBarButtonsElement.classList.toggle("hidden",false);if(this._flameChart)
-this._flameChart.detach();this.dataGrid.show(this.element);if(!this.currentQuery||!this._searchFinishedCallback||!this._searchResults)
-return;this._searchFinishedCallback(this,-this._searchResults.length);this.performSearch(this.currentQuery,this._searchFinishedCallback);},_focusClicked:function(event)
+return;this._searchableView.closeSearch();if(this._visibleView)
+this._visibleView.detach();this._viewType.set(this.viewSelectComboBox.selectedOption().value);switch(this._viewType.get()){case WebInspector.CPUProfileView._TypeFlame:this._ensureFlameChartCreated();this._visibleView=this._flameChart;this._searchableElement=this._flameChart;break;case WebInspector.CPUProfileView._TypeTree:this.profileDataGridTree=this._getTopDownProfileDataGridTree();this._sortProfile();this._visibleView=this.dataGrid;this._searchableElement=this.profileDataGridTree;break;case WebInspector.CPUProfileView._TypeHeavy:this.profileDataGridTree=this._getBottomUpProfileDataGridTree();this._sortProfile();this._visibleView=this.dataGrid;this._searchableElement=this.profileDataGridTree;break;}
+var isFlame=this._viewType.get()===WebInspector.CPUProfileView._TypeFlame;this.focusButton.setVisible(!isFlame);this.excludeButton.setVisible(!isFlame);this.resetButton.setVisible(!isFlame);this._visibleView.show(this._searchableView.element);},_focusClicked:function(event)
 {if(!this.dataGrid.selectedNode)
-return;this.resetButton.visible=true;this.profileDataGridTree.focus(this.dataGrid.selectedNode);this.refresh();this.refreshVisibleData();},_excludeClicked:function(event)
-{var selectedNode=this.dataGrid.selectedNode
-if(!selectedNode)
-return;selectedNode.deselect();this.resetButton.visible=true;this.profileDataGridTree.exclude(selectedNode);this.refresh();this.refreshVisibleData();},_resetClicked:function(event)
-{this.resetButton.visible=false;this.profileDataGridTree.restore();this._linkifier.reset();this.refresh();this.refreshVisibleData();},_dataGridNodeSelected:function(node)
+return;this.resetButton.setVisible(true);this.profileDataGridTree.focus(this.dataGrid.selectedNode);this.refresh();this.refreshVisibleData();},_excludeClicked:function(event)
+{var selectedNode=this.dataGrid.selectedNode;if(!selectedNode)
+return;selectedNode.deselect();this.resetButton.setVisible(true);this.profileDataGridTree.exclude(selectedNode);this.refresh();this.refreshVisibleData();},_resetClicked:function(event)
+{this.resetButton.setVisible(false);this.profileDataGridTree.restore();this._linkifier.reset();this.refresh();this.refreshVisibleData();},_dataGridNodeSelected:function(node)
 {this.focusButton.setEnabled(true);this.excludeButton.setEnabled(true);},_dataGridNodeDeselected:function(node)
 {this.focusButton.setEnabled(false);this.excludeButton.setEnabled(false);},_sortProfile:function()
 {var sortAscending=this.dataGrid.isSortOrderAscending();var sortColumnIdentifier=this.dataGrid.sortColumnIdentifier();var sortProperty={"self":"selfTime","total":"totalTime","function":"functionName"}[sortColumnIdentifier];this.profileDataGridTree.sort(WebInspector.ProfileDataGridTree.propertyComparator(sortProperty,sortAscending));this.refresh();},__proto__:WebInspector.VBox.prototype}
@@ -511,10 +510,10 @@ var profile=new WebInspector.CPUProfileHeader(scriptLocation.target(),this,resol
 {var target=WebInspector.context.flavor(WebInspector.Target);if(this._profileBeingRecorded||!target)
 return;var profile=new WebInspector.CPUProfileHeader(target,this);this.setProfileBeingRecorded(profile);this.addProfile(profile);profile.updateStatus(WebInspector.UIString("Recording\u2026"));this._recording=true;target.cpuProfilerModel.startRecording();},stopRecordingProfile:function()
 {this._recording=false;if(!this._profileBeingRecorded||!this._profileBeingRecorded.target())
-return;function didStopProfiling(error,profile)
+return;function didStopProfiling(profile)
 {if(!this._profileBeingRecorded)
 return;this._profileBeingRecorded.setProtocolProfile(profile);this._profileBeingRecorded.updateStatus("");var recordedProfile=this._profileBeingRecorded;this.setProfileBeingRecorded(null);this.dispatchEventToListeners(WebInspector.ProfileType.Events.ProfileComplete,recordedProfile);}
-this._profileBeingRecorded.target().cpuProfilerModel.stopRecording(didStopProfiling.bind(this));},createProfileLoadedFromFile:function(title)
+this._profileBeingRecorded.target().cpuProfilerModel.stopRecording().then(didStopProfiling.bind(this));},createProfileLoadedFromFile:function(title)
 {return new WebInspector.CPUProfileHeader(null,this,title);},profileBeingRecordedRemoved:function()
 {this.stopRecordingProfile();},__proto__:WebInspector.ProfileType.prototype}
 WebInspector.CPUProfileHeader=function(target,type,title)
@@ -545,13 +544,13 @@ this._fileName=this._fileName||"CPU-"+new Date().toISO8601Compact()+this._profil
 this.dispatchEventToListeners(WebInspector.ProfileHeader.Events.ProfileReceived);},_saveProfileDataToTempFile:function(data)
 {var serializedData=JSON.stringify(data);function didCreateTempFile(tempFile)
 {this._writeToTempFile(tempFile,serializedData);}
-new WebInspector.TempFile("cpu-profiler",String(this.uid),didCreateTempFile.bind(this));},_writeToTempFile:function(tempFile,serializedData)
+WebInspector.TempFile.create("cpu-profiler",String(this.uid)).then(didCreateTempFile.bind(this));},_writeToTempFile:function(tempFile,serializedData)
 {this._tempFile=tempFile;if(!tempFile){this._failedToCreateTempFile=true;this._notifyTempFileReady();return;}
-function didWriteToTempFile(success)
-{if(!success)
+function didWriteToTempFile(fileSize)
+{if(!fileSize)
 this._failedToCreateTempFile=true;tempFile.finishWriting();this._notifyTempFileReady();}
 tempFile.write([serializedData],didWriteToTempFile.bind(this));},_notifyTempFileReady:function()
-{if(this._onTempFileReady){this._onTempFileReady();this._onTempFileReady=null;}},__proto__:WebInspector.ProfileHeader.prototype};WebInspector.HeapSnapshotProgressEvent={Update:"ProgressUpdate"};WebInspector.HeapSnapshotCommon={}
+{if(this._onTempFileReady){this._onTempFileReady();this._onTempFileReady=null;}},__proto__:WebInspector.ProfileHeader.prototype};WebInspector.HeapSnapshotProgressEvent={Update:"ProgressUpdate",BrokenSnapshot:"BrokenSnapshot"};WebInspector.HeapSnapshotCommon={}
 WebInspector.HeapSnapshotCommon.baseSystemDistance=100000000;WebInspector.HeapSnapshotCommon.AllocationNodeCallers=function(nodesWithSingleCaller,branchingCallers)
 {this.nodesWithSingleCaller=nodesWithSingleCaller;this.branchingCallers=branchingCallers;}
 WebInspector.HeapSnapshotCommon.SerializedAllocationNode=function(nodeId,functionName,scriptName,scriptId,line,column,count,size,liveCount,liveSize,hasChildren)
@@ -577,12 +576,14 @@ WebInspector.HeapSnapshotCommon.ItemsRange=function(startPosition,endPosition,to
 WebInspector.HeapSnapshotCommon.StaticData=function(nodeCount,rootNodeIndex,totalSize,maxJSObjectId)
 {this.nodeCount=nodeCount;this.rootNodeIndex=rootNodeIndex;this.totalSize=totalSize;this.maxJSObjectId=maxJSObjectId;}
 WebInspector.HeapSnapshotCommon.Statistics=function()
-{this.total;this.v8heap;this.native;this.code;this.jsArrays;this.strings;}
+{this.total;this.v8heap;this.native;this.code;this.jsArrays;this.strings;this.system;}
 WebInspector.HeapSnapshotCommon.NodeFilter=function(minNodeId,maxNodeId)
 {this.minNodeId=minNodeId;this.maxNodeId=maxNodeId;this.allocationNodeId;}
 WebInspector.HeapSnapshotCommon.NodeFilter.prototype={equals:function(o)
-{return this.minNodeId===o.minNodeId&&this.maxNodeId===o.maxNodeId&&this.allocationNodeId===o.allocationNodeId;}};WebInspector.HeapSnapshotWorkerProxy=function(eventHandler)
-{this._eventHandler=eventHandler;this._nextObjectId=1;this._nextCallId=1;this._callbacks=[];this._previousCallbacks=[];this._worker=Runtime.startWorker("heap_snapshot_worker");this._worker.onmessage=this._messageReceived.bind(this);}
+{return this.minNodeId===o.minNodeId&&this.maxNodeId===o.maxNodeId&&this.allocationNodeId===o.allocationNodeId;}}
+WebInspector.HeapSnapshotCommon.SearchConfig=function(query,caseSensitive,isRegex,shouldJump,jumpBackward)
+{this.query=query;this.caseSensitive=caseSensitive;this.isRegex=isRegex;this.shouldJump=shouldJump;this.jumpBackward=jumpBackward;};WebInspector.HeapSnapshotWorkerProxy=function(eventHandler)
+{this._eventHandler=eventHandler;this._nextObjectId=1;this._nextCallId=1;this._callbacks=[];this._previousCallbacks=[];this._worker=new WorkerRuntime.Worker("heap_snapshot_worker");this._worker.onmessage=this._messageReceived.bind(this);}
 WebInspector.HeapSnapshotWorkerProxy.prototype={createLoader:function(profileUid,snapshotReceivedCallback)
 {var objectId=this._nextObjectId++;var proxy=new WebInspector.HeapSnapshotLoaderProxy(this,objectId,profileUid,snapshotReceivedCallback);this._postMessage({callId:this._nextCallId++,disposition:"create",objectId:objectId,methodName:"WebInspector.HeapSnapshotLoader"});return proxy;},dispose:function()
 {this._worker.terminate();if(this._interval)
@@ -615,7 +616,10 @@ WebInspector.HeapSnapshotProxyObject.prototype={_callWorker:function(workerMetho
 {this._worker.disposeObject(this._objectId);},disposeWorker:function()
 {this._worker.dispose();},callFactoryMethod:function(callback,methodName,proxyConstructor,var_args)
 {return this._callWorker("callFactoryMethod",Array.prototype.slice.call(arguments,0));},callMethod:function(callback,methodName,var_args)
-{return this._callWorker("callMethod",Array.prototype.slice.call(arguments,0));}};WebInspector.HeapSnapshotLoaderProxy=function(worker,objectId,profileUid,snapshotReceivedCallback)
+{return this._callWorker("callMethod",Array.prototype.slice.call(arguments,0));},_callMethodPromise:function(methodName,var_args)
+{function action(args,fulfill)
+{this._callWorker("callMethod",[fulfill].concat(args));}
+return new Promise(action.bind(this,Array.prototype.slice.call(arguments)));}};WebInspector.HeapSnapshotLoaderProxy=function(worker,objectId,profileUid,snapshotReceivedCallback)
 {WebInspector.HeapSnapshotProxyObject.call(this,worker,objectId);this._profileUid=profileUid;this._snapshotReceivedCallback=snapshotReceivedCallback;}
 WebInspector.HeapSnapshotLoaderProxy.prototype={write:function(chunk,callback)
 {this.callMethod(callback,"write",chunk);},close:function(callback)
@@ -627,7 +631,8 @@ function updateStaticData(snapshotProxy)
 this.callMethod(buildSnapshot.bind(this),"close");},__proto__:WebInspector.HeapSnapshotProxyObject.prototype}
 WebInspector.HeapSnapshotProxy=function(worker,objectId)
 {WebInspector.HeapSnapshotProxyObject.call(this,worker,objectId);this._staticData=null;}
-WebInspector.HeapSnapshotProxy.prototype={aggregatesWithFilter:function(filter,callback)
+WebInspector.HeapSnapshotProxy.prototype={search:function(searchConfig,filter,callback)
+{this.callMethod(callback,"search",searchConfig,filter);},aggregatesWithFilter:function(filter,callback)
 {this.callMethod(callback,"aggregatesWithFilter",filter);},aggregatesForDiff:function(callback)
 {this.callMethod(callback,"aggregatesForDiff");},calculateSnapshotDiff:function(baseSnapshotId,baseSnapshotAggregates,callback)
 {this.callMethod(callback,"calculateSnapshotDiff",baseSnapshotId,baseSnapshotAggregates);},nodeClassName:function(snapshotObjectId,callback)
@@ -646,8 +651,8 @@ WebInspector.HeapSnapshotProxy.prototype={aggregatesWithFilter:function(filter,c
 {return this._staticData.rootNodeIndex;},updateStaticData:function(callback)
 {function dataReceived(staticData)
 {this._staticData=staticData;callback(this);}
-this.callMethod(dataReceived.bind(this),"updateStaticData");},getStatistics:function(callback)
-{this.callMethod(callback,"getStatistics");},get totalSize()
+this.callMethod(dataReceived.bind(this),"updateStaticData");},getStatistics:function()
+{return this._callMethodPromise("getStatistics");},get totalSize()
 {return this._staticData.totalSize;},get uid()
 {return this._profileUid;},setProfileUid:function(profileUid)
 {this._profileUid=profileUid;},maxJSObjectId:function()
@@ -659,9 +664,10 @@ WebInspector.HeapSnapshotProviderProxy.prototype={nodePosition:function(snapshot
 {this.callMethod(callback,"isEmpty");},serializeItemsRange:function(startPosition,endPosition,callback)
 {this.callMethod(callback,"serializeItemsRange",startPosition,endPosition);},sortAndRewind:function(comparator,callback)
 {this.callMethod(callback,"sortAndRewind",comparator);},__proto__:WebInspector.HeapSnapshotProxyObject.prototype};WebInspector.HeapSnapshotSortableDataGrid=function(dataDisplayDelegate,columns)
-{WebInspector.DataGrid.call(this,columns);this._dataDisplayDelegate=dataDisplayDelegate;this._recursiveSortingDepth=0;this._highlightedNode=null;this._populatedAndSorted=false;this._nameFilter=null;this.addEventListener(WebInspector.HeapSnapshotSortableDataGrid.Events.SortingComplete,this._sortingComplete,this);this.addEventListener(WebInspector.DataGrid.Events.SortingChanged,this.sortingChanged,this);}
+{WebInspector.DataGrid.call(this,columns);this._dataDisplayDelegate=dataDisplayDelegate;this._recursiveSortingDepth=0;this._highlightedNode=null;this._populatedAndSorted=false;this._nameFilter=null;this._nodeFilter=new WebInspector.HeapSnapshotCommon.NodeFilter();this.addEventListener(WebInspector.HeapSnapshotSortableDataGrid.Events.SortingComplete,this._sortingComplete,this);this.addEventListener(WebInspector.DataGrid.Events.SortingChanged,this.sortingChanged,this);}
 WebInspector.HeapSnapshotSortableDataGrid.Events={ContentShown:"ContentShown",SortingComplete:"SortingComplete"}
-WebInspector.HeapSnapshotSortableDataGrid.prototype={setNameFilter:function(nameFilter)
+WebInspector.HeapSnapshotSortableDataGrid.prototype={nodeFilter:function()
+{return this._nodeFilter;},setNameFilter:function(nameFilter)
 {this._nameFilter=nameFilter;},defaultPopulateCount:function()
 {return 100;},_disposeAllNodes:function()
 {var children=this.topLevelNodes();for(var i=0,l=children.length;i<l;++i)
@@ -676,17 +682,17 @@ this._nameFilter.removeEventListener(WebInspector.StatusBarInput.Event.TextChang
 return;var node=td.heapSnapshotNode;function revealInSummaryView()
 {this._dataDisplayDelegate.showObject(node.snapshotNodeId,"Summary");}
 if(node instanceof WebInspector.HeapSnapshotRetainingObjectNode)
-contextMenu.appendItem(WebInspector.UIString(WebInspector.useLowerCaseMenuTitles()?"Reveal in Summary view":"Reveal in Summary View"),revealInSummaryView.bind(this));},resetSortingCache:function()
+contextMenu.appendItem(WebInspector.UIString.capitalize("Reveal in Summary ^view"),revealInSummaryView.bind(this));},resetSortingCache:function()
 {delete this._lastSortColumnIdentifier;delete this._lastSortAscending;},topLevelNodes:function()
-{return this.rootNode().children;},highlightObjectByHeapSnapshotId:function(heapSnapshotObjectId,callback)
+{return this.rootNode().children;},revealObjectByHeapSnapshotId:function(heapSnapshotObjectId,callback)
 {},highlightNode:function(node)
-{var prevNode=this._highlightedNode;this._clearCurrentHighlight();this._highlightedNode=node;WebInspector.runCSSAnimationOnce(this._highlightedNode.element(),"highlighted-row");},nodeWasDetached:function(node)
+{this._clearCurrentHighlight();this._highlightedNode=node;WebInspector.runCSSAnimationOnce(this._highlightedNode.element(),"highlighted-row");},nodeWasDetached:function(node)
 {if(this._highlightedNode===node)
 this._clearCurrentHighlight();},_clearCurrentHighlight:function()
 {if(!this._highlightedNode)
 return
 this._highlightedNode.element().classList.remove("highlighted-row");this._highlightedNode=null;},resetNameFilter:function()
-{this._nameFilter.setValue("");this._onNameFilterChanged();},_onNameFilterChanged:function()
+{this._nameFilter.setValue("");},_onNameFilterChanged:function()
 {this.updateVisibleNodes(true);},sortingChanged:function()
 {var sortAscending=this.isSortOrderAscending();var sortColumnIdentifier=this.sortColumnIdentifier();if(this._lastSortColumnIdentifier===sortColumnIdentifier&&this._lastSortAscending===sortAscending)
 return;this._lastSortColumnIdentifier=sortColumnIdentifier;this._lastSortAscending=sortAscending;var sortFields=this._sortFields(sortColumnIdentifier,sortAscending);function SortByTwoFields(nodeA,nodeB)
@@ -709,22 +715,20 @@ return;this.updateVisibleNodes(true);this.dispatchEventToListeners(WebInspector.
 {parent.removeChild(parent.children[index]);},removeAllChildren:function(parent)
 {parent.removeChildren();},__proto__:WebInspector.DataGrid.prototype}
 WebInspector.HeapSnapshotViewportDataGrid=function(dataDisplayDelegate,columns)
-{WebInspector.HeapSnapshotSortableDataGrid.call(this,dataDisplayDelegate,columns);this.scrollContainer.addEventListener("scroll",this._onScroll.bind(this),true);this._nodeToHighlightAfterScroll=null;this._topPaddingHeight=0;this._bottomPaddingHeight=0;}
+{WebInspector.HeapSnapshotSortableDataGrid.call(this,dataDisplayDelegate,columns);this.scrollContainer.addEventListener("scroll",this._onScroll.bind(this),true);this._topPaddingHeight=0;this._bottomPaddingHeight=0;}
 WebInspector.HeapSnapshotViewportDataGrid.prototype={topLevelNodes:function()
 {return this.allChildren(this.rootNode());},appendChildAfterSorting:function(child)
-{},updateVisibleNodes:function(force,pathToReveal)
-{var guardZoneHeight=40;var scrollHeight=this.scrollContainer.scrollHeight;var scrollTop=this.scrollContainer.scrollTop;var scrollBottom=scrollHeight-scrollTop-this.scrollContainer.offsetHeight;scrollTop=Math.max(0,scrollTop-guardZoneHeight);scrollBottom=Math.max(0,scrollBottom-guardZoneHeight);var viewPortHeight=scrollHeight-scrollTop-scrollBottom;if(!pathToReveal){if(!force&&scrollTop>=this._topPaddingHeight&&scrollBottom>=this._bottomPaddingHeight)
-return;var hysteresisHeight=500;scrollTop-=hysteresisHeight;viewPortHeight+=2*hysteresisHeight;}
-var selectedNode=this.selectedNode;this.rootNode().removeChildren();this._topPaddingHeight=0;this._bottomPaddingHeight=0;this._addVisibleNodes(this.rootNode(),scrollTop,scrollTop+viewPortHeight,pathToReveal||null);this.setVerticalPadding(this._topPaddingHeight,this._bottomPaddingHeight);if(selectedNode){if(selectedNode.parent)
+{},updateVisibleNodes:function(force)
+{var guardZoneHeight=40;var scrollHeight=this.scrollContainer.scrollHeight;var scrollTop=this.scrollContainer.scrollTop;var scrollBottom=scrollHeight-scrollTop-this.scrollContainer.offsetHeight;scrollTop=Math.max(0,scrollTop-guardZoneHeight);scrollBottom=Math.max(0,scrollBottom-guardZoneHeight);var viewPortHeight=scrollHeight-scrollTop-scrollBottom;if(!force&&scrollTop>=this._topPaddingHeight&&scrollBottom>=this._bottomPaddingHeight)
+return;var hysteresisHeight=500;scrollTop-=hysteresisHeight;viewPortHeight+=2*hysteresisHeight;var selectedNode=this.selectedNode;this.rootNode().removeChildren();this._topPaddingHeight=0;this._bottomPaddingHeight=0;this._addVisibleNodes(this.rootNode(),scrollTop,scrollTop+viewPortHeight);this.setVerticalPadding(this._topPaddingHeight,this._bottomPaddingHeight);if(selectedNode){if(selectedNode.parent)
 selectedNode.select(true);else
-this.selectedNode=selectedNode;}},_addVisibleNodes:function(parentNode,topBound,bottomBound,pathToReveal)
+this.selectedNode=selectedNode;}},_addVisibleNodes:function(parentNode,topBound,bottomBound)
 {if(!parentNode.expanded)
-return 0;var nodeToReveal=pathToReveal?pathToReveal[0]:null;var restPathToReveal=pathToReveal&&pathToReveal.length>1?pathToReveal.slice(1):null;var children=this.allChildren(parentNode);var topPadding=0;var nameFilterValue=this._nameFilter?this._nameFilter.value().toLowerCase():"";for(var i=0;i<children.length;++i){var child=children[i];if(nameFilterValue&&child.filteredOut&&child.filteredOut(nameFilterValue))
-continue;var newTop=topPadding+this._nodeHeight(child);if(nodeToReveal===child||(!nodeToReveal&&newTop>topBound))
+return 0;var children=this.allChildren(parentNode);var topPadding=0;var nameFilterValue=this._nameFilter?this._nameFilter.value().toLowerCase():"";for(var i=0;i<children.length;++i){var child=children[i];if(nameFilterValue&&child.filteredOut&&child.filteredOut(nameFilterValue))
+continue;var newTop=topPadding+this._nodeHeight(child);if(newTop>topBound)
 break;topPadding=newTop;}
-var position=topPadding;for(;i<children.length&&(nodeToReveal||position<bottomBound);++i){var child=children[i];if(nameFilterValue&&child.filteredOut&&child.filteredOut(nameFilterValue))
-continue;var hasChildren=child.hasChildren;child.removeChildren();child.hasChildren=hasChildren;child.revealed=true;parentNode.appendChild(child);position+=child.nodeSelfHeight();position+=this._addVisibleNodes(child,topBound-position,bottomBound-position,restPathToReveal);if(nodeToReveal===child)
-break;}
+var position=topPadding;for(;i<children.length&&position<bottomBound;++i){var child=children[i];if(nameFilterValue&&child.filteredOut&&child.filteredOut(nameFilterValue))
+continue;var hasChildren=child.hasChildren;child.removeChildren();child.hasChildren=hasChildren;child.revealed=true;parentNode.appendChild(child);position+=child.nodeSelfHeight();position+=this._addVisibleNodes(child,topBound-position,bottomBound-position);}
 var bottomPadding=0;for(;i<children.length;++i){var child=children[i];if(nameFilterValue&&child.filteredOut&&child.filteredOut(nameFilterValue))
 continue;bottomPadding+=this._nodeHeight(child);}
 this._topPaddingHeight+=topPadding;this._bottomPaddingHeight+=bottomPadding;return position+bottomPadding;},_nodeHeight:function(node)
@@ -732,18 +736,22 @@ this._topPaddingHeight+=topPadding;this._bottomPaddingHeight+=bottomPadding;retu
 return 0;var result=node.nodeSelfHeight();if(!node.expanded)
 return result;var children=this.allChildren(node);for(var i=0;i<children.length;i++)
 result+=this._nodeHeight(children[i]);return result;},revealTreeNode:function(pathToReveal)
-{this.updateVisibleNodes(true,pathToReveal);},allChildren:function(parent)
+{var height=this._calculateOffset(pathToReveal);var node=(pathToReveal.peekLast());var scrollTop=this.scrollContainer.scrollTop;var scrollBottom=scrollTop+this.scrollContainer.offsetHeight;if(height>=scrollTop&&height<scrollBottom)
+return Promise.resolve(node);var scrollGap=40;this.scrollContainer.scrollTop=Math.max(0,height-scrollGap);return new Promise(this._scrollTo.bind(this,node));},_scrollTo:function(node,fulfill)
+{console.assert(!this._scrollToResolveCallback);this._scrollToResolveCallback=fulfill.bind(null,node);},_calculateOffset:function(pathToReveal)
+{var parentNode=this.rootNode();var height=0;for(var i=0;i<pathToReveal.length;++i){var node=pathToReveal[i];var children=this.allChildren(parentNode);for(var j=0;j<children.length;++j){var child=children[j];if(node===child){height+=node.nodeSelfHeight();break;}
+height+=this._nodeHeight(child);}
+parentNode=node;}
+return height-pathToReveal.peekLast().nodeSelfHeight();},allChildren:function(parent)
 {return parent._allChildren||(parent._allChildren=[]);},appendNode:function(parent,node)
 {this.allChildren(parent).push(node);},insertChild:function(parent,node,index)
 {this.allChildren(parent).splice(index,0,node);},removeChildByIndex:function(parent,index)
 {this.allChildren(parent).splice(index,1);},removeAllChildren:function(parent)
 {parent._allChildren=[];},removeTopLevelNodes:function()
-{this._disposeAllNodes();this.rootNode().removeChildren();this.rootNode()._allChildren=[];},highlightNode:function(node)
-{if(this._isScrolledIntoView(node.element())){this.updateVisibleNodes(true);WebInspector.HeapSnapshotSortableDataGrid.prototype.highlightNode.call(this,node);}else{node.element().scrollIntoViewIfNeeded(true);this._nodeToHighlightAfterScroll=node;}},_isScrolledIntoView:function(element)
-{var viewportTop=this.scrollContainer.scrollTop;var viewportBottom=viewportTop+this.scrollContainer.clientHeight;var elemTop=element.offsetTop
-var elemBottom=elemTop+element.offsetHeight;return elemBottom<=viewportBottom&&elemTop>=viewportTop;},onResize:function()
+{this._disposeAllNodes();this.rootNode().removeChildren();this.rootNode()._allChildren=[];},_isScrolledIntoView:function(element)
+{var viewportTop=this.scrollContainer.scrollTop;var viewportBottom=viewportTop+this.scrollContainer.clientHeight;var elemTop=element.offsetTop;var elemBottom=elemTop+element.offsetHeight;return elemBottom<=viewportBottom&&elemTop>=viewportTop;},onResize:function()
 {WebInspector.HeapSnapshotSortableDataGrid.prototype.onResize.call(this);this.updateVisibleNodes(false);},_onScroll:function(event)
-{this.updateVisibleNodes(false);if(this._nodeToHighlightAfterScroll){WebInspector.HeapSnapshotSortableDataGrid.prototype.highlightNode.call(this,this._nodeToHighlightAfterScroll);this._nodeToHighlightAfterScroll=null;}},__proto__:WebInspector.HeapSnapshotSortableDataGrid.prototype}
+{this.updateVisibleNodes(false);if(this._scrollToResolveCallback){this._scrollToResolveCallback();this._scrollToResolveCallback=null;}},__proto__:WebInspector.HeapSnapshotSortableDataGrid.prototype}
 WebInspector.HeapSnapshotContainmentDataGrid=function(dataDisplayDelegate,columns)
 {columns=columns||[{id:"object",title:WebInspector.UIString("Object"),disclosure:true,sortable:true},{id:"distance",title:WebInspector.UIString("Distance"),width:"80px",sortable:true},{id:"shallowSize",title:WebInspector.UIString("Shallow Size"),width:"120px",sortable:true},{id:"retainedSize",title:WebInspector.UIString("Retained Size"),width:"120px",sortable:true,sort:WebInspector.DataGrid.Order.Descending}];WebInspector.HeapSnapshotSortableDataGrid.call(this,dataDisplayDelegate,columns);}
 WebInspector.HeapSnapshotContainmentDataGrid.prototype={setDataSource:function(snapshot,nodeIndex)
@@ -762,25 +770,29 @@ WebInspector.HeapSnapshotRetainmentDataGrid.prototype={_createRootNode:function(
 WebInspector.HeapSnapshotConstructorsDataGrid=function(dataDisplayDelegate)
 {var columns=[{id:"object",title:WebInspector.UIString("Constructor"),disclosure:true,sortable:true},{id:"distance",title:WebInspector.UIString("Distance"),width:"90px",sortable:true},{id:"count",title:WebInspector.UIString("Objects Count"),width:"90px",sortable:true},{id:"shallowSize",title:WebInspector.UIString("Shallow Size"),width:"120px",sortable:true},{id:"retainedSize",title:WebInspector.UIString("Retained Size"),width:"120px",sort:WebInspector.DataGrid.Order.Descending,sortable:true}];WebInspector.HeapSnapshotViewportDataGrid.call(this,dataDisplayDelegate,columns);this._profileIndex=-1;this._objectIdToSelect=null;}
 WebInspector.HeapSnapshotConstructorsDataGrid.prototype={_sortFields:function(sortColumn,sortAscending)
-{return{object:["_name",sortAscending,"_count",false],distance:["_distance",sortAscending,"_retainedSize",true],count:["_count",sortAscending,"_name",true],shallowSize:["_shallowSize",sortAscending,"_name",true],retainedSize:["_retainedSize",sortAscending,"_name",true]}[sortColumn];},highlightObjectByHeapSnapshotId:function(id,callback)
+{return{object:["_name",sortAscending,"_count",false],distance:["_distance",sortAscending,"_retainedSize",true],count:["_count",sortAscending,"_name",true],shallowSize:["_shallowSize",sortAscending,"_name",true],retainedSize:["_retainedSize",sortAscending,"_name",true]}[sortColumn];},revealObjectByHeapSnapshotId:function(id,callback)
 {if(!this.snapshot){this._objectIdToSelect=id;return;}
+function didPopulateNode(parentNode,node)
+{if(node)
+this.revealTreeNode([parentNode,node]).then(callback);else
+callback(node);}
 function didGetClassName(className)
-{if(!className){callback(false);return;}
-var constructorNodes=this.topLevelNodes();for(var i=0;i<constructorNodes.length;i++){var parent=constructorNodes[i];if(parent._name===className){parent.revealNodeBySnapshotObjectId(parseInt(id,10),callback);return;}}}
+{if(!className){callback(null);return;}
+var constructorNodes=this.topLevelNodes();for(var i=0;i<constructorNodes.length;i++){var parent=constructorNodes[i];if(parent._name===className){parent.populateNodeBySnapshotObjectId(parseInt(id,10),didPopulateNode.bind(this));return;}}}
 this.snapshot.nodeClassName(parseInt(id,10),didGetClassName.bind(this));},clear:function()
 {this._nextRequestedFilter=null;this._lastFilter=null;this.removeTopLevelNodes();},setDataSource:function(snapshot)
 {this.snapshot=snapshot;if(this._profileIndex===-1)
-this._populateChildren();if(this._objectIdToSelect){this.highlightObjectByHeapSnapshotId(this._objectIdToSelect,function(found){});this._objectIdToSelect=null;}},setSelectionRange:function(minNodeId,maxNodeId)
-{this._populateChildren(new WebInspector.HeapSnapshotCommon.NodeFilter(minNodeId,maxNodeId));},setAllocationNodeId:function(allocationNodeId)
-{var filter=new WebInspector.HeapSnapshotCommon.NodeFilter();filter.allocationNodeId=allocationNodeId;this._populateChildren(filter);},_aggregatesReceived:function(nodeFilter,aggregates)
+this._populateChildren();if(this._objectIdToSelect){this.revealObjectByHeapSnapshotId(this._objectIdToSelect,function(){});this._objectIdToSelect=null;}},setSelectionRange:function(minNodeId,maxNodeId)
+{this._nodeFilter=new WebInspector.HeapSnapshotCommon.NodeFilter(minNodeId,maxNodeId);this._populateChildren(this._nodeFilter);},setAllocationNodeId:function(allocationNodeId)
+{this._nodeFilter=new WebInspector.HeapSnapshotCommon.NodeFilter();this._nodeFilter.allocationNodeId=allocationNodeId;this._populateChildren(this._nodeFilter);},_aggregatesReceived:function(nodeFilter,aggregates)
 {this._filterInProgress=null;if(this._nextRequestedFilter){this.snapshot.aggregatesWithFilter(this._nextRequestedFilter,this._aggregatesReceived.bind(this,this._nextRequestedFilter));this._filterInProgress=this._nextRequestedFilter;this._nextRequestedFilter=null;}
 this.removeTopLevelNodes();this.resetSortingCache();for(var constructor in aggregates)
 this.appendNode(this.rootNode(),new WebInspector.HeapSnapshotConstructorNode(this,constructor,aggregates[constructor],nodeFilter));this.sortingChanged();this._lastFilter=nodeFilter;},_populateChildren:function(nodeFilter)
 {nodeFilter=nodeFilter||new WebInspector.HeapSnapshotCommon.NodeFilter();if(this._filterInProgress){this._nextRequestedFilter=this._filterInProgress.equals(nodeFilter)?null:nodeFilter;return;}
 if(this._lastFilter&&this._lastFilter.equals(nodeFilter))
 return;this._filterInProgress=nodeFilter;this.snapshot.aggregatesWithFilter(nodeFilter,this._aggregatesReceived.bind(this,nodeFilter));},filterSelectIndexChanged:function(profiles,profileIndex)
-{this._profileIndex=profileIndex;var nodeFilter;if(profileIndex!==-1){var minNodeId=profileIndex>0?profiles[profileIndex-1].maxJSObjectId:0;var maxNodeId=profiles[profileIndex].maxJSObjectId;nodeFilter=new WebInspector.HeapSnapshotCommon.NodeFilter(minNodeId,maxNodeId)}
-this._populateChildren(nodeFilter);},__proto__:WebInspector.HeapSnapshotViewportDataGrid.prototype}
+{this._profileIndex=profileIndex;this._nodeFilter=undefined;if(profileIndex!==-1){var minNodeId=profileIndex>0?profiles[profileIndex-1].maxJSObjectId:0;var maxNodeId=profiles[profileIndex].maxJSObjectId;this._nodeFilter=new WebInspector.HeapSnapshotCommon.NodeFilter(minNodeId,maxNodeId);}
+this._populateChildren(this._nodeFilter);},__proto__:WebInspector.HeapSnapshotViewportDataGrid.prototype}
 WebInspector.HeapSnapshotDiffDataGrid=function(dataDisplayDelegate)
 {var columns=[{id:"object",title:WebInspector.UIString("Constructor"),disclosure:true,sortable:true},{id:"addedCount",title:WebInspector.UIString("# New"),width:"72px",sortable:true},{id:"removedCount",title:WebInspector.UIString("# Deleted"),width:"72px",sortable:true},{id:"countDelta",title:WebInspector.UIString("# Delta"),width:"64px",sortable:true},{id:"addedSize",title:WebInspector.UIString("Alloc. Size"),width:"72px",sortable:true,sort:WebInspector.DataGrid.Order.Descending},{id:"removedSize",title:WebInspector.UIString("Freed Size"),width:"72px",sortable:true},{id:"sizeDelta",title:WebInspector.UIString("Size Delta"),width:"72px",sortable:true}];WebInspector.HeapSnapshotViewportDataGrid.call(this,dataDisplayDelegate,columns);}
 WebInspector.HeapSnapshotDiffDataGrid.prototype={defaultPopulateCount:function()
@@ -815,7 +827,8 @@ WebInspector.HeapSnapshotGridNode.createComparator=function(fieldNames)
 {return({fieldName1:fieldNames[0],ascending1:fieldNames[1],fieldName2:fieldNames[2],ascending2:fieldNames[3]});}
 WebInspector.HeapSnapshotGridNode.ChildrenProvider=function(){}
 WebInspector.HeapSnapshotGridNode.ChildrenProvider.prototype={dispose:function(){},nodePosition:function(snapshotObjectId,callback){},isEmpty:function(callback){},serializeItemsRange:function(startPosition,endPosition,callback){},sortAndRewind:function(comparator,callback){}}
-WebInspector.HeapSnapshotGridNode.prototype={createProvider:function()
+WebInspector.HeapSnapshotGridNode.prototype={heapSnapshotDataGrid:function()
+{return this._dataGrid;},createProvider:function()
 {throw new Error("Not implemented.");},retainersDataSource:function()
 {return null;},_provider:function()
 {if(!this._providerObject)
@@ -837,7 +850,7 @@ node.dispose();},_reachableFromWindow:false,queryObjectContent:function(callback
 {var indexOfFirstChildInRange=0;for(var i=0;i<this._retrievedChildrenRanges.length;i++){var range=this._retrievedChildrenRanges[i];if(range.from<=nodePosition&&nodePosition<range.to){var childIndex=indexOfFirstChildInRange+nodePosition-range.from;return this.allChildren()[childIndex];}
 indexOfFirstChildInRange+=range.to-range.from+1;}
 return null;},_createValueCell:function(columnIdentifier)
-{var cell=document.createElement("td");cell.className="numeric-column";if(this.dataGrid.snapshot.totalSize!==0){var div=document.createElement("div");var valueSpan=document.createElement("span");valueSpan.textContent=this.data[columnIdentifier];div.appendChild(valueSpan);var percentColumn=columnIdentifier+"-percent";if(percentColumn in this.data){var percentSpan=document.createElement("span");percentSpan.className="percent-column";percentSpan.textContent=this.data[percentColumn];div.appendChild(percentSpan);div.classList.add("profile-multiple-values");}
+{var cell=createElement("td");cell.className="numeric-column";if(this.dataGrid.snapshot.totalSize!==0){var div=createElement("div");var valueSpan=createElement("span");valueSpan.textContent=this.data[columnIdentifier];div.appendChild(valueSpan);var percentColumn=columnIdentifier+"-percent";if(percentColumn in this.data){var percentSpan=createElement("span");percentSpan.className="percent-column";percentSpan.textContent=this.data[percentColumn];div.appendChild(percentSpan);div.classList.add("profile-multiple-values");}
 cell.appendChild(div);}
 return cell;},populate:function(event)
 {if(this._populated)
@@ -897,7 +910,7 @@ value+="[]";break;};if(this._reachableFromWindow)
 valueStyle+=" highlight";if(value==="Object")
 value="";if(this.detachedDOMTreeNode)
 valueStyle+=" detached-dom-tree-node";return this._createObjectCellWithValue(valueStyle,value);},_createObjectCellWithValue:function(valueStyle,value)
-{var cell=document.createElement("td");cell.className="object-column";var div=document.createElement("div");div.className="source-code event-properties";div.style.overflow="visible";this._prefixObjectCell(div);var valueSpan=document.createElement("span");valueSpan.className="value console-formatted-"+valueStyle;valueSpan.textContent=value;div.appendChild(valueSpan);var idSpan=document.createElement("span");idSpan.className="console-formatted-id";idSpan.textContent=" @"+this.snapshotNodeId;div.appendChild(idSpan);cell.appendChild(div);cell.classList.add("disclosure");if(this.depth)
+{var cell=createElement("td");cell.className="object-column";var div=createElement("div");div.className="source-code event-properties";div.style.overflow="visible";this._prefixObjectCell(div);var valueSpan=createElement("span");valueSpan.className="value console-formatted-"+valueStyle;valueSpan.textContent=value;div.appendChild(valueSpan);var idSpan=createElement("span");idSpan.className="console-formatted-id";idSpan.textContent=" @"+this.snapshotNodeId;div.appendChild(idSpan);cell.appendChild(div);cell.classList.add("disclosure");if(this.depth)
 cell.style.setProperty("padding-left",(this.depth*this.dataGrid.indentWidth)+"px");cell.heapSnapshotNode=this;return cell;},_prefixObjectCell:function(div)
 {},queryObjectContent:function(target,callback,objectGroupName)
 {function formatResult(error,object)
@@ -928,7 +941,7 @@ return null;},_createChildNode:function(item)
 {var sortAscending=this._dataGrid.isSortOrderAscending();var sortColumnIdentifier=this._dataGrid.sortColumnIdentifier();var sortFields={object:["!edgeName",sortAscending,"retainedSize",false],count:["!edgeName",true,"retainedSize",false],shallowSize:["selfSize",sortAscending,"!edgeName",true],retainedSize:["retainedSize",sortAscending,"!edgeName",true],distance:["distance",sortAscending,"_name",true]}[sortColumnIdentifier]||["!edgeName",true,"retainedSize",false];return WebInspector.HeapSnapshotGridNode.createComparator(sortFields);},_prefixObjectCell:function(div)
 {var name=this._referenceName;if(name==="")name="(empty)";var nameClass="name";switch(this._referenceType){case"context":nameClass="console-formatted-number";break;case"internal":case"hidden":case"weak":nameClass="console-formatted-null";break;case"element":name="["+name+"]";break;}
 if(this._cycledWithAncestorGridNode)
-div.className+=" cycled-ancessor-node";var nameSpan=document.createElement("span");nameSpan.className=nameClass;nameSpan.textContent=name;div.appendChild(nameSpan);var separatorSpan=document.createElement("span");separatorSpan.className="grayed";separatorSpan.textContent=this._edgeNodeSeparator();div.appendChild(separatorSpan);},_edgeNodeSeparator:function()
+div.className+=" cycled-ancessor-node";var nameSpan=createElement("span");nameSpan.className=nameClass;nameSpan.textContent=name;div.appendChild(nameSpan);var separatorSpan=createElement("span");separatorSpan.className="grayed";separatorSpan.textContent=this._edgeNodeSeparator();div.appendChild(separatorSpan);},_edgeNodeSeparator:function()
 {return" :: ";},__proto__:WebInspector.HeapSnapshotGenericObjectNode.prototype}
 WebInspector.HeapSnapshotRetainingObjectNode=function(dataGrid,snapshot,edge,parentRetainingObjectNode)
 {WebInspector.HeapSnapshotObjectNode.call(this,dataGrid,snapshot,edge,parentRetainingObjectNode);}
@@ -953,14 +966,13 @@ WebInspector.HeapSnapshotInstanceNode=function(dataGrid,snapshot,node,isDeletedN
 WebInspector.HeapSnapshotConstructorNode=function(dataGrid,className,aggregate,nodeFilter)
 {WebInspector.HeapSnapshotGridNode.call(this,dataGrid,aggregate.count>0);this._name=className;this._nodeFilter=nodeFilter;this._distance=aggregate.distance;this._count=aggregate.count;this._shallowSize=aggregate.self;this._retainedSize=aggregate.maxRet;var snapshot=dataGrid.snapshot;var countPercent=this._count/snapshot.nodeCount*100.0;var retainedSizePercent=this._retainedSize/snapshot.totalSize*100.0;var shallowSizePercent=this._shallowSize/snapshot.totalSize*100.0;this.data={"object":className,"count":Number.withThousandsSeparator(this._count),"distance":this._toUIDistance(this._distance),"shallowSize":Number.withThousandsSeparator(this._shallowSize),"retainedSize":Number.withThousandsSeparator(this._retainedSize),"count-percent":this._toPercentString(countPercent),"shallowSize-percent":this._toPercentString(shallowSizePercent),"retainedSize-percent":this._toPercentString(retainedSizePercent)};}
 WebInspector.HeapSnapshotConstructorNode.prototype={createProvider:function()
-{return this._dataGrid.snapshot.createNodesProviderForClass(this._name,this._nodeFilter)},revealNodeBySnapshotObjectId:function(snapshotObjectId,callback)
+{return this._dataGrid.snapshot.createNodesProviderForClass(this._name,this._nodeFilter)},populateNodeBySnapshotObjectId:function(snapshotObjectId,callback)
 {function didExpand()
 {this._provider().nodePosition(snapshotObjectId,didGetNodePosition.bind(this));}
 function didGetNodePosition(nodePosition)
-{if(nodePosition===-1){this.collapse();callback(false);}else{this._populateChildren(nodePosition,null,didPopulateChildren.bind(this,nodePosition));}}
+{if(nodePosition===-1){this.collapse();callback(null,null);}else{this._populateChildren(nodePosition,null,didPopulateChildren.bind(this,nodePosition));}}
 function didPopulateChildren(nodePosition)
-{var child=this.childForPosition(nodePosition);if(child){this._dataGrid.revealTreeNode([this,child]);this._dataGrid.highlightNode((child));}
-callback(!!child);}
+{callback(this,(this.childForPosition(nodePosition)));}
 this._dataGrid.resetNameFilter();this.expandWithoutPopulate(didExpand.bind(this));},filteredOut:function(filterValue)
 {return this._name.toLowerCase().indexOf(filterValue)===-1;},createCell:function(columnIdentifier)
 {var cell=columnIdentifier!=="object"?this._createValueCell(columnIdentifier):WebInspector.HeapSnapshotGridNode.prototype.createCell.call(this,columnIdentifier);if(this._searchMatched)
@@ -1021,16 +1033,16 @@ return this._createValueCell(columnIdentifier);var cell=WebInspector.HeapSnapsho
 return cell;},allocationNodeId:function()
 {return this._allocationNode.id;},__proto__:WebInspector.HeapSnapshotGridNode.prototype};WebInspector.HeapSnapshotView=function(dataDisplayDelegate,profile)
 {WebInspector.VBox.call(this);this.element.classList.add("heap-snapshot-view");profile.profileType().addEventListener(WebInspector.HeapSnapshotProfileType.SnapshotReceived,this._onReceiveSnapshot,this);profile.profileType().addEventListener(WebInspector.ProfileType.Events.RemoveProfileHeader,this._onProfileHeaderRemoved,this);if(profile.profileType().id===WebInspector.TrackingHeapSnapshotProfileType.TypeId){this._trackingOverviewGrid=new WebInspector.HeapTrackingOverviewGrid(profile);this._trackingOverviewGrid.addEventListener(WebInspector.HeapTrackingOverviewGrid.IdsRangeChanged,this._onIdsRangeChanged.bind(this));}
-this._parentDataDisplayDelegate=dataDisplayDelegate;this._splitView=new WebInspector.SplitView(false,true,"heapSnapshotSplitViewState",200,200);this._splitView.show(this.element);this._containmentView=new WebInspector.VBox();this._containmentView.setMinimumSize(50,25);this._containmentDataGrid=new WebInspector.HeapSnapshotContainmentDataGrid(this);this._containmentDataGrid.show(this._containmentView.element);this._containmentDataGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._selectionChanged,this);this._statisticsView=new WebInspector.HeapSnapshotStatisticsView();this._constructorsView=new WebInspector.VBox();this._constructorsView.setMinimumSize(50,25);this._constructorsDataGrid=new WebInspector.HeapSnapshotConstructorsDataGrid(this);this._constructorsDataGrid.show(this._constructorsView.element);this._constructorsDataGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._selectionChanged,this);this._diffView=new WebInspector.VBox();this._diffView.setMinimumSize(50,25);this._diffDataGrid=new WebInspector.HeapSnapshotDiffDataGrid(this);this._diffDataGrid.show(this._diffView.element);this._diffDataGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._selectionChanged,this);if(profile._hasAllocationStacks){this._allocationView=new WebInspector.VBox();this._allocationView.setMinimumSize(50,25);this._allocationDataGrid=new WebInspector.AllocationDataGrid(profile.target(),this);this._allocationDataGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._onSelectAllocationNode,this);this._allocationDataGrid.show(this._allocationView.element);this._allocationStackView=new WebInspector.HeapAllocationStackView(profile.target());this._allocationStackView.setMinimumSize(50,25);this._tabbedPane=new WebInspector.TabbedPane();this._tabbedPane.closeableTabs=false;this._tabbedPane.headerElement().classList.add("heap-object-details-header");}
-this._retainmentView=new WebInspector.VBox();this._retainmentView.setMinimumSize(50,21);this._retainmentView.element.classList.add("retaining-paths-view");var splitViewResizer;if(this._allocationStackView){this._tabbedPane=new WebInspector.TabbedPane();this._tabbedPane.closeableTabs=false;this._tabbedPane.headerElement().classList.add("heap-object-details-header");this._tabbedPane.appendTab("retainers",WebInspector.UIString("Retainers"),this._retainmentView);this._tabbedPane.appendTab("allocation-stack",WebInspector.UIString("Allocation stack"),this._allocationStackView);splitViewResizer=this._tabbedPane.headerElement();this._objectDetailsView=this._tabbedPane;}else{var retainmentViewHeader=document.createElementWithClass("div","heap-snapshot-view-resizer");var retainingPathsTitleDiv=retainmentViewHeader.createChild("div","title");var retainingPathsTitle=retainingPathsTitleDiv.createChild("span");retainingPathsTitle.textContent=WebInspector.UIString("Retainers");this._retainmentView.element.appendChild(retainmentViewHeader);splitViewResizer=retainmentViewHeader;this._objectDetailsView=this._retainmentView;}
+this._parentDataDisplayDelegate=dataDisplayDelegate;this._searchableView=new WebInspector.SearchableView(this);this._searchableView.show(this.element);this._splitView=new WebInspector.SplitView(false,true,"heapSnapshotSplitViewState",200,200);this._splitView.show(this._searchableView.element);this._containmentView=new WebInspector.VBox();this._containmentView.setMinimumSize(50,25);this._containmentDataGrid=new WebInspector.HeapSnapshotContainmentDataGrid(this);this._containmentDataGrid.show(this._containmentView.element);this._containmentDataGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._selectionChanged,this);this._statisticsView=new WebInspector.HeapSnapshotStatisticsView();this._constructorsView=new WebInspector.VBox();this._constructorsView.setMinimumSize(50,25);this._constructorsDataGrid=new WebInspector.HeapSnapshotConstructorsDataGrid(this);this._constructorsDataGrid.show(this._constructorsView.element);this._constructorsDataGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._selectionChanged,this);this._diffView=new WebInspector.VBox();this._diffView.setMinimumSize(50,25);this._diffDataGrid=new WebInspector.HeapSnapshotDiffDataGrid(this);this._diffDataGrid.show(this._diffView.element);this._diffDataGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._selectionChanged,this);if(profile._hasAllocationStacks){this._allocationView=new WebInspector.VBox();this._allocationView.setMinimumSize(50,25);this._allocationDataGrid=new WebInspector.AllocationDataGrid(profile.target(),this);this._allocationDataGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._onSelectAllocationNode,this);this._allocationDataGrid.show(this._allocationView.element);this._allocationStackView=new WebInspector.HeapAllocationStackView(profile.target());this._allocationStackView.setMinimumSize(50,25);this._tabbedPane=new WebInspector.TabbedPane();this._tabbedPane.setCloseableTabs(false);this._tabbedPane.headerElement().classList.add("heap-object-details-header");}
+this._retainmentView=new WebInspector.VBox();this._retainmentView.setMinimumSize(50,21);this._retainmentView.element.classList.add("retaining-paths-view");var splitViewResizer;if(this._allocationStackView){this._tabbedPane=new WebInspector.TabbedPane();this._tabbedPane.setCloseableTabs(false);this._tabbedPane.headerElement().classList.add("heap-object-details-header");this._tabbedPane.appendTab("retainers",WebInspector.UIString("Retainers"),this._retainmentView);this._tabbedPane.appendTab("allocation-stack",WebInspector.UIString("Allocation stack"),this._allocationStackView);splitViewResizer=this._tabbedPane.headerElement();this._objectDetailsView=this._tabbedPane;}else{var retainmentViewHeader=createElementWithClass("div","heap-snapshot-view-resizer");var retainingPathsTitleDiv=retainmentViewHeader.createChild("div","title");var retainingPathsTitle=retainingPathsTitleDiv.createChild("span");retainingPathsTitle.textContent=WebInspector.UIString("Retainers");this._retainmentView.element.appendChild(retainmentViewHeader);splitViewResizer=retainmentViewHeader;this._objectDetailsView=this._retainmentView;}
 this._splitView.hideDefaultResizer();this._splitView.installResizer(splitViewResizer);this._retainmentDataGrid=new WebInspector.HeapSnapshotRetainmentDataGrid(this);this._retainmentDataGrid.show(this._retainmentView.element);this._retainmentDataGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._inspectedObjectChanged,this);this._retainmentDataGrid.reset();this._perspectives=[];this._perspectives.push(new WebInspector.HeapSnapshotView.SummaryPerspective());if(profile.profileType()!==WebInspector.ProfileTypeRegistry.instance.trackingHeapSnapshotProfileType)
 this._perspectives.push(new WebInspector.HeapSnapshotView.ComparisonPerspective());this._perspectives.push(new WebInspector.HeapSnapshotView.ContainmentPerspective());if(this._allocationView)
 this._perspectives.push(new WebInspector.HeapSnapshotView.AllocationPerspective());this._perspectives.push(new WebInspector.HeapSnapshotView.StatisticsPerspective());this._perspectiveSelect=new WebInspector.StatusBarComboBox(this._onSelectedPerspectiveChanged.bind(this));for(var i=0;i<this._perspectives.length;++i)
-this._perspectiveSelect.createOption(this._perspectives[i].title());this._profile=profile;this._baseSelect=new WebInspector.StatusBarComboBox(this._changeBase.bind(this));this._baseSelect.visible=false;this._updateBaseOptions();this._filterSelect=new WebInspector.StatusBarComboBox(this._changeFilter.bind(this));this._filterSelect.visible=false;this._updateFilterOptions();this._classNameFilter=new WebInspector.StatusBarInput("Class filter");this._classNameFilter.visible=false;this._constructorsDataGrid.setNameFilter(this._classNameFilter);this._diffDataGrid.setNameFilter(this._classNameFilter);this._selectedSizeText=new WebInspector.StatusBarText("");this._popoverHelper=new WebInspector.ObjectPopoverHelper(this.element,this._getHoverAnchor.bind(this),this._resolveObjectForPopover.bind(this),undefined,true);this._currentPerspectiveIndex=0;this._currentPerspective=this._perspectives[0];this._currentPerspective.activate(this);this._dataGrid=this._currentPerspective.masterGrid(this);this._refreshView();}
+this._perspectiveSelect.createOption(this._perspectives[i].title());this._profile=profile;this._baseSelect=new WebInspector.StatusBarComboBox(this._changeBase.bind(this));this._baseSelect.setVisible(false);this._updateBaseOptions();this._filterSelect=new WebInspector.StatusBarComboBox(this._changeFilter.bind(this));this._filterSelect.setVisible(false);this._updateFilterOptions();this._classNameFilter=new WebInspector.StatusBarInput("Class filter");this._classNameFilter.setVisible(false);this._constructorsDataGrid.setNameFilter(this._classNameFilter);this._diffDataGrid.setNameFilter(this._classNameFilter);this._selectedSizeText=new WebInspector.StatusBarText("");this._popoverHelper=new WebInspector.ObjectPopoverHelper(this.element,this._getHoverAnchor.bind(this),this._resolveObjectForPopover.bind(this),undefined,true);this._currentPerspectiveIndex=0;this._currentPerspective=this._perspectives[0];this._currentPerspective.activate(this);this._dataGrid=this._currentPerspective.masterGrid(this);this._refreshView();this._searchThrottler=new WebInspector.Throttler(0);}
 WebInspector.HeapSnapshotView.Perspective=function(title)
 {this._title=title;}
 WebInspector.HeapSnapshotView.Perspective.prototype={activate:function(heapSnapshotView){},deactivate:function(heapSnapshotView)
-{heapSnapshotView._baseSelect.visible=false;heapSnapshotView._filterSelect.visible=false;heapSnapshotView._classNameFilter.visible=false;if(heapSnapshotView._trackingOverviewGrid)
+{heapSnapshotView._baseSelect.setVisible(false);heapSnapshotView._filterSelect.setVisible(false);heapSnapshotView._classNameFilter.setVisible(false);if(heapSnapshotView._trackingOverviewGrid)
 heapSnapshotView._trackingOverviewGrid.detach();if(heapSnapshotView._allocationView)
 heapSnapshotView._allocationView.detach();if(heapSnapshotView._statisticsView)
 heapSnapshotView._statisticsView.detach();heapSnapshotView._splitView.detach();heapSnapshotView._splitView.detachChildViews();},masterGrid:function(heapSnapshotView)
@@ -1040,87 +1052,77 @@ heapSnapshotView._statisticsView.detach();heapSnapshotView._splitView.detach();h
 WebInspector.HeapSnapshotView.SummaryPerspective=function()
 {WebInspector.HeapSnapshotView.Perspective.call(this,WebInspector.UIString("Summary"));}
 WebInspector.HeapSnapshotView.SummaryPerspective.prototype={activate:function(heapSnapshotView)
-{heapSnapshotView._constructorsView.show(heapSnapshotView._splitView.mainElement());heapSnapshotView._objectDetailsView.show(heapSnapshotView._splitView.sidebarElement());heapSnapshotView._splitView.show(heapSnapshotView.element);heapSnapshotView._filterSelect.visible=true;heapSnapshotView._classNameFilter.visible=true;if(heapSnapshotView._trackingOverviewGrid){heapSnapshotView._trackingOverviewGrid.show(heapSnapshotView.element,heapSnapshotView._splitView.element);heapSnapshotView._trackingOverviewGrid.update();heapSnapshotView._trackingOverviewGrid._updateGrid();}},masterGrid:function(heapSnapshotView)
+{heapSnapshotView._splitView.setMainView(heapSnapshotView._constructorsView);heapSnapshotView._splitView.setSidebarView(heapSnapshotView._objectDetailsView);heapSnapshotView._splitView.show(heapSnapshotView._searchableView.element);heapSnapshotView._filterSelect.setVisible(true);heapSnapshotView._classNameFilter.setVisible(true);if(heapSnapshotView._trackingOverviewGrid){heapSnapshotView._trackingOverviewGrid.show(heapSnapshotView._searchableView.element,heapSnapshotView._splitView.element);heapSnapshotView._trackingOverviewGrid.update();heapSnapshotView._trackingOverviewGrid._updateGrid();}},masterGrid:function(heapSnapshotView)
 {return heapSnapshotView._constructorsDataGrid;},supportsSearch:function()
 {return true;},__proto__:WebInspector.HeapSnapshotView.Perspective.prototype}
 WebInspector.HeapSnapshotView.ComparisonPerspective=function()
 {WebInspector.HeapSnapshotView.Perspective.call(this,WebInspector.UIString("Comparison"));}
 WebInspector.HeapSnapshotView.ComparisonPerspective.prototype={activate:function(heapSnapshotView)
-{heapSnapshotView._diffView.show(heapSnapshotView._splitView.mainElement());heapSnapshotView._objectDetailsView.show(heapSnapshotView._splitView.sidebarElement());heapSnapshotView._splitView.show(heapSnapshotView.element);heapSnapshotView._baseSelect.visible=true;heapSnapshotView._classNameFilter.visible=true;},masterGrid:function(heapSnapshotView)
+{heapSnapshotView._splitView.setMainView(heapSnapshotView._diffView);heapSnapshotView._splitView.setSidebarView(heapSnapshotView._objectDetailsView);heapSnapshotView._splitView.show(heapSnapshotView._searchableView.element);heapSnapshotView._baseSelect.setVisible(true);heapSnapshotView._classNameFilter.setVisible(true);},masterGrid:function(heapSnapshotView)
 {return heapSnapshotView._diffDataGrid;},supportsSearch:function()
 {return true;},__proto__:WebInspector.HeapSnapshotView.Perspective.prototype}
 WebInspector.HeapSnapshotView.ContainmentPerspective=function()
 {WebInspector.HeapSnapshotView.Perspective.call(this,WebInspector.UIString("Containment"));}
 WebInspector.HeapSnapshotView.ContainmentPerspective.prototype={activate:function(heapSnapshotView)
-{heapSnapshotView._containmentView.show(heapSnapshotView._splitView.mainElement());heapSnapshotView._objectDetailsView.show(heapSnapshotView._splitView.sidebarElement());heapSnapshotView._splitView.show(heapSnapshotView.element);},masterGrid:function(heapSnapshotView)
+{heapSnapshotView._splitView.setMainView(heapSnapshotView._containmentView);heapSnapshotView._splitView.setSidebarView(heapSnapshotView._objectDetailsView);heapSnapshotView._splitView.show(heapSnapshotView._searchableView.element);},masterGrid:function(heapSnapshotView)
 {return heapSnapshotView._containmentDataGrid;},__proto__:WebInspector.HeapSnapshotView.Perspective.prototype}
 WebInspector.HeapSnapshotView.AllocationPerspective=function()
-{WebInspector.HeapSnapshotView.Perspective.call(this,WebInspector.UIString("Allocation"));this._allocationSplitView=new WebInspector.SplitView(false,true,"heapSnapshotAllocationSplitViewState",200,200);var resizer=document.createElementWithClass("div","heap-snapshot-view-resizer");var title=resizer.createChild("div","title").createChild("span");title.textContent=WebInspector.UIString("Live objects");this._allocationSplitView.hideDefaultResizer();this._allocationSplitView.installResizer(resizer);this._allocationSplitView.sidebarElement().appendChild(resizer);}
+{WebInspector.HeapSnapshotView.Perspective.call(this,WebInspector.UIString("Allocation"));this._allocationSplitView=new WebInspector.SplitView(false,true,"heapSnapshotAllocationSplitViewState",200,200);this._allocationSplitView.setSidebarView(new WebInspector.VBox());var resizer=createElementWithClass("div","heap-snapshot-view-resizer");var title=resizer.createChild("div","title").createChild("span");title.textContent=WebInspector.UIString("Live objects");this._allocationSplitView.hideDefaultResizer();this._allocationSplitView.installResizer(resizer);this._allocationSplitView.sidebarView().element.appendChild(resizer);}
 WebInspector.HeapSnapshotView.AllocationPerspective.prototype={activate:function(heapSnapshotView)
-{heapSnapshotView._allocationView.show(this._allocationSplitView.mainElement());heapSnapshotView._constructorsView.show(heapSnapshotView._splitView.mainElement());heapSnapshotView._objectDetailsView.show(heapSnapshotView._splitView.sidebarElement());heapSnapshotView._splitView.show(this._allocationSplitView.sidebarElement());this._allocationSplitView.show(heapSnapshotView.element);heapSnapshotView._constructorsDataGrid.clear();var selectedNode=heapSnapshotView._allocationDataGrid.selectedNode;if(selectedNode)
+{this._allocationSplitView.setMainView(heapSnapshotView._allocationView);heapSnapshotView._splitView.setMainView(heapSnapshotView._constructorsView);heapSnapshotView._splitView.setSidebarView(heapSnapshotView._objectDetailsView);this._allocationSplitView.setSidebarView(heapSnapshotView._splitView);this._allocationSplitView.show(heapSnapshotView._searchableView.element);heapSnapshotView._constructorsDataGrid.clear();var selectedNode=heapSnapshotView._allocationDataGrid.selectedNode;if(selectedNode)
 heapSnapshotView._constructorsDataGrid.setAllocationNodeId(selectedNode.allocationNodeId());},deactivate:function(heapSnapshotView)
 {this._allocationSplitView.detach();WebInspector.HeapSnapshotView.Perspective.prototype.deactivate.call(this,heapSnapshotView);},masterGrid:function(heapSnapshotView)
 {return heapSnapshotView._allocationDataGrid;},__proto__:WebInspector.HeapSnapshotView.Perspective.prototype}
 WebInspector.HeapSnapshotView.StatisticsPerspective=function()
 {WebInspector.HeapSnapshotView.Perspective.call(this,WebInspector.UIString("Statistics"));}
 WebInspector.HeapSnapshotView.StatisticsPerspective.prototype={activate:function(heapSnapshotView)
-{heapSnapshotView._statisticsView.show(heapSnapshotView.element);},masterGrid:function(heapSnapshotView)
+{heapSnapshotView._statisticsView.show(heapSnapshotView._searchableView.element);},masterGrid:function(heapSnapshotView)
 {return null;},__proto__:WebInspector.HeapSnapshotView.Perspective.prototype}
-WebInspector.HeapSnapshotView.prototype={showProfile:function(profile)
+WebInspector.HeapSnapshotView.prototype={searchableView:function()
+{return this._searchableView;},showProfile:function(profile)
 {return this._parentDataDisplayDelegate.showProfile(profile);},showObject:function(snapshotObjectId,perspectiveName)
 {if(snapshotObjectId<=this._profile.maxJSObjectId)
-this.highlightLiveObject(perspectiveName,snapshotObjectId);else
+this.selectLiveObject(perspectiveName,snapshotObjectId);else
 this._parentDataDisplayDelegate.showObject(snapshotObjectId,perspectiveName);},_refreshView:function()
-{this._profile.load(profileCallback.bind(this));function profileCallback(heapSnapshotProxy)
-{heapSnapshotProxy.getStatistics(this._gotStatistics.bind(this));var list=this._profiles();var profileIndex=list.indexOf(this._profile);this._baseSelect.setSelectedIndex(Math.max(0,profileIndex-1));this._dataGrid.setDataSource(heapSnapshotProxy);if(this._trackingOverviewGrid)
+{this._profile._loadPromise.then(profileCallback.bind(this));function profileCallback(heapSnapshotProxy)
+{heapSnapshotProxy.getStatistics().then(this._gotStatistics.bind(this));var list=this._profiles();var profileIndex=list.indexOf(this._profile);this._baseSelect.setSelectedIndex(Math.max(0,profileIndex-1));this._dataGrid.setDataSource(heapSnapshotProxy);if(this._trackingOverviewGrid)
 this._trackingOverviewGrid._updateGrid();}},_gotStatistics:function(statistics)
-{this._statisticsView.setTotal(statistics.total);this._statisticsView.addRecord(statistics.code,WebInspector.UIString("Code"),"#f77");this._statisticsView.addRecord(statistics.strings,WebInspector.UIString("Strings"),"#5e5");this._statisticsView.addRecord(statistics.jsArrays,WebInspector.UIString("JS Arrays"),"#7af");this._statisticsView.addRecord(statistics.native,WebInspector.UIString("Typed Arrays"),"#fc5");this._statisticsView.addRecord(statistics.total,WebInspector.UIString("Total"));},_onIdsRangeChanged:function(event)
+{this._statisticsView.setTotal(statistics.total);this._statisticsView.addRecord(statistics.code,WebInspector.UIString("Code"),"#f77");this._statisticsView.addRecord(statistics.strings,WebInspector.UIString("Strings"),"#5e5");this._statisticsView.addRecord(statistics.jsArrays,WebInspector.UIString("JS Arrays"),"#7af");this._statisticsView.addRecord(statistics.native,WebInspector.UIString("Typed Arrays"),"#fc5");this._statisticsView.addRecord(statistics.system,WebInspector.UIString("System Objects"),"#98f");this._statisticsView.addRecord(statistics.total,WebInspector.UIString("Total"));},_onIdsRangeChanged:function(event)
 {var minId=event.data.minId;var maxId=event.data.maxId;this._selectedSizeText.setText(WebInspector.UIString("Selected size: %s",Number.bytesToString(event.data.size)));if(this._constructorsDataGrid.snapshot)
-this._constructorsDataGrid.setSelectionRange(minId,maxId);},get statusBarItems()
-{var result=[this._perspectiveSelect.element,this._classNameFilter.element];if(this._profile.profileType()!==WebInspector.ProfileTypeRegistry.instance.trackingHeapSnapshotProfileType)
-result.push(this._baseSelect.element,this._filterSelect.element);result.push(this._selectedSizeText.element);return result;},wasShown:function()
-{this._profile.load(profileCallback.bind(this));function profileCallback(){this._profile._wasShown();if(this._baseProfile)
-this._baseProfile.load(function(){});}},willHide:function()
+this._constructorsDataGrid.setSelectionRange(minId,maxId);},statusBarItems:function()
+{var result=[this._perspectiveSelect,this._classNameFilter];if(this._profile.profileType()!==WebInspector.ProfileTypeRegistry.instance.trackingHeapSnapshotProfileType)
+result.push(this._baseSelect,this._filterSelect);result.push(this._selectedSizeText);return result;},wasShown:function()
+{this._profile._loadPromise.then(this._profile._wasShown.bind(this._profile));},willHide:function()
 {this._currentSearchResultIndex=-1;this._popoverHelper.hidePopover();if(this.helpPopover&&this.helpPopover.isShowing())
-this.helpPopover.hide();},searchCanceled:function()
-{if(this._searchResults){for(var i=0;i<this._searchResults.length;++i){var node=this._searchResults[i].node;delete node._searchMatched;node.refresh();}}
-delete this._searchFinishedCallback;this._currentSearchResultIndex=-1;this._searchResults=[];},performSearch:function(query,finishedCallback)
-{this.searchCanceled();query=query.trim();if(!query)
-return;if(!this._currentPerspective.supportsSearch())
-return;function didHighlight(found)
-{finishedCallback(this,found?1:0);}
+this.helpPopover.hide();},supportsCaseSensitiveSearch:function()
+{return true;},supportsRegexSearch:function()
+{return false;},searchCanceled:function()
+{this._currentSearchResultIndex=-1;this._searchResults=[];},_selectRevealedNode:function(callback,node)
+{if(node)
+node.select();callback();},performSearch:function(searchConfig,shouldJump,jumpBackwards)
+{var nextQuery=new WebInspector.HeapSnapshotCommon.SearchConfig(searchConfig.query.trim(),searchConfig.caseSensitive,searchConfig.isRegex,shouldJump,jumpBackwards||false);this._searchThrottler.schedule(this._performSearch.bind(this,nextQuery));},_performSearch:function(nextQuery,callback)
+{this.searchCanceled();if(!this._currentPerspective.supportsSearch()){callback();return;}
+this.currentQuery=nextQuery;var query=nextQuery.query.trim();if(!query){callback();return;}
 if(query.charAt(0)==="@"){var snapshotNodeId=parseInt(query.substring(1),10);if(!isNaN(snapshotNodeId))
-this._dataGrid.highlightObjectByHeapSnapshotId(String(snapshotNodeId),didHighlight.bind(this));else
-finishedCallback(this,0);return;}
-this._searchFinishedCallback=finishedCallback;var nameRegExp=createPlainTextSearchRegex(query,"i");function matchesByName(gridNode){return("_name"in gridNode)&&nameRegExp.test(gridNode._name);}
-function matchesQuery(gridNode)
-{delete gridNode._searchMatched;if(matchesByName(gridNode)){gridNode._searchMatched=true;gridNode.refresh();return true;}
-return false;}
-var current=this._dataGrid.rootNode().children[0];var depth=0;var info={};const maxDepth=1;while(current){if(matchesQuery(current))
-this._searchResults.push({node:current});current=current.traverseNextNode(false,null,(depth>=maxDepth),info);depth+=info.depthChange;}
-finishedCallback(this,this._searchResults.length);},jumpToFirstSearchResult:function()
-{if(!this._searchResults||!this._searchResults.length)
-return;this._currentSearchResultIndex=0;this._jumpToSearchResult(this._currentSearchResultIndex);},jumpToLastSearchResult:function()
-{if(!this._searchResults||!this._searchResults.length)
-return;this._currentSearchResultIndex=(this._searchResults.length-1);this._jumpToSearchResult(this._currentSearchResultIndex);},jumpToNextSearchResult:function()
-{if(!this._searchResults||!this._searchResults.length)
-return;if(++this._currentSearchResultIndex>=this._searchResults.length)
-this._currentSearchResultIndex=0;this._jumpToSearchResult(this._currentSearchResultIndex);},jumpToPreviousSearchResult:function()
-{if(!this._searchResults||!this._searchResults.length)
-return;if(--this._currentSearchResultIndex<0)
-this._currentSearchResultIndex=(this._searchResults.length-1);this._jumpToSearchResult(this._currentSearchResultIndex);},showingFirstSearchResult:function()
-{return(this._currentSearchResultIndex===0);},showingLastSearchResult:function()
-{return(this._searchResults&&this._currentSearchResultIndex===(this._searchResults.length-1));},currentSearchResultIndex:function(){return this._currentSearchResultIndex;},_jumpToSearchResult:function(index)
-{var searchResult=this._searchResults[index];if(!searchResult)
-return;var node=searchResult.node;node.revealAndSelect();},refreshVisibleData:function()
+this._dataGrid.revealObjectByHeapSnapshotId(String(snapshotNodeId),this._selectRevealedNode.bind(this,callback));else
+callback();return;}
+function didSearch(entryIds)
+{this._searchResults=entryIds;this._searchableView.updateSearchMatchesCount(this._searchResults.length);if(this._searchResults.length)
+this._currentSearchResultIndex=nextQuery.jumpBackwards?this._searchResults.length-1:0;this._jumpToSearchResult(this._currentSearchResultIndex,callback);}
+this._profile._snapshotProxy.search(this.currentQuery,this._dataGrid.nodeFilter(),didSearch.bind(this));},jumpToNextSearchResult:function()
+{if(!this._searchResults.length)
+return;this._currentSearchResultIndex=(this._currentSearchResultIndex+1)%this._searchResults.length;this._searchThrottler.schedule(this._jumpToSearchResult.bind(this,this._currentSearchResultIndex));},jumpToPreviousSearchResult:function()
+{if(!this._searchResults.length)
+return;this._currentSearchResultIndex=(this._currentSearchResultIndex+this._searchResults.length-1)%this._searchResults.length;this._searchThrottler.schedule(this._jumpToSearchResult.bind(this,this._currentSearchResultIndex));},_jumpToSearchResult:function(searchResultIndex,callback)
+{this._dataGrid.revealObjectByHeapSnapshotId(String(this._searchResults[searchResultIndex]),this._selectRevealedNode.bind(this,callback));this._searchableView.updateCurrentMatchIndex(searchResultIndex);},refreshVisibleData:function()
 {if(!this._dataGrid)
 return;var child=this._dataGrid.rootNode().children[0];while(child){child.refresh();child=child.traverseNextNode(false,null,true);}},_changeBase:function()
 {if(this._baseProfile===this._profiles()[this._baseSelect.selectedIndex()])
 return;this._baseProfile=this._profiles()[this._baseSelect.selectedIndex()];var dataGrid=(this._dataGrid);if(dataGrid.snapshot)
-this._baseProfile.load(dataGrid.setBaseDataSource.bind(dataGrid));if(!this.currentQuery||!this._searchFinishedCallback||!this._searchResults)
-return;this._searchFinishedCallback(this,-this._searchResults.length);this.performSearch(this.currentQuery,this._searchFinishedCallback);},_changeFilter:function()
-{var profileIndex=this._filterSelect.selectedIndex()-1;this._dataGrid.filterSelectIndexChanged(this._profiles(),profileIndex);WebInspector.notifications.dispatchEventToListeners(WebInspector.UserMetrics.UserAction,{action:WebInspector.UserMetrics.UserActionNames.HeapSnapshotFilterChanged,label:this._filterSelect.selectedOption().label});if(!this.currentQuery||!this._searchFinishedCallback||!this._searchResults)
-return;this._searchFinishedCallback(this,-this._searchResults.length);this.performSearch(this.currentQuery,this._searchFinishedCallback);},_profiles:function()
+this._baseProfile._loadPromise.then(dataGrid.setBaseDataSource.bind(dataGrid));if(!this.currentQuery||!this._searchResults)
+return;this.performSearch(this.currentQuery,false);},_changeFilter:function()
+{var profileIndex=this._filterSelect.selectedIndex()-1;this._dataGrid.filterSelectIndexChanged(this._profiles(),profileIndex);WebInspector.notifications.dispatchEventToListeners(WebInspector.UserMetrics.UserAction,{action:WebInspector.UserMetrics.UserActionNames.HeapSnapshotFilterChanged,label:this._filterSelect.selectedOption().label});if(!this.currentQuery||!this._searchResults)
+return;this.performSearch(this.currentQuery,false);},_profiles:function()
 {return this._profile.profileType().getProfiles();},populateContextMenu:function(contextMenu,event)
 {if(this._dataGrid)
 this._dataGrid.populateContextMenu(contextMenu,event);},_selectionChanged:function(event)
@@ -1129,7 +1131,7 @@ this._dataGrid.populateContextMenu(contextMenu,event);},_selectionChanged:functi
 {var selectedNode=event.target.selectedNode;var target=this._profile.target();if(target&&selectedNode instanceof WebInspector.HeapSnapshotGenericObjectNode)
 target.consoleAgent().addInspectedHeapObject(selectedNode.snapshotNodeId);},_setSelectedNodeForDetailsView:function(nodeItem)
 {var dataSource=nodeItem&&nodeItem.retainersDataSource();if(dataSource){this._retainmentDataGrid.setDataSource(dataSource.snapshot,dataSource.snapshotNodeIndex);if(this._allocationStackView)
-this._allocationStackView.setAllocatedObject(dataSource.snapshot,dataSource.snapshotNodeIndex)}else{if(this._allocationStackView)
+this._allocationStackView.setAllocatedObject(dataSource.snapshot,dataSource.snapshotNodeIndex);}else{if(this._allocationStackView)
 this._allocationStackView.clear();this._retainmentDataGrid.reset();}},_changePerspectiveAndWait:function(perspectiveTitle,callback)
 {var perspectiveIndex=null;for(var i=0;i<this._perspectives.length;++i){if(this._perspectives[i].title()===perspectiveTitle){perspectiveIndex=i;break;}}
 if(this._currentPerspectiveIndex===perspectiveIndex||perspectiveIndex===null){setTimeout(callback,0);return;}
@@ -1138,11 +1140,11 @@ function dataGridContentShown(event)
 callback();}
 this._perspectives[perspectiveIndex].masterGrid(this).addEventListener(WebInspector.HeapSnapshotSortableDataGrid.Events.ContentShown,dataGridContentShown,this);this._perspectiveSelect.setSelectedIndex(perspectiveIndex);this._changePerspective(perspectiveIndex);},_updateDataSourceAndView:function()
 {var dataGrid=this._dataGrid;if(!dataGrid||dataGrid.snapshot)
-return;this._profile.load(didLoadSnapshot.bind(this));function didLoadSnapshot(snapshotProxy)
+return;this._profile._loadPromise.then(didLoadSnapshot.bind(this));function didLoadSnapshot(snapshotProxy)
 {if(this._dataGrid!==dataGrid)
 return;if(dataGrid.snapshot!==snapshotProxy)
 dataGrid.setDataSource(snapshotProxy);if(dataGrid===this._diffDataGrid){if(!this._baseProfile)
-this._baseProfile=this._profiles()[this._baseSelect.selectedIndex()];this._baseProfile.load(didLoadBaseSnaphot.bind(this));}}
+this._baseProfile=this._profiles()[this._baseSelect.selectedIndex()];this._baseProfile._loadPromise.then(didLoadBaseSnaphot.bind(this));}}
 function didLoadBaseSnaphot(baseSnapshotProxy)
 {if(this._diffDataGrid.baseSnapshot!==baseSnapshotProxy)
 this._diffDataGrid.setBaseDataSource(baseSnapshotProxy);}},_onSelectedPerspectiveChanged:function(event)
@@ -1150,17 +1152,18 @@ this._diffDataGrid.setBaseDataSource(baseSnapshotProxy);}},_onSelectedPerspectiv
 {},_changePerspective:function(selectedIndex)
 {if(selectedIndex===this._currentPerspectiveIndex)
 return;this._currentPerspectiveIndex=selectedIndex;this._currentPerspective.deactivate(this);var perspective=this._perspectives[selectedIndex];this._currentPerspective=perspective;this._dataGrid=perspective.masterGrid(this);perspective.activate(this);this.refreshVisibleData();if(this._dataGrid)
-this._dataGrid.updateWidths();this._updateDataSourceAndView();if(!this.currentQuery||!this._searchFinishedCallback||!this._searchResults)
-return;this._searchFinishedCallback(this,-this._searchResults.length);this.performSearch(this.currentQuery,this._searchFinishedCallback);},highlightLiveObject:function(perspectiveName,snapshotObjectId)
+this._dataGrid.updateWidths();this._updateDataSourceAndView();if(!this.currentQuery||!this._searchResults)
+return;this.performSearch(this.currentQuery,false);},selectLiveObject:function(perspectiveName,snapshotObjectId)
 {this._changePerspectiveAndWait(perspectiveName,didChangePerspective.bind(this));function didChangePerspective()
-{this._dataGrid.highlightObjectByHeapSnapshotId(snapshotObjectId,didHighlightObject);}
-function didHighlightObject(found)
-{if(!found)
+{this._dataGrid.revealObjectByHeapSnapshotId(snapshotObjectId,didRevealObject);}
+function didRevealObject(parentNode,node)
+{if(!node)
 WebInspector.console.error("Cannot find corresponding heap snapshot node");}},_getHoverAnchor:function(target)
 {var span=target.enclosingNodeOrSelfWithNodeName("span");if(!span)
 return;var row=target.enclosingNodeOrSelfWithNodeName("tr");if(!row)
 return;span.node=row._dataGridNode;return span;},_resolveObjectForPopover:function(element,showCallback,objectGroupName)
 {if(!this._profile.target())
+return;if(!element.node)
 return;element.node.queryObjectContent(this._profile.target(),showCallback,objectGroupName);},_updateBaseOptions:function()
 {var list=this._profiles();if(this._baseSelect.size()===list.length)
 return;for(var i=this._baseSelect.size(),n=list.length;i<n;++i){var title=list[i].title;this._baseSelect.createOption(title);}},_updateFilterOptions:function()
@@ -1172,7 +1175,9 @@ title=WebInspector.UIString("Objects allocated between %s and %s",list[i-1].titl
 {this._updateBaseOptions();this._updateFilterOptions();},_onReceiveSnapshot:function(event)
 {this._updateControls();},_onProfileHeaderRemoved:function(event)
 {var profile=event.data;if(this._profile===profile){this.detach();this._profile.profileType().removeEventListener(WebInspector.HeapSnapshotProfileType.SnapshotReceived,this._onReceiveSnapshot,this);this._profile.profileType().removeEventListener(WebInspector.ProfileType.Events.RemoveProfileHeader,this._onProfileHeaderRemoved,this);this.dispose();}else{this._updateControls();}},dispose:function()
-{if(this._allocationStackView){this._allocationStackView.clear();this._allocationDataGrid.dispose();}},__proto__:WebInspector.VBox.prototype}
+{if(this._allocationStackView){this._allocationStackView.clear();this._allocationDataGrid.dispose();}
+if(this._trackingOverviewGrid)
+this._trackingOverviewGrid.dispose();},__proto__:WebInspector.VBox.prototype}
 WebInspector.HeapSnapshotProfileType=function(id,title)
 {WebInspector.ProfileType.call(this,id||WebInspector.HeapSnapshotProfileType.TypeId,title||WebInspector.UIString("Take Heap Snapshot"));WebInspector.targetManager.observeTargets(this);WebInspector.targetManager.addModelListener(WebInspector.HeapProfilerModel,WebInspector.HeapProfilerModel.Events.ResetProfiles,this._resetProfiles,this);WebInspector.targetManager.addModelListener(WebInspector.HeapProfilerModel,WebInspector.HeapProfilerModel.Events.AddHeapSnapshotChunk,this._addHeapSnapshotChunk,this);WebInspector.targetManager.addModelListener(WebInspector.HeapProfilerModel,WebInspector.HeapProfilerModel.Events.ReportHeapSnapshotProgress,this._reportHeapSnapshotProgress,this);}
 WebInspector.HeapSnapshotProfileType.TypeId="HEAP";WebInspector.HeapSnapshotProfileType.SnapshotReceived="SnapshotReceived";WebInspector.HeapSnapshotProfileType.prototype={targetAdded:function(target)
@@ -1203,7 +1208,7 @@ WebInspector.TrackingHeapSnapshotProfileType.TypeId="HEAP-RECORD";WebInspector.T
 {WebInspector.HeapSnapshotProfileType.prototype.targetAdded.call(this,target);target.heapProfilerModel.addEventListener(WebInspector.HeapProfilerModel.Events.HeapStatsUpdate,this._heapStatsUpdate,this);target.heapProfilerModel.addEventListener(WebInspector.HeapProfilerModel.Events.LastSeenObjectId,this._lastSeenObjectId,this);},targetRemoved:function(target)
 {WebInspector.HeapSnapshotProfileType.prototype.targetRemoved.call(this,target);target.heapProfilerModel.removeEventListener(WebInspector.HeapProfilerModel.Events.HeapStatsUpdate,this._heapStatsUpdate,this);target.heapProfilerModel.removeEventListener(WebInspector.HeapProfilerModel.Events.LastSeenObjectId,this._lastSeenObjectId,this);},_heapStatsUpdate:function(event)
 {if(!this._profileSamples)
-return;var samples=(event.data);var index;for(var i=0;i<samples.length;i+=3){index=samples[i];var count=samples[i+1];var size=samples[i+2];this._profileSamples.sizes[index]=size;if(!this._profileSamples.max[index])
+return;var samples=(event.data);var index;for(var i=0;i<samples.length;i+=3){index=samples[i];var size=samples[i+2];this._profileSamples.sizes[index]=size;if(!this._profileSamples.max[index])
 this._profileSamples.max[index]=size;}},_lastSeenObjectId:function(event)
 {var profileSamples=this._profileSamples;if(!profileSamples)
 return;var data=(event.data);var currentIndex=Math.max(profileSamples.ids.length,profileSamples.max.length-1);profileSamples.ids[currentIndex]=data.lastSeenObjectId;if(!profileSamples.max[currentIndex]){profileSamples.max[currentIndex]=0;profileSamples.sizes[currentIndex]=0;}
@@ -1224,18 +1229,16 @@ this._profileBeingRecorded.target().heapProfilerAgent().stopTrackingHeapObjects(
 this._stopRecordingProfile();else
 this._startRecordingProfile();return this._recording;},get treeItemTitle()
 {return WebInspector.UIString("HEAP TIMELINES");},get description()
-{return WebInspector.UIString("Record JavaScript object allocations over time. Use this profile type to isolate memory leaks.");},resetProfiles:function()
-{var wasRecording=this._recording;var recordingAllocationStacks=wasRecording&&this.profileBeingRecorded()._hasAllocationStacks;this.setProfileBeingRecorded(null);WebInspector.HeapSnapshotProfileType.prototype.resetProfiles.call(this);this._profileSamples=null;this._lastSeenIndex=-1;if(wasRecording)
+{return WebInspector.UIString("Record JavaScript object allocations over time. Use this profile type to isolate memory leaks.");},_resetProfiles:function()
+{var wasRecording=this._recording;var recordingAllocationStacks=wasRecording&&this.profileBeingRecorded()._hasAllocationStacks;this.setProfileBeingRecorded(null);WebInspector.HeapSnapshotProfileType.prototype._resetProfiles.call(this);this._profileSamples=null;this._lastSeenIndex=-1;if(wasRecording)
 this._addNewProfile(recordingAllocationStacks);},profileBeingRecordedRemoved:function()
 {this._stopRecordingProfile();this._profileSamples=null;},__proto__:WebInspector.HeapSnapshotProfileType.prototype}
 WebInspector.HeapProfileHeader=function(target,type,title,hasAllocationStacks)
-{WebInspector.ProfileHeader.call(this,target,type,title||WebInspector.UIString("Snapshot %d",type.nextProfileUid()));this._hasAllocationStacks=!!hasAllocationStacks;this.maxJSObjectId=-1;this._workerProxy=null;this._receiver=null;this._snapshotProxy=null;this._loadCallbacks=[];this._totalNumberOfChunks=0;this._bufferedWriter=null;}
+{WebInspector.ProfileHeader.call(this,target,type,title||WebInspector.UIString("Snapshot %d",type.nextProfileUid()));this._hasAllocationStacks=!!hasAllocationStacks;this.maxJSObjectId=-1;this._workerProxy=null;this._receiver=null;this._snapshotProxy=null;this._loadPromise=new Promise(loadResolver.bind(this));this._totalNumberOfChunks=0;this._bufferedWriter=null;function loadResolver(fulfill)
+{this._fulfillLoad=fulfill;}}
 WebInspector.HeapProfileHeader.prototype={createSidebarTreeElement:function(dataDisplayDelegate)
 {return new WebInspector.ProfileSidebarTreeElement(dataDisplayDelegate,this,"heap-snapshot-sidebar-tree-item");},createView:function(dataDisplayDelegate)
-{return new WebInspector.HeapSnapshotView(dataDisplayDelegate,this);},load:function(callback)
-{if(this.uid===-1)
-return;if(this._snapshotProxy){callback(this._snapshotProxy);return;}
-this._loadCallbacks.push(callback);},_prepareToLoad:function()
+{return new WebInspector.HeapSnapshotView(dataDisplayDelegate,this);},_prepareToLoad:function()
 {console.assert(!this._receiver,"Already loading");this._setupWorker();this.updateStatus(WebInspector.UIString("Loading\u2026"),true);},_finishLoad:function()
 {if(!this._wasDisposed)
 this._receiver.close();if(this._bufferedWriter){this._bufferedWriter.finishWriting(this._didWriteToTempFile.bind(this));this._bufferedWriter=null;}},_didWriteToTempFile:function(tempFile)
@@ -1246,7 +1249,8 @@ this._failedToCreateTempFile=true;if(this._onTempFileReady){this._onTempFileRead
 {function setProfileWait(event)
 {this.updateStatus(null,event.data);}
 console.assert(!this._workerProxy,"HeapSnapshotWorkerProxy already exists");this._workerProxy=new WebInspector.HeapSnapshotWorkerProxy(this._handleWorkerEvent.bind(this));this._workerProxy.addEventListener("wait",setProfileWait,this);this._receiver=this._workerProxy.createLoader(this.uid,this._snapshotReceived.bind(this));},_handleWorkerEvent:function(eventName,data)
-{if(WebInspector.HeapSnapshotProgressEvent.Update!==eventName)
+{if(WebInspector.HeapSnapshotProgressEvent.BrokenSnapshot===eventName){var error=(data);WebInspector.console.error(error);return;}
+if(WebInspector.HeapSnapshotProgressEvent.Update!==eventName)
 return;var subtitle=(data);this.updateStatus(subtitle);},dispose:function()
 {if(this._workerProxy)
 this._workerProxy.dispose();this.removeTempFile();this._wasDisposed=true;},_didCompleteSnapshotTransfer:function()
@@ -1256,8 +1260,7 @@ return;this.updateStatus(Number.bytesToString(this._snapshotProxy.totalSize),fal
 this._bufferedWriter=new WebInspector.DeferredTempFile("heap-profiler",String(this.uid));this._bufferedWriter.write([chunk]);++this._totalNumberOfChunks;this._receiver.write(chunk,function(){});},_snapshotReceived:function(snapshotProxy)
 {if(this._wasDisposed)
 return;this._receiver=null;this._snapshotProxy=snapshotProxy;this.maxJSObjectId=snapshotProxy.maxJSObjectId();this._didCompleteSnapshotTransfer();this._workerProxy.startCheckingForLongRunningCalls();this.notifySnapshotReceived();},notifySnapshotReceived:function()
-{for(var i=0;i<this._loadCallbacks.length;i++)
-this._loadCallbacks[i]((this._snapshotProxy));this._loadCallbacks=null;this._profileType._snapshotReceived(this);if(this.canSaveToFile())
+{this._fulfillLoad(this._snapshotProxy);this._profileType._snapshotReceived(this);if(this.canSaveToFile())
 this.dispatchEventToListeners(WebInspector.ProfileHeader.Events.ProfileReceived);},_wasShown:function()
 {},canSaveToFile:function()
 {return!this.fromFile()&&!!this._snapshotProxy;},saveToFile:function()
@@ -1284,9 +1287,10 @@ WebInspector.SaveSnapshotOutputStreamDelegate.prototype={onTransferStarted:funct
 {this._profileHeader._updateSaveProgress(reader.loadedSize(),reader.fileSize());},onError:function(reader,event)
 {WebInspector.console.error("Failed to read heap snapshot from temp file: "+(event).message);this.onTransferFinished();}}
 WebInspector.HeapTrackingOverviewGrid=function(heapProfileHeader)
-{WebInspector.VBox.call(this);this.registerRequiredCSS("flameChart.css");this.element.id="heap-recording-view";this.element.classList.add("heap-tracking-overview");this._overviewContainer=this.element.createChild("div","overview-container");this._overviewGrid=new WebInspector.OverviewGrid("heap-recording");this._overviewGrid.element.classList.add("fill");this._overviewCanvas=this._overviewContainer.createChild("canvas","heap-recording-overview-canvas");this._overviewContainer.appendChild(this._overviewGrid.element);this._overviewCalculator=new WebInspector.HeapTrackingOverviewGrid.OverviewCalculator();this._overviewGrid.addEventListener(WebInspector.OverviewGrid.Events.WindowChanged,this._onWindowChanged,this);this._profileSamples=heapProfileHeader._profileSamples;if(heapProfileHeader.profileType().profileBeingRecorded()===heapProfileHeader){this._profileType=heapProfileHeader.profileType();this._profileType.addEventListener(WebInspector.TrackingHeapSnapshotProfileType.HeapStatsUpdate,this._onHeapStatsUpdate,this);this._profileType.addEventListener(WebInspector.TrackingHeapSnapshotProfileType.TrackingStopped,this._onStopTracking,this);}
+{WebInspector.VBox.call(this);this.element.id="heap-recording-view";this.element.classList.add("heap-tracking-overview");this._overviewContainer=this.element.createChild("div","heap-overview-container");this._overviewGrid=new WebInspector.OverviewGrid("heap-recording");this._overviewGrid.element.classList.add("fill");this._overviewCanvas=this._overviewContainer.createChild("canvas","heap-recording-overview-canvas");this._overviewContainer.appendChild(this._overviewGrid.element);this._overviewCalculator=new WebInspector.HeapTrackingOverviewGrid.OverviewCalculator();this._overviewGrid.addEventListener(WebInspector.OverviewGrid.Events.WindowChanged,this._onWindowChanged,this);this._profileSamples=heapProfileHeader._profileSamples;if(heapProfileHeader.profileType().profileBeingRecorded()===heapProfileHeader){this._profileType=heapProfileHeader.profileType();this._profileType.addEventListener(WebInspector.TrackingHeapSnapshotProfileType.HeapStatsUpdate,this._onHeapStatsUpdate,this);this._profileType.addEventListener(WebInspector.TrackingHeapSnapshotProfileType.TrackingStopped,this._onStopTracking,this);}
 var timestamps=this._profileSamples.timestamps;var totalTime=this._profileSamples.totalTime;this._windowLeft=0.0;this._windowRight=totalTime&&timestamps.length?(timestamps[timestamps.length-1]-timestamps[0])/totalTime:1.0;this._overviewGrid.setWindow(this._windowLeft,this._windowRight);this._yScale=new WebInspector.HeapTrackingOverviewGrid.SmoothScale();this._xScale=new WebInspector.HeapTrackingOverviewGrid.SmoothScale();}
-WebInspector.HeapTrackingOverviewGrid.IdsRangeChanged="IdsRangeChanged";WebInspector.HeapTrackingOverviewGrid.prototype={_onStopTracking:function(event)
+WebInspector.HeapTrackingOverviewGrid.IdsRangeChanged="IdsRangeChanged";WebInspector.HeapTrackingOverviewGrid.prototype={dispose:function()
+{this._onStopTracking();},_onStopTracking:function()
 {this._profileType.removeEventListener(WebInspector.TrackingHeapSnapshotProfileType.HeapStatsUpdate,this._onHeapStatsUpdate,this);this._profileType.removeEventListener(WebInspector.TrackingHeapSnapshotProfileType.TrackingStopped,this._onStopTracking,this);},_onHeapStatsUpdate:function(event)
 {this._profileSamples=event.data;this._scheduleUpdate();},_drawOverviewCanvas:function(width,height)
 {if(!this._profileSamples)
@@ -1317,8 +1321,8 @@ size+=sizes[i];}
 this.dispatchEventToListeners(WebInspector.HeapTrackingOverviewGrid.IdsRangeChanged,{minId:minId,maxId:maxId,size:size});},__proto__:WebInspector.VBox.prototype}
 WebInspector.HeapTrackingOverviewGrid.SmoothScale=function()
 {this._lastUpdate=0;this._currentScale=0.0;}
-WebInspector.HeapTrackingOverviewGrid.SmoothScale.prototype={nextScale:function(target){target=target||this._currentScale;if(this._currentScale){var now=Date.now();var timeDeltaMs=now-this._lastUpdate;this._lastUpdate=now;var maxChangePerSec=20;var maxChangePerDelta=Math.pow(maxChangePerSec,timeDeltaMs/1000);var scaleChange=target/this._currentScale;this._currentScale*=Number.constrain(scaleChange,1/maxChangePerDelta,maxChangePerDelta);}else
-this._currentScale=target;return this._currentScale;}}
+WebInspector.HeapTrackingOverviewGrid.SmoothScale.prototype={nextScale:function(target){target=target||this._currentScale;if(this._currentScale){var now=Date.now();var timeDeltaMs=now-this._lastUpdate;this._lastUpdate=now;var maxChangePerSec=20;var maxChangePerDelta=Math.pow(maxChangePerSec,timeDeltaMs/1000);var scaleChange=target/this._currentScale;this._currentScale*=Number.constrain(scaleChange,1/maxChangePerDelta,maxChangePerDelta);}else{this._currentScale=target;}
+return this._currentScale;}}
 WebInspector.HeapTrackingOverviewGrid.OverviewCalculator=function()
 {}
 WebInspector.HeapTrackingOverviewGrid.OverviewCalculator.prototype={paddingLeft:function()
@@ -1331,7 +1335,7 @@ WebInspector.HeapTrackingOverviewGrid.OverviewCalculator.prototype={paddingLeft:
 {return this._minimumBoundaries;},boundarySpan:function()
 {return this._maximumBoundaries-this._minimumBoundaries;}}
 WebInspector.HeapSnapshotStatisticsView=function()
-{WebInspector.VBox.call(this);this.setMinimumSize(50,25);this._pieChart=new WebInspector.PieChart(150,WebInspector.HeapSnapshotStatisticsView._valueFormatter);this.element.appendChild(this._pieChart.element);this._labels=this.element.createChild("div","heap-snapshot-stats-legend");}
+{WebInspector.VBox.call(this);this.setMinimumSize(50,25);this._pieChart=new WebInspector.PieChart(150,WebInspector.HeapSnapshotStatisticsView._valueFormatter,true);this._pieChart.element.classList.add("heap-snapshot-stats-pie-chart");this.element.appendChild(this._pieChart.element);this._labels=this.element.createChild("div","heap-snapshot-stats-legend");}
 WebInspector.HeapSnapshotStatisticsView._valueFormatter=function(value)
 {return WebInspector.UIString("%s KB",Number.withThousandsSeparator(Math.round(value/1024)));}
 WebInspector.HeapSnapshotStatisticsView.prototype={setTotal:function(value)
@@ -1346,9 +1350,10 @@ WebInspector.HeapAllocationStackView.prototype={setAllocatedObject:function(snap
 {this.clear();snapshot.allocationStack(snapshotNodeIndex,this._didReceiveAllocationStack.bind(this));},clear:function()
 {this.element.removeChildren();this._linkifier.reset();},_didReceiveAllocationStack:function(frames)
 {if(!frames){var stackDiv=this.element.createChild("div","no-heap-allocation-stack");stackDiv.createTextChild(WebInspector.UIString("Stack was not recorded for this object because it had been allocated before this profile recording started."));return;}
-var stackDiv=this.element.createChild("div","heap-allocation-stack");for(var i=0;i<frames.length;i++){var frame=frames[i];var frameDiv=stackDiv.createChild("div","stack-frame");var name=frameDiv.createChild("div");name.textContent=frame.functionName;if(frame.scriptId){var urlElement=this._linkifier.linkifyScriptLocation(this._target,String(frame.scriptId),frame.scriptName,frame.line-1,frame.column-1);frameDiv.appendChild(urlElement);}}},__proto__:WebInspector.View.prototype};WebInspector.ProfileLauncherView=function(profilesPanel)
-{WebInspector.VBox.call(this);this._panel=profilesPanel;this.element.classList.add("profile-launcher-view");this.element.classList.add("panel-enabler-view");this._contentElement=this.element.createChild("div","profile-launcher-view-content");this._innerContentElement=this._contentElement.createChild("div");var targetSpan=this._contentElement.createChild("span");var selectTargetText=targetSpan.createChild("span");selectTargetText.textContent=WebInspector.UIString("Target:");var targetsSelect=targetSpan.createChild("select","chrome-select");new WebInspector.TargetsComboBoxController(targetsSelect,targetSpan);this._controlButton=this._contentElement.createChild("button","text-button control-profiling");this._controlButton.addEventListener("click",this._controlButtonClicked.bind(this),false);this._recordButtonEnabled=true;this._loadButton=this._contentElement.createChild("button","text-button load-profile");this._loadButton.textContent=WebInspector.UIString("Load");this._loadButton.addEventListener("click",this._loadButtonClicked.bind(this),false);WebInspector.targetManager.observeTargets(this);}
-WebInspector.ProfileLauncherView.prototype={targetAdded:function(target)
+var stackDiv=this.element.createChild("div","heap-allocation-stack");for(var i=0;i<frames.length;i++){var frame=frames[i];var frameDiv=stackDiv.createChild("div","stack-frame");var name=frameDiv.createChild("div");name.textContent=WebInspector.beautifyFunctionName(frame.functionName);if(frame.scriptId){var urlElement=this._linkifier.linkifyScriptLocation(this._target,String(frame.scriptId),frame.scriptName,frame.line-1,frame.column-1);frameDiv.appendChild(urlElement);}}},__proto__:WebInspector.View.prototype};WebInspector.ProfileLauncherView=function(profilesPanel)
+{WebInspector.VBox.call(this);this._panel=profilesPanel;this.element.classList.add("profile-launcher-view");this.element.classList.add("panel-enabler-view");this._contentElement=this.element.createChild("div","profile-launcher-view-content");this._innerContentElement=this._contentElement.createChild("div");var targetSpan=this._contentElement.createChild("span");var selectTargetText=targetSpan.createChild("span");selectTargetText.textContent=WebInspector.UIString("Target:");var targetsSelect=targetSpan.createChild("select","chrome-select");new WebInspector.TargetsComboBoxController(targetsSelect,targetSpan);this._controlButton=createTextButton("",this._controlButtonClicked.bind(this),"control-profiling");this._contentElement.appendChild(this._controlButton);this._recordButtonEnabled=true;this._loadButton=createTextButton(WebInspector.UIString("Load"),this._loadButtonClicked.bind(this),"load-profile");this._contentElement.appendChild(this._loadButton);WebInspector.targetManager.observeTargets(this);}
+WebInspector.ProfileLauncherView.prototype={searchableView:function()
+{return null;},targetAdded:function(target)
 {this._updateLoadButtonLayout();},targetRemoved:function(target)
 {this._updateLoadButtonLayout();},_updateLoadButtonLayout:function()
 {this._loadButton.classList.toggle("multi-target",WebInspector.targetManager.targets().length>1);},addProfileType:function(profileType)
@@ -1366,7 +1371,7 @@ WebInspector.MultiProfileLauncherView=function(profilesPanel)
 {WebInspector.ProfileLauncherView.call(this,profilesPanel);WebInspector.settings.selectedProfileType=WebInspector.settings.createSetting("selectedProfileType","CPU");var header=this._innerContentElement.createChild("h1");header.textContent=WebInspector.UIString("Select profiling type");this._profileTypeSelectorForm=this._innerContentElement.createChild("form");this._innerContentElement.createChild("div","flexible-space");this._typeIdToOptionElement={};}
 WebInspector.MultiProfileLauncherView.EventTypes={ProfileTypeSelected:"profile-type-selected"}
 WebInspector.MultiProfileLauncherView.prototype={addProfileType:function(profileType)
-{var labelElement=this._profileTypeSelectorForm.createChild("label");labelElement.textContent=profileType.name;var optionElement=document.createElement("input");labelElement.insertBefore(optionElement,labelElement.firstChild);this._typeIdToOptionElement[profileType.id]=optionElement;optionElement._profileType=profileType;optionElement.type="radio";optionElement.name="profile-type";optionElement.style.hidden=true;optionElement.addEventListener("change",this._profileTypeChanged.bind(this,profileType),false);var descriptionElement=labelElement.createChild("p");descriptionElement.textContent=profileType.description;var decorationElement=profileType.decorationElement();if(decorationElement)
+{var labelElement=createRadioLabel("profile-type",profileType.name);this._profileTypeSelectorForm.appendChild(labelElement);var optionElement=labelElement.radioElement;this._typeIdToOptionElement[profileType.id]=optionElement;optionElement._profileType=profileType;optionElement.style.hidden=true;optionElement.addEventListener("change",this._profileTypeChanged.bind(this,profileType),false);var descriptionElement=labelElement.createChild("p");descriptionElement.textContent=profileType.description;var decorationElement=profileType.decorationElement();if(decorationElement)
 labelElement.appendChild(decorationElement);},restoreSelectedProfileType:function()
 {var typeId=WebInspector.settings.selectedProfileType.get();if(!(typeId in this._typeIdToOptionElement))
 typeId=Object.keys(this._typeIdToOptionElement)[0];this._typeIdToOptionElement[typeId].checked=true;var type=this._typeIdToOptionElement[typeId]._profileType;this.dispatchEventToListeners(WebInspector.MultiProfileLauncherView.EventTypes.ProfileTypeSelected,type);},_controlButtonClicked:function()
@@ -1376,19 +1381,19 @@ items[i].disabled=this._isProfiling;}},_profileTypeChanged:function(profileType)
 {this.dispatchEventToListeners(WebInspector.MultiProfileLauncherView.EventTypes.ProfileTypeSelected,profileType);this._isInstantProfile=profileType.isInstantProfile();this._isEnabled=profileType.isEnabled();this._profileTypeId=profileType.id;this._updateControls();WebInspector.settings.selectedProfileType.set(profileType.id);},profileStarted:function()
 {this._isProfiling=true;this._updateControls();},profileFinished:function()
 {this._isProfiling=false;this._updateControls();},__proto__:WebInspector.ProfileLauncherView.prototype};WebInspector.CanvasProfileView=function(profile)
-{WebInspector.VBox.call(this);this.registerRequiredCSS("canvasProfiler.css");this.element.classList.add("canvas-profile-view");this._profile=profile;this._traceLogId=profile.traceLogId();this._traceLogPlayer=(profile.traceLogPlayer());this._linkifier=new WebInspector.Linkifier();this._replayInfoSplitView=new WebInspector.SplitView(true,true,"canvasProfileViewReplaySplitViewState",0.34);this._replayInfoSplitView.show(this.element);this._imageSplitView=new WebInspector.SplitView(false,true,"canvasProfileViewSplitViewState",300);this._imageSplitView.show(this._replayInfoSplitView.mainElement());var replayImageContainerView=new WebInspector.VBoxWithResizeCallback(this._onReplayImageResize.bind(this));replayImageContainerView.setMinimumSize(50,28);replayImageContainerView.show(this._imageSplitView.mainElement());var replayImageContainer=replayImageContainerView.element;replayImageContainer.id="canvas-replay-image-container";var replayImageParent=replayImageContainer.createChild("div","canvas-replay-image-parent");replayImageParent.createChild("span");this._replayImageElement=replayImageParent.createChild("img");this._debugInfoElement=replayImageContainer.createChild("div","canvas-debug-info hidden");this._spinnerIcon=replayImageContainer.createChild("div","spinner-icon small hidden");var replayLogContainerView=new WebInspector.VBox();replayLogContainerView.setMinimumSize(22,22);replayLogContainerView.show(this._imageSplitView.sidebarElement());var replayLogContainer=replayLogContainerView.element;var controlsContainer=replayLogContainer.createChild("div","status-bar");var logGridContainer=replayLogContainer.createChild("div","canvas-replay-log");this._createControlButton(controlsContainer,"canvas-replay-first-step",WebInspector.UIString("First call."),this._onReplayFirstStepClick.bind(this));this._createControlButton(controlsContainer,"canvas-replay-prev-step",WebInspector.UIString("Previous call."),this._onReplayStepClick.bind(this,false));this._createControlButton(controlsContainer,"canvas-replay-next-step",WebInspector.UIString("Next call."),this._onReplayStepClick.bind(this,true));this._createControlButton(controlsContainer,"canvas-replay-prev-draw",WebInspector.UIString("Previous drawing call."),this._onReplayDrawingCallClick.bind(this,false));this._createControlButton(controlsContainer,"canvas-replay-next-draw",WebInspector.UIString("Next drawing call."),this._onReplayDrawingCallClick.bind(this,true));this._createControlButton(controlsContainer,"canvas-replay-last-step",WebInspector.UIString("Last call."),this._onReplayLastStepClick.bind(this));this._replayContextSelector=new WebInspector.StatusBarComboBox(this._onReplayContextChanged.bind(this));this._replayContextSelector.createOption(WebInspector.UIString("<screenshot auto>"),WebInspector.UIString("Show screenshot of the last replayed resource."),"");controlsContainer.appendChild(this._replayContextSelector.element);this._installReplayInfoSidebarWidgets(controlsContainer);this._replayStateView=new WebInspector.CanvasReplayStateView(this._traceLogPlayer);this._replayStateView.show(this._replayInfoSplitView.sidebarElement());this._replayContexts={};var columns=[{title:"#",sortable:false,width:"5%"},{title:WebInspector.UIString("Call"),sortable:false,width:"75%",disclosure:true},{title:WebInspector.UIString("Location"),sortable:false,width:"20%"}];this._logGrid=new WebInspector.DataGrid(columns);this._logGrid.element.classList.add("fill");this._logGrid.show(logGridContainer);this._logGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._replayTraceLog,this);this.element.addEventListener("mousedown",this._onMouseClick.bind(this),true);this._popoverHelper=new WebInspector.ObjectPopoverHelper(this.element,this._popoverAnchor.bind(this),this._resolveObjectForPopover.bind(this),this._onHidePopover.bind(this),true);this._popoverHelper.setRemoteObjectFormatter(this._hexNumbersFormatter.bind(this));this._requestTraceLog(0);}
+{WebInspector.VBox.call(this);this.registerRequiredCSS("profiler/canvasProfiler.css");this.element.classList.add("canvas-profile-view");this._profile=profile;this._traceLogId=profile.traceLogId();this._traceLogPlayer=(profile.traceLogPlayer());this._linkifier=new WebInspector.Linkifier();this._replayInfoSplitView=new WebInspector.SplitView(true,true,"canvasProfileViewReplaySplitViewState",0.34);this._replayInfoSplitView.show(this.element);this._imageSplitView=new WebInspector.SplitView(false,true,"canvasProfileViewSplitViewState",300);this._replayInfoSplitView.setMainView(this._imageSplitView);var replayImageContainerView=new WebInspector.VBoxWithResizeCallback(this._onReplayImageResize.bind(this));replayImageContainerView.setMinimumSize(50,28);this._imageSplitView.setMainView(replayImageContainerView);var replayImageContainer=replayImageContainerView.element;replayImageContainer.id="canvas-replay-image-container";var replayImageParent=replayImageContainer.createChild("div","canvas-replay-image-parent");replayImageParent.createChild("span");this._replayImageElement=replayImageParent.createChild("img");this._debugInfoElement=replayImageContainer.createChild("div","canvas-debug-info hidden");this._spinnerIcon=replayImageContainer.createChild("div","spinner-icon small hidden");var replayLogContainerView=new WebInspector.VBox();replayLogContainerView.setMinimumSize(22,22);this._imageSplitView.setSidebarView(replayLogContainerView);var replayLogContainer=replayLogContainerView.element;var controlsToolbar=new WebInspector.StatusBar(replayLogContainer);var logGridContainer=replayLogContainer.createChild("div","canvas-replay-log");this._createControlButton(controlsToolbar,"first-step-status-bar-item",WebInspector.UIString("First call."),this._onReplayFirstStepClick.bind(this));this._createControlButton(controlsToolbar,"step-out-status-bar-item",WebInspector.UIString("Previous call."),this._onReplayStepClick.bind(this,false));this._createControlButton(controlsToolbar,"step-in-status-bar-item",WebInspector.UIString("Next call."),this._onReplayStepClick.bind(this,true));this._createControlButton(controlsToolbar,"step-backwards-status-bar-item",WebInspector.UIString("Previous drawing call."),this._onReplayDrawingCallClick.bind(this,false));this._createControlButton(controlsToolbar,"step-over-status-bar-item",WebInspector.UIString("Next drawing call."),this._onReplayDrawingCallClick.bind(this,true));this._createControlButton(controlsToolbar,"last-step-status-bar-item",WebInspector.UIString("Last call."),this._onReplayLastStepClick.bind(this));this._replayContextSelector=new WebInspector.StatusBarComboBox(this._onReplayContextChanged.bind(this));this._replayContextSelector.createOption(WebInspector.UIString("<screenshot auto>"),WebInspector.UIString("Show screenshot of the last replayed resource."),"");controlsToolbar.appendStatusBarItem(this._replayContextSelector);this._installReplayInfoSidebarWidgets(replayLogContainer);this._replayStateView=new WebInspector.CanvasReplayStateView(this._traceLogPlayer);this._replayInfoSplitView.setSidebarView(this._replayStateView);this._replayContexts={};var columns=[{title:"#",sortable:false,width:"5%"},{title:WebInspector.UIString("Call"),sortable:false,width:"75%",disclosure:true},{title:WebInspector.UIString("Location"),sortable:false,width:"20%"}];this._logGrid=new WebInspector.DataGrid(columns);this._logGrid.element.classList.add("fill");this._logGrid.show(logGridContainer);this._logGrid.addEventListener(WebInspector.DataGrid.Events.SelectedNode,this._replayTraceLog,this);this.element.addEventListener("mousedown",this._onMouseClick.bind(this),true);this._popoverHelper=new WebInspector.ObjectPopoverHelper(this.element,this._popoverAnchor.bind(this),this._resolveObjectForPopover.bind(this),this._onHidePopover.bind(this),true);this._popoverHelper.setRemoteObjectFormatter(this._hexNumbersFormatter.bind(this));this._requestTraceLog(0);}
 WebInspector.CanvasProfileView.TraceLogPollingInterval=500;WebInspector.CanvasProfileView.prototype={dispose:function()
-{this._linkifier.reset();},get statusBarItems()
+{this._linkifier.reset();},statusBarItems:function()
 {return[];},get profile()
 {return this._profile;},_onReplayImageResize:function()
-{var parent=this._replayImageElement.parentElement;this._replayImageElement.style.maxWidth=parent.clientWidth+"px";this._replayImageElement.style.maxHeight=parent.clientHeight+"px";},elementsToRestoreScrollPositionsFor:function()
-{return[this._logGrid.scrollContainer];},_installReplayInfoSidebarWidgets:function(controlsContainer)
-{this._replayInfoResizeWidgetElement=controlsContainer.createChild("div","resizer-widget");this._replayInfoSplitView.addEventListener(WebInspector.SplitView.Events.ShowModeChanged,this._updateReplayInfoResizeWidget,this);this._updateReplayInfoResizeWidget();this._replayInfoSplitView.installResizer(this._replayInfoResizeWidgetElement);this._toggleReplayStateSidebarButton=this._replayInfoSplitView.createShowHideSidebarButton("sidebar","canvas-sidebar-show-hide-button");controlsContainer.appendChild(this._toggleReplayStateSidebarButton.element);this._replayInfoSplitView.hideSidebar();},_updateReplayInfoResizeWidget:function()
+{var parent=this._replayImageElement.parentElement;this._replayImageElement.style.maxWidth=(parent.clientWidth-1)+"px";this._replayImageElement.style.maxHeight=(parent.clientHeight-1)+"px";},elementsToRestoreScrollPositionsFor:function()
+{return[this._logGrid.scrollContainer];},_installReplayInfoSidebarWidgets:function(replayLogElement)
+{this._replayInfoResizeWidgetElement=replayLogElement.createChild("div","resizer-widget");this._replayInfoSplitView.addEventListener(WebInspector.SplitView.Events.ShowModeChanged,this._updateReplayInfoResizeWidget,this);this._updateReplayInfoResizeWidget();this._replayInfoSplitView.installResizer(this._replayInfoResizeWidgetElement);},_updateReplayInfoResizeWidget:function()
 {this._replayInfoResizeWidgetElement.classList.toggle("hidden",this._replayInfoSplitView.showMode()!==WebInspector.SplitView.ShowMode.Both);},_onMouseClick:function(event)
 {var resourceLinkElement=event.target.enclosingNodeOrSelfWithClass("canvas-formatted-resource");if(resourceLinkElement){this._replayInfoSplitView.showBoth();this._replayStateView.selectResource(resourceLinkElement.__resourceId);event.consume(true);return;}
 if(event.target.enclosingNodeOrSelfWithClass("webkit-html-resource-link"))
-event.consume(false);},_createControlButton:function(parent,className,title,clickCallback)
-{var button=new WebInspector.StatusBarButton(title,className+" canvas-replay-button");parent.appendChild(button.element);button.makeLongClickEnabled();button.addEventListener("click",clickCallback,this);button.addEventListener("longClickDown",clickCallback,this);button.addEventListener("longClickPress",clickCallback,this);},_onReplayContextChanged:function()
+event.consume(false);},_createControlButton:function(toolbar,className,title,clickCallback)
+{var button=new WebInspector.StatusBarButton(title,className+" canvas-replay-button");toolbar.appendStatusBarItem(button);button.makeLongClickEnabled();button.addEventListener("click",clickCallback,this);button.addEventListener("longClickDown",clickCallback,this);button.addEventListener("longClickPress",clickCallback,this);},_onReplayContextChanged:function()
 {var selectedContextId=this._replayContextSelector.selectedOption().value;function didReceiveResourceState(resourceState)
 {this._enableWaitIcon(false);if(selectedContextId!==this._replayContextSelector.selectedOption().value)
 return;var imageURL=(resourceState&&resourceState.imageURL)||"";this._replayImageElement.src=imageURL;this._replayImageElement.style.visibility=imageURL?"":"hidden";}
@@ -1442,7 +1447,7 @@ var drawCallGroup=frameNode.children.peekLast();var groupHasDrawCall=false;if(dr
 drawCallGroup=appendDrawCallGroup();for(var i=fromIndex;i<toIndex;++i){var node=callNodes[i];drawCallGroup.appendChild(node);if(node.call.isDrawingCall){if(groupHasDrawCall)
 drawCallGroup=splitDrawCallGroup(drawCallGroup);else
 groupHasDrawCall=true;}}},_createCallNode:function(index,call)
-{var callViewElement=document.createElement("div");var data={};data[0]=index+1;data[1]=callViewElement;data[2]="";if(call.sourceURL){var lineNumber=Math.max(0,call.lineNumber-1)||0;var columnNumber=Math.max(0,call.columnNumber-1)||0;data[2]=this._linkifier.linkifyScriptLocation(this.profile.target(),null,call.sourceURL,lineNumber,columnNumber);}
+{var callViewElement=createElement("div");var data={};data[0]=index+1;data[1]=callViewElement;data[2]="";if(call.sourceURL){var lineNumber=Math.max(0,call.lineNumber-1)||0;var columnNumber=Math.max(0,call.columnNumber-1)||0;data[2]=this._linkifier.linkifyScriptLocation(this.profile.target(),null,call.sourceURL,lineNumber,columnNumber);}
 callViewElement.createChild("span","canvas-function-name").textContent=call.functionName||"context."+call.property;if(call.arguments){callViewElement.createTextChild("(");for(var i=0,n=call.arguments.length;i<n;++i){var argument=(call.arguments[i]);if(i)
 callViewElement.createTextChild(", ");var element=WebInspector.CanvasProfileDataGridHelper.createCallArgumentElement(argument);element.__argumentIndex=i;callViewElement.appendChild(element);}
 callViewElement.createTextChild(")");}else if(call.value){callViewElement.createTextChild(" = ");callViewElement.appendChild(WebInspector.CanvasProfileDataGridHelper.createCallArgumentElement(call.value));}
@@ -1460,31 +1465,30 @@ var callIndex=dataGridNode.index;var argumentIndex=argumentElement.__argumentInd
 argumentIndex=-1;CanvasAgent.evaluateTraceLogCallArgument(this._traceLogId,callIndex,argumentIndex,objectGroupName,showObjectPopover.bind(this));}},_hexNumbersFormatter:function(object)
 {if(object.type==="number"){var str="0000"+Number(object.description).toString(16).toUpperCase();str=str.replace(/^0+(.{4,})$/,"$1");return"0x"+str;}
 return object.description||"";},_onHidePopover:function()
-{if(this._popoverAnchorElement){this._popoverAnchorElement.remove()
-delete this._popoverAnchorElement;}},_flattenSingleFrameNode:function()
+{if(this._popoverAnchorElement){this._popoverAnchorElement.remove();delete this._popoverAnchorElement;}},_flattenSingleFrameNode:function()
 {var rootNode=this._logGrid.rootNode();if(rootNode.children.length!==1)
 return;var frameNode=rootNode.children[0];while(frameNode.children[0])
 rootNode.appendChild(frameNode.children[0]);rootNode.removeChild(frameNode);},__proto__:WebInspector.VBox.prototype}
 WebInspector.CanvasProfileType=function()
-{WebInspector.ProfileType.call(this,WebInspector.CanvasProfileType.TypeId,WebInspector.UIString("Capture Canvas Frame"));this._recording=false;this._lastProfileHeader=null;this._capturingModeSelector=new WebInspector.StatusBarComboBox(this._dispatchViewUpdatedEvent.bind(this));this._capturingModeSelector.element.title=WebInspector.UIString("Canvas capture mode.");this._capturingModeSelector.createOption(WebInspector.UIString("Single Frame"),WebInspector.UIString("Capture a single canvas frame."),"");this._capturingModeSelector.createOption(WebInspector.UIString("Consecutive Frames"),WebInspector.UIString("Capture consecutive canvas frames."),"1");this._frameOptions={};this._framesWithCanvases={};this._frameSelector=new WebInspector.StatusBarComboBox(this._dispatchViewUpdatedEvent.bind(this));this._frameSelector.element.title=WebInspector.UIString("Frame containing the canvases to capture.");this._frameSelector.element.classList.add("hidden");this._target=null;WebInspector.targetManager.observeTargets(this);this._canvasAgentEnabled=false;this._decorationElement=document.createElement("div");this._decorationElement.className="profile-canvas-decoration";this._updateDecorationElement();}
+{WebInspector.ProfileType.call(this,WebInspector.CanvasProfileType.TypeId,WebInspector.UIString("Capture Canvas Frame"));this._recording=false;this._lastProfileHeader=null;this._capturingModeSelector=new WebInspector.StatusBarComboBox(this._dispatchViewUpdatedEvent.bind(this));this._capturingModeSelector.element.title=WebInspector.UIString("Canvas capture mode.");this._capturingModeSelector.createOption(WebInspector.UIString("Single Frame"),WebInspector.UIString("Capture a single canvas frame."),"");this._capturingModeSelector.createOption(WebInspector.UIString("Consecutive Frames"),WebInspector.UIString("Capture consecutive canvas frames."),"1");this._frameOptions={};this._framesWithCanvases={};this._frameSelector=new WebInspector.StatusBarComboBox(this._dispatchViewUpdatedEvent.bind(this));this._frameSelector.element.title=WebInspector.UIString("Frame containing the canvases to capture.");this._frameSelector.element.classList.add("hidden");this._target=null;WebInspector.targetManager.observeTargets(this);this._canvasAgentEnabled=false;this._decorationElement=createElement("div");this._decorationElement.className="profile-canvas-decoration";this._updateDecorationElement();}
 WebInspector.CanvasProfileType.TypeId="CANVAS_PROFILE";WebInspector.CanvasProfileType.prototype={targetAdded:function(target)
 {if(this._target||target!==WebInspector.targetManager.mainTarget())
 return;this._target=target;this._target.resourceTreeModel.frames().forEach(this._addFrame,this);this._target.resourceTreeModel.addEventListener(WebInspector.ResourceTreeModel.EventTypes.FrameAdded,this._frameAdded,this);this._target.resourceTreeModel.addEventListener(WebInspector.ResourceTreeModel.EventTypes.FrameDetached,this._frameRemoved,this);new WebInspector.CanvasDispatcher(this._target,this);},targetRemoved:function(target)
 {if(this._target!==target)
-return;this._target=null;this._target.resourceTreeModel.removeEventListener(WebInspector.ResourceTreeModel.EventTypes.FrameAdded,this._frameAdded,this);this._target.resourceTreeModel.removeEventListener(WebInspector.ResourceTreeModel.EventTypes.FrameDetached,this._frameRemoved,this);},get statusBarItems()
-{return[this._capturingModeSelector.element,this._frameSelector.element];},get buttonTooltip()
+return;this._target=null;this._target.resourceTreeModel.removeEventListener(WebInspector.ResourceTreeModel.EventTypes.FrameAdded,this._frameAdded,this);this._target.resourceTreeModel.removeEventListener(WebInspector.ResourceTreeModel.EventTypes.FrameDetached,this._frameRemoved,this);},statusBarItems:function()
+{return[this._capturingModeSelector,this._frameSelector];},get buttonTooltip()
 {if(this._isSingleFrameMode())
 return WebInspector.UIString("Capture next canvas frame.");else
 return this._recording?WebInspector.UIString("Stop capturing canvas frames."):WebInspector.UIString("Start capturing canvas frames.");},buttonClicked:function()
 {if(!this._canvasAgentEnabled)
 return false;if(this._recording){this._recording=false;this._stopFrameCapturing();}else if(this._isSingleFrameMode()){this._recording=false;this._runSingleFrameCapturing();}else{this._recording=true;this._startFrameCapturing();}
 return this._recording;},_runSingleFrameCapturing:function()
-{var frameId=this._selectedFrameId();WebInspector.profilingLock().acquire();CanvasAgent.captureFrame(frameId,this._didStartCapturingFrame.bind(this,frameId));WebInspector.profilingLock().release();},_startFrameCapturing:function()
-{var frameId=this._selectedFrameId();WebInspector.profilingLock().acquire();CanvasAgent.startCapturing(frameId,this._didStartCapturingFrame.bind(this,frameId));},_stopFrameCapturing:function()
-{if(!this._lastProfileHeader){WebInspector.profilingLock().release();return;}
+{var frameId=this._selectedFrameId();WebInspector.targetManager.suspendAllTargets();CanvasAgent.captureFrame(frameId,this._didStartCapturingFrame.bind(this,frameId));WebInspector.targetManager.resumeAllTargets();},_startFrameCapturing:function()
+{var frameId=this._selectedFrameId();WebInspector.targetManager.suspendAllTargets();CanvasAgent.startCapturing(frameId,this._didStartCapturingFrame.bind(this,frameId));},_stopFrameCapturing:function()
+{if(!this._lastProfileHeader){WebInspector.targetManager.resumeAllTargets();return;}
 var profileHeader=this._lastProfileHeader;var traceLogId=profileHeader.traceLogId();this._lastProfileHeader=null;function didStopCapturing()
 {profileHeader._updateCapturingStatus();}
-CanvasAgent.stopCapturing(traceLogId,didStopCapturing);WebInspector.profilingLock().release();},_didStartCapturingFrame:function(frameId,error,traceLogId)
+CanvasAgent.stopCapturing(traceLogId,didStopCapturing);WebInspector.targetManager.resumeAllTargets();},_didStartCapturingFrame:function(frameId,error,traceLogId)
 {if(error||this._lastProfileHeader&&this._lastProfileHeader.traceLogId()===traceLogId)
 return;var profileHeader=new WebInspector.CanvasProfileHeader(this._target,this,traceLogId,frameId);this._lastProfileHeader=profileHeader;this.addProfile(profileHeader);profileHeader._updateCapturingStatus();},get treeItemTitle()
 {return WebInspector.UIString("CANVAS PROFILE");},get description()
@@ -1492,7 +1496,7 @@ return;var profileHeader=new WebInspector.CanvasProfileHeader(this._target,this,
 {return this._decorationElement;},removeProfile:function(profile)
 {WebInspector.ProfileType.prototype.removeProfile.call(this,profile);if(this._recording&&profile===this._lastProfileHeader)
 this._recording=false;},_updateDecorationElement:function(forcePageReload)
-{this._decorationElement.removeChildren();this._decorationElement.createChild("div","warning-icon-small");this._decorationElement.createTextChild(this._canvasAgentEnabled?WebInspector.UIString("Canvas Profiler is enabled."):WebInspector.UIString("Canvas Profiler is disabled."));var button=this._decorationElement.createChild("button","text-button");button.type="button";button.textContent=this._canvasAgentEnabled?WebInspector.UIString("Disable"):WebInspector.UIString("Enable");button.addEventListener("click",this._onProfilerEnableButtonClick.bind(this,!this._canvasAgentEnabled),false);var target=this._target;if(!target)
+{this._decorationElement.removeChildren();this._decorationElement.createChild("div","warning-icon-small");this._decorationElement.createTextChild(this._canvasAgentEnabled?WebInspector.UIString("Canvas Profiler is enabled."):WebInspector.UIString("Canvas Profiler is disabled."));var button=createTextButton(this._canvasAgentEnabled?WebInspector.UIString("Disable"):WebInspector.UIString("Enable"),this._onProfilerEnableButtonClick.bind(this,!this._canvasAgentEnabled));this._decorationElement.appendChild(button);var target=this._target;if(!target)
 return;function hasUninstrumentedCanvasesCallback(error,result)
 {if(error||result)
 target.resourceTreeModel.reloadPage();}
@@ -1506,7 +1510,7 @@ CanvasAgent.enable(callback.bind(this));else
 CanvasAgent.disable(callback.bind(this));},_isSingleFrameMode:function()
 {return!this._capturingModeSelector.selectedOption().value;},_frameAdded:function(event)
 {var frame=(event.data);this._addFrame(frame);},_addFrame:function(frame)
-{var frameId=frame.id;var option=document.createElement("option");option.text=frame.displayName();option.title=frame.url;option.value=frameId;this._frameOptions[frameId]=option;if(this._framesWithCanvases[frameId]){this._frameSelector.addOption(option);this._dispatchViewUpdatedEvent();}},_frameRemoved:function(event)
+{var frameId=frame.id;var option=createElement("option");option.text=frame.displayName();option.title=frame.url;option.value=frameId;this._frameOptions[frameId]=option;if(this._framesWithCanvases[frameId]){this._frameSelector.addOption(option);this._dispatchViewUpdatedEvent();}},_frameRemoved:function(event)
 {var frame=(event.data);var frameId=frame.id;var option=this._frameOptions[frameId];if(option&&this._framesWithCanvases[frameId]){this._frameSelector.removeOption(option);this._dispatchViewUpdatedEvent();}
 delete this._frameOptions[frameId];delete this._framesWithCanvases[frameId];},_contextCreated:function(frameId)
 {if(this._framesWithCanvases[frameId])
@@ -1545,14 +1549,14 @@ return;this._alive=traceLog.alive;this._traceLogSize=traceLog.totalAvailableCall
 this._traceLogPlayer.getTraceLog(0,0,didReceiveTraceLog.bind(this));},__proto__:WebInspector.ProfileHeader.prototype}
 WebInspector.CanvasProfileDataGridHelper={createCallArgumentElement:function(callArgument)
 {if(callArgument.enumName)
-return WebInspector.CanvasProfileDataGridHelper.createEnumValueElement(callArgument.enumName,+callArgument.description);var element=document.createElement("span");element.className="canvas-call-argument";var description=callArgument.description;if(callArgument.type==="string"){const maxStringLength=150;element.createTextChild("\"");element.createChild("span","canvas-formatted-string").textContent=description.trimMiddle(maxStringLength);element.createTextChild("\"");element.__suppressPopover=(description.length<=maxStringLength&&!/[\r\n]/.test(description));if(!element.__suppressPopover)
+return WebInspector.CanvasProfileDataGridHelper.createEnumValueElement(callArgument.enumName,+callArgument.description);var element=createElement("span");element.className="canvas-call-argument";var description=callArgument.description;if(callArgument.type==="string"){const maxStringLength=150;element.createTextChild("\"");element.createChild("span","canvas-formatted-string").textContent=description.trimMiddle(maxStringLength);element.createTextChild("\"");element.__suppressPopover=(description.length<=maxStringLength&&!/[\r\n]/.test(description));if(!element.__suppressPopover)
 element.__evalResult=WebInspector.runtimeModel.createRemoteObjectFromPrimitiveValue(description);}else{var type=callArgument.subtype||callArgument.type;if(type){element.classList.add("canvas-formatted-"+type);if(["null","undefined","boolean","number"].indexOf(type)>=0)
 element.__suppressPopover=true;}
 element.textContent=description;if(callArgument.remoteObject)
 element.__evalResult=WebInspector.runtimeModel.createRemoteObject(callArgument.remoteObject);}
 if(callArgument.resourceId){element.classList.add("canvas-formatted-resource");element.__resourceId=callArgument.resourceId;}
 return element;},createEnumValueElement:function(enumName,enumValue)
-{var element=document.createElement("span");element.className="canvas-call-argument canvas-formatted-number";element.textContent=enumName;element.__evalResult=WebInspector.runtimeModel.createRemoteObjectFromPrimitiveValue(enumValue);return element;}}
+{var element=createElement("span");element.className="canvas-call-argument canvas-formatted-number";element.textContent=enumName;element.__evalResult=WebInspector.runtimeModel.createRemoteObjectFromPrimitiveValue(enumValue);return element;}}
 WebInspector.CanvasTraceLogPlayerProxy=function(traceLogId)
 {this._traceLogId=traceLogId;this._currentResourceStates={};this._defaultResourceId=null;}
 WebInspector.CanvasTraceLogPlayerProxy.Events={CanvasTraceLogReceived:"CanvasTraceLogReceived",CanvasReplayStateChanged:"CanvasReplayStateChanged",CanvasResourceStateReceived:"CanvasResourceStateReceived",}
@@ -1574,11 +1578,11 @@ this.dispatchEventToListeners(WebInspector.CanvasTraceLogPlayerProxy.Events.Canv
 this.dispatchEventToListeners(WebInspector.CanvasTraceLogPlayerProxy.Events.CanvasResourceStateReceived,resourceState);}
 CanvasAgent.replayTraceLog(this._traceLogId,index,callback.bind(this));},clearResourceStates:function()
 {this._currentResourceStates={};this.dispatchEventToListeners(WebInspector.CanvasTraceLogPlayerProxy.Events.CanvasReplayStateChanged);},__proto__:WebInspector.Object.prototype};WebInspector.CanvasReplayStateView=function(traceLogPlayer)
-{WebInspector.VBox.call(this);this.registerRequiredCSS("canvasProfiler.css");this.element.classList.add("canvas-replay-state-view");this._traceLogPlayer=traceLogPlayer;var controlsContainer=this.element.createChild("div","status-bar");this._prevButton=this._createControlButton(controlsContainer,"canvas-replay-state-prev",WebInspector.UIString("Previous resource."),this._onResourceNavigationClick.bind(this,false));this._nextButton=this._createControlButton(controlsContainer,"canvas-replay-state-next",WebInspector.UIString("Next resource."),this._onResourceNavigationClick.bind(this,true));this._createControlButton(controlsContainer,"canvas-replay-state-refresh",WebInspector.UIString("Refresh."),this._onStateRefreshClick.bind(this));this._resourceSelector=new WebInspector.StatusBarComboBox(this._onReplayResourceChanged.bind(this));this._currentOption=this._resourceSelector.createOption(WebInspector.UIString("<auto>"),WebInspector.UIString("Show state of the last replayed resource."),"");controlsContainer.appendChild(this._resourceSelector.element);this._resourceIdToDescription={};this._gridNodesExpandedState={};this._gridScrollPositions={};this._currentResourceId=null;this._prevOptionsStack=[];this._nextOptionsStack=[];this._highlightedGridNodes=[];var columns=[{title:WebInspector.UIString("Name"),sortable:false,width:"50%",disclosure:true},{title:WebInspector.UIString("Value"),sortable:false,width:"50%"}];this._stateGrid=new WebInspector.DataGrid(columns);this._stateGrid.element.classList.add("fill");this._stateGrid.show(this.element);this._traceLogPlayer.addEventListener(WebInspector.CanvasTraceLogPlayerProxy.Events.CanvasReplayStateChanged,this._onReplayResourceChanged,this);this._traceLogPlayer.addEventListener(WebInspector.CanvasTraceLogPlayerProxy.Events.CanvasTraceLogReceived,this._onCanvasTraceLogReceived,this);this._traceLogPlayer.addEventListener(WebInspector.CanvasTraceLogPlayerProxy.Events.CanvasResourceStateReceived,this._onCanvasResourceStateReceived,this);this._updateButtonsEnabledState();}
+{WebInspector.VBox.call(this);this.registerRequiredCSS("profiler/canvasProfiler.css");this.element.classList.add("canvas-replay-state-view");this._traceLogPlayer=traceLogPlayer;var controlsToolbar=new WebInspector.StatusBar(this.element);this._prevButton=this._createControlButton(controlsToolbar,"play-backwards-status-bar-item",WebInspector.UIString("Previous resource."),this._onResourceNavigationClick.bind(this,false));this._nextButton=this._createControlButton(controlsToolbar,"play-status-bar-item",WebInspector.UIString("Next resource."),this._onResourceNavigationClick.bind(this,true));this._createControlButton(controlsToolbar,"refresh-status-bar-item",WebInspector.UIString("Refresh."),this._onStateRefreshClick.bind(this));this._resourceSelector=new WebInspector.StatusBarComboBox(this._onReplayResourceChanged.bind(this));this._currentOption=this._resourceSelector.createOption(WebInspector.UIString("<auto>"),WebInspector.UIString("Show state of the last replayed resource."),"");controlsToolbar.appendStatusBarItem(this._resourceSelector);this._resourceIdToDescription={};this._gridNodesExpandedState={};this._gridScrollPositions={};this._currentResourceId=null;this._prevOptionsStack=[];this._nextOptionsStack=[];this._highlightedGridNodes=[];var columns=[{title:WebInspector.UIString("Name"),sortable:false,width:"50%",disclosure:true},{title:WebInspector.UIString("Value"),sortable:false,width:"50%"}];this._stateGrid=new WebInspector.DataGrid(columns);this._stateGrid.element.classList.add("fill");this._stateGrid.show(this.element);this._traceLogPlayer.addEventListener(WebInspector.CanvasTraceLogPlayerProxy.Events.CanvasReplayStateChanged,this._onReplayResourceChanged,this);this._traceLogPlayer.addEventListener(WebInspector.CanvasTraceLogPlayerProxy.Events.CanvasTraceLogReceived,this._onCanvasTraceLogReceived,this);this._traceLogPlayer.addEventListener(WebInspector.CanvasTraceLogPlayerProxy.Events.CanvasResourceStateReceived,this._onCanvasResourceStateReceived,this);this._updateButtonsEnabledState();}
 WebInspector.CanvasReplayStateView.prototype={selectResource:function(resourceId)
 {if(resourceId===this._resourceSelector.selectedOption().value)
-return;var option=this._resourceSelector.selectElement().firstChild;for(var index=0;option;++index,option=option.nextSibling){if(resourceId===option.value){this._resourceSelector.setSelectedIndex(index);this._onReplayResourceChanged();break;}}},_createControlButton:function(parent,className,title,clickCallback)
-{var button=new WebInspector.StatusBarButton(title,className+" canvas-replay-button");parent.appendChild(button.element);button.makeLongClickEnabled();button.addEventListener("click",clickCallback,this);button.addEventListener("longClickDown",clickCallback,this);button.addEventListener("longClickPress",clickCallback,this);return button;},_onResourceNavigationClick:function(forward)
+return;var option=this._resourceSelector.selectElement().firstChild;for(var index=0;option;++index,option=option.nextSibling){if(resourceId===option.value){this._resourceSelector.setSelectedIndex(index);this._onReplayResourceChanged();break;}}},_createControlButton:function(toolbar,className,title,clickCallback)
+{var button=new WebInspector.StatusBarButton(title,className);toolbar.appendStatusBarItem(button);button.makeLongClickEnabled();button.addEventListener("click",clickCallback,this);button.addEventListener("longClickDown",clickCallback,this);button.addEventListener("longClickPress",clickCallback,this);return button;},_onResourceNavigationClick:function(forward)
 {var newOption=forward?this._nextOptionsStack.pop():this._prevOptionsStack.pop();if(!newOption)
 return;(forward?this._prevOptionsStack:this._nextOptionsStack).push(this._currentOption);this._isNavigationButton=true;this.selectResource(newOption.value);delete this._isNavigationButton;this._updateButtonsEnabledState();},_onStateRefreshClick:function()
 {this._traceLogPlayer.clearResourceStates();},_updateButtonsEnabledState:function()
@@ -1644,10 +1648,10 @@ return;var key=this._resourceKindId(this._currentResourceId);var scrollState=thi
 return;this._stateGrid.scrollContainer.scrollTop=scrollState.scrollTop;this._stateGrid.scrollContainer.scrollLeft=scrollState.scrollLeft;},_createDataGridNode:function(descriptor)
 {var name=descriptor.name;var callArgument=descriptor.value;var valueElement=callArgument?WebInspector.CanvasProfileDataGridHelper.createCallArgumentElement(callArgument):"";var nameElement=name;if(typeof descriptor.enumValueForName!=="undefined")
 nameElement=WebInspector.CanvasProfileDataGridHelper.createEnumValueElement(name,+descriptor.enumValueForName);if(descriptor.isArray&&descriptor.values){if(typeof nameElement==="string")
-nameElement+="["+descriptor.values.length+"]";else{var element=document.createElement("span");element.appendChild(nameElement);element.createTextChild("["+descriptor.values.length+"]");nameElement=element;}}
+nameElement+="["+descriptor.values.length+"]";else{var element=createElement("span");element.appendChild(nameElement);element.createTextChild("["+descriptor.values.length+"]");nameElement=element;}}
 var data={};data[0]=nameElement;data[1]=valueElement;var node=new WebInspector.DataGridNode(data);node.selectable=false;node.name=name;return node;},__proto__:WebInspector.VBox.prototype};WebInspector.ProfileTypeRegistry=function()
 {this._profileTypes=[];this.cpuProfileType=new WebInspector.CPUProfileType();this._addProfileType(this.cpuProfileType);this.heapSnapshotProfileType=new WebInspector.HeapSnapshotProfileType();this._addProfileType(this.heapSnapshotProfileType);this.trackingHeapSnapshotProfileType=new WebInspector.TrackingHeapSnapshotProfileType();this._addProfileType(this.trackingHeapSnapshotProfileType);if(!WebInspector.isWorkerFrontend()&&Runtime.experiments.isEnabled("canvasInspection")){this.canvasProfileType=new WebInspector.CanvasProfileType();this._addProfileType(this.canvasProfileType);}}
 WebInspector.ProfileTypeRegistry.prototype={_addProfileType:function(profileType)
 {this._profileTypes.push(profileType);},profileTypes:function()
 {return this._profileTypes;}}
-WebInspector.ProfileTypeRegistry.instance=new WebInspector.ProfileTypeRegistry();;
+WebInspector.ProfileTypeRegistry.instance=new WebInspector.ProfileTypeRegistry();;Runtime.cachedResources["profiler/canvasProfiler.css"]="/*\n * Copyright (C) 2012 Google Inc. All rights reserved.\n *\n * Redistribution and use in source and binary forms, with or without\n * modification, are permitted provided that the following conditions are\n * met:\n *\n *     * Redistributions of source code must retain the above copyright\n * notice, this list of conditions and the following disclaimer.\n *     * Redistributions in binary form must reproduce the above\n * copyright notice, this list of conditions and the following disclaimer\n * in the documentation and/or other materials provided with the\n * distribution.\n *     * Neither the name of Google Inc. nor the names of its\n * contributors may be used to endorse or promote products derived from\n * this software without specific prior written permission.\n *\n * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n * \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\n * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\n * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n */\n\n.canvas-profile-view,\n#canvas-replay-image-container {\n    overflow: hidden;\n}\n\n#canvas-replay-image-container {\n    text-align: center;\n    background-color: black;\n    overflow: hidden;\n    padding: 0;\n    color: white;\n    flex: auto;\n}\n\n.canvas-profile-view .resizer-widget {\n    position: absolute;\n    top: 0;\n    right: 0;\n    height: 24px;\n    width: 16px;\n    background-image: url(Images/statusbarResizerHorizontal.png);\n    background-repeat: no-repeat;\n    background-position: center;\n    z-index: 13;\n}\n\n.canvas-replay-image-parent {\n    position: absolute;\n    top: 5px;\n    left: 5px;\n    right: 5px;\n    bottom: 10px;\n}\n\n.canvas-replay-image-parent > span {\n    display: inline-block;\n    height: 100%;\n    vertical-align: middle;\n}\n\n.canvas-replay-image-parent > img {\n    vertical-align: middle;\n}\n\n.canvas-debug-info {\n    position: absolute;\n    left: 0;\n    right: 0;\n    bottom: 6px;\n}\n\n.canvas-profile-view .spinner-icon {\n    position: absolute;\n    width: 16px;\n    height: 16px;\n    right: 4px;\n    bottom: 4px;\n}\n\n.canvas-replay-log {\n    flex: auto;\n    position: relative;\n}\n\n.canvas-replay-log .data-grid {\n    border: none;\n}\n\n.canvas-replay-button {\n    min-width: 32px;\n}\n\n.canvas-popover-anchor {\n    position: absolute;\n    text-indent: 0;\n    padding: 0;\n    margin: 0;\n}\n.data-grid:focus tr.selected .canvas-popover-anchor {\n    background-color: #aaa !important;\n}\n\n.canvas-function-name {\n}\n\n.canvas-formatted-resource {\n    color: rgb(33%, 33%, 33%);\n}\n.canvas-formatted-resource.canvas-popover-anchor,\n.canvas-formatted-resource:hover {\n    color: rgb(38, 38, 38);\n    text-decoration: underline;\n    cursor: pointer;\n}\n\n/* Keep in sync with \"console-formatted-*\" CSS styles. */\n.canvas-formatted-object,\n.canvas-formatted-node,\n.canvas-formatted-array {\n    color: #222;\n}\n.canvas-formatted-number {\n    color: rgb(28, 0, 207);\n}\n.canvas-formatted-string,\n.canvas-formatted-regexp {\n    color: rgb(196, 26, 22);\n}\n.canvas-formatted-null,\n.canvas-formatted-undefined {\n    color: rgb(128, 128, 128);\n}\n.data-grid:focus tr.selected .canvas-call-argument,\n.data-grid:focus tr.selected .canvas-formatted-string {\n    color: inherit !important;\n}\n\n.canvas-replay-state-view .data-grid {\n    top: 23px;\n}\n\n.canvas-replay-state-view .data-grid .data-container tr:nth-child(odd).canvas-grid-node-highlighted {\n    -webkit-animation: fadeout-odd 2s 0s;\n    background-color: rgb(255, 255, 175);\n}\n\n.canvas-replay-state-view .data-grid .data-container tr:nth-child(even).canvas-grid-node-highlighted {\n    -webkit-animation: fadeout-even 2s 0s;\n    background-color: rgb(235, 235, 120);\n}\n\n@-webkit-keyframes fadeout-odd {\n    from { background-color: rgb(255, 255, 25); }\n    to { background-color: rgb(255, 255, 175); }\n}\n\n@-webkit-keyframes fadeout-even {\n    from { background-color: rgb(255, 255, 25); }\n    to { background-color: rgb(235, 235, 120); }\n}\n\n.canvas-profile-view .status-bar {\n    background-color: #eee;\n    border-bottom: 1px solid #ccc;\n}\n\n/*# sourceURL=profiler/canvasProfiler.css */";Runtime.cachedResources["profiler/heapProfiler.css"]="/*\n * Copyright (C) 2009 Google Inc. All rights reserved.\n * Copyright (C) 2010 Apple Inc. All rights reserved.\n *\n * Redistribution and use in source and binary forms, with or without\n * modification, are permitted provided that the following conditions are\n * met:\n *\n *     * Redistributions of source code must retain the above copyright\n * notice, this list of conditions and the following disclaimer.\n *     * Redistributions in binary form must reproduce the above\n * copyright notice, this list of conditions and the following disclaimer\n * in the documentation and/or other materials provided with the\n * distribution.\n *     * Neither the name of Google Inc. nor the names of its\n * contributors may be used to endorse or promote products derived from\n * this software without specific prior written permission.\n *\n * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n * \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\n * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\n * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n */\n\n.heap-snapshot-sidebar-tree-item .icon {\n    content: url(Images/profileIcon.png);\n}\n\n.heap-snapshot-sidebar-tree-item.small .icon {\n    content: url(Images/profileSmallIcon.png);\n}\n\n.heap-snapshot-view {\n    overflow: hidden;\n}\n\n.heap-snapshot-view .data-grid {\n    border: none;\n}\n\n.heap-snapshot-view .data-grid tr:empty {\n    height: 16px;\n    visibility: hidden;\n}\n\n.heap-snapshot-view .data-grid span.percent-column {\n    width: 32px;\n}\n\n.heap-snapshot-view .console-formatted-object,\n.console-formatted-node {\n    display: inline;\n    position: static;\n}\n\n.detached-dom-tree-node {\n    background-color: #FF9999;\n}\n\n.heap-snapshot-view .console-formatted-string {\n    white-space: nowrap;\n}\n\n.heap-snapshot-view tr:not(.selected) .console-formatted-id {\n    color: grey;\n}\n\n.heap-snapshot-view .data-grid {\n    flex: auto;\n}\n\n.heap-snapshot-view .heap-tracking-overview {\n    flex: 0 0 80px;\n    height: 80px;\n}\n\n.heap-snapshot-view .retaining-paths-view {\n    overflow: hidden;\n}\n\n.heap-snapshot-view .heap-snapshot-view-resizer {\n    background-image: url(Images/statusbarResizerVertical.png);\n    background-color: #eee;\n    border-bottom: 1px solid rgb(179, 179, 179);\n    background-repeat: no-repeat;\n    background-position: right center, center;\n    flex: 0 0 21px;\n}\n\n.heap-snapshot-view .heap-snapshot-view-resizer .title > span {\n    display: inline-block;\n    padding-top: 3px;\n    vertical-align: middle;\n    margin-left: 4px;\n    margin-right: 8px;\n}\n\n.heap-snapshot-view .heap-snapshot-view-resizer * {\n    pointer-events: none;\n}\n\n.heap-snapshot-view .heap-object-details-header {\n    background-color: #eee;\n}\n\n.heap-snapshot-view tr:not(.selected) td.object-column span.highlight {\n    background-color: rgb(255, 255, 200);\n}\n\n.heap-snapshot-view td.object-column span.grayed {\n    color: gray;\n}\n\n.cycled-ancessor-node {\n    opacity: 0.6;\n}\n\n#heap-recording-view .heap-snapshot-view {\n    top: 80px;\n}\n\n.heap-overview-container {\n    overflow: hidden;\n    position: absolute;\n    top: 0;\n    width: 100%;\n    height: 80px;\n}\n\n#heap-recording-overview-grid .resources-dividers-label-bar {\n    pointer-events: auto;\n}\n\n#heap-recording-overview-container {\n    border-bottom: 1px solid rgba(0, 0, 0, 0.3);\n}\n\n.heap-recording-overview-canvas {\n    position: absolute;\n    top: 20px;\n    left: 0;\n    right: 0;\n    bottom: 0;\n}\n\n.heap-snapshot-stats-pie-chart {\n    margin: 12px 30px;\n}\n\n.heap-snapshot-stats-legend {\n    margin-left: 24px;\n}\n\n.heap-snapshot-stats-legend > div {\n    margin-top: 1px;\n    width: 170px;\n}\n\n.heap-snapshot-stats-swatch {\n    display: inline-block;\n    width: 10px;\n    height: 10px;\n    border: 1px solid rgba(100, 100, 100, 0.3);\n}\n\n.heap-snapshot-stats-swatch.heap-snapshot-stats-empty-swatch {\n    border: none;\n}\n\n.heap-snapshot-stats-name,\n.heap-snapshot-stats-size {\n    display: inline-block;\n    margin-left: 6px;\n}\n\n.heap-snapshot-stats-size {\n    float: right;\n    text-align: right;\n}\n\n.heap-allocation-stack .stack-frame {\n    display: flex;\n    justify-content: space-between;\n    border-bottom: 1px solid rgb(240, 240, 240);\n    padding: 2px;\n}\n\n.heap-allocation-stack .stack-frame a {\n    color: rgb(33%, 33%, 33%);\n}\n\n.no-heap-allocation-stack {\n    padding: 5px;\n}\n\n/*# sourceURL=profiler/heapProfiler.css */";Runtime.cachedResources["profiler/profilesPanel.css"]="/*\n * Copyright (C) 2006, 2007, 2008 Apple Inc.  All rights reserved.\n * Copyright (C) 2009 Anthony Ricaud <rik@webkit.org>\n *\n * Redistribution and use in source and binary forms, with or without\n * modification, are permitted provided that the following conditions\n * are met:\n *\n * 1.  Redistributions of source code must retain the above copyright\n *     notice, this list of conditions and the following disclaimer.\n * 2.  Redistributions in binary form must reproduce the above copyright\n *     notice, this list of conditions and the following disclaimer in the\n *     documentation and/or other materials provided with the distribution.\n * 3.  Neither the name of Apple Computer, Inc. (\"Apple\") nor the names of\n *     its contributors may be used to endorse or promote products derived\n *     from this software without specific prior written permission.\n *\n * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS \"AS IS\" AND ANY\n * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\n * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY\n * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\n * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\n * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF\n * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n */\n\n/* Profiler Style */\n\n#profile-views {\n    flex: auto;\n    position: relative;\n}\n\n.profile-view .data-grid table.data {\n    background: white;\n}\n\n.profile-view .data-grid tr:not(.selected) .highlight {\n    background-color: rgb(255, 230, 179);\n}\n\n.profile-view .data-grid tr:hover td:not(.bottom-filler-td) {\n    background-color: rgba(0, 0, 0, 0.1);\n}\n\n.profile-view .data-grid td.numeric-column {\n    text-align: right;\n}\n\n.profile-view .data-grid div.profile-multiple-values {\n    float: right;\n}\n\n.profile-view .data-grid span.percent-column {\n    color: #999;\n    width: 48px;\n    display: inline-block;\n}\n\n.profile-view .data-grid tr.selected span {\n    color: inherit;\n}\n\n.profiles-status-bar {\n    display: flex;\n    background-color: #eee;\n    flex: 0 0 25px;\n    flex-direction: row;\n    border-bottom: 1px solid rgb(202, 202, 202);\n}\n\n.profile-launcher-view-tree-item > .icon {\n    width: 4px !important;\n    visibility: hidden;\n}\n\n.profiles-sidebar-tree-box {\n    overflow: auto;\n    flex: auto;\n}\n\n.profiles-sidebar-tree-box > ol {\n    overflow: auto;\n    flex: auto;\n}\n\n.profile-sidebar-tree-item .icon {\n    content: url(Images/profileIcon.png);\n}\n\n.profile-sidebar-tree-item.small .icon {\n    content: url(Images/profileSmallIcon.png);\n}\n\n.profile-group-sidebar-tree-item .icon {\n    content: url(Images/profileGroupIcon.png);\n}\n\n.sidebar-tree-item .title-container > .save-link {\n    text-decoration: underline;\n    margin-left: auto;\n    display: none;\n}\n\n.sidebar-tree-item.selected .title-container > .save-link {\n    display: block;\n}\n\n.cpu-profile-view {\n    display: none;\n    overflow: hidden;\n}\n\n.cpu-profile-view.visible {\n    display: flex;\n}\n\n.cpu-profile-view .data-grid {\n    border: none;\n    flex: auto;\n}\n\n.cpu-profile-view .data-grid th.self-column,\n.cpu-profile-view .data-grid th.total-column {\n    text-align: center;\n}\n\n.profile-node-file {\n    float: right;\n    color: gray;\n}\n\n.profile-warn-marker {\n    background-image: url(Images/statusbarButtonGlyphs.png);\n    background-size: 320px 144px;\n    background-position: -202px -107px;\n    width: 10px;\n    height: 10px;\n    vertical-align: -1px;\n    margin-right: 2px;\n    display: inline-block;\n}\n\n.data-grid tr.selected .profile-node-file {\n    color: rgb(33%, 33%, 33%);\n}\n\n.data-grid:focus tr.selected .profile-node-file {\n    color: white;\n}\n\n.profile-launcher-view-content {\n    padding: 0 16px;\n    text-align: left;\n}\n\n.control-profiling {\n    -webkit-align-self: flex-start;\n    margin-right: 50px;\n}\n\n.profile-launcher-view-content h1 {\n    padding: 15px 0 10px;\n}\n\n.panel-enabler-view.profile-launcher-view form {\n    padding: 0;\n    font-size: 13px;\n    width: 100%;\n}\n\n.panel-enabler-view.profile-launcher-view label {\n    margin: 0;\n}\n\n.profile-launcher-view-content p {\n    color: grey;\n    margin-top: 1px;\n    margin-left: 22px;\n}\n\n.profile-launcher-view-content button.running {\n    color: hsl(0, 100%, 58%);\n}\n\n.profile-launcher-view-content button.running:hover {\n    color: hsl(0, 100%, 42%);\n}\n\nbody.inactive .profile-launcher-view-content button.running:not(.status-bar-item) {\n    color: rgb(220, 130, 130);\n}\n\n.highlighted-row {\n    -webkit-animation: row_highlight 2s 0s;\n}\n\n@-webkit-keyframes row_highlight {\n    from {background-color: rgba(255, 255, 120, 1); }\n    to { background-color: rgba(255, 255, 120, 0); }\n}\n\n.profile-canvas-decoration .warning-icon-small {\n    margin-right: 4px;\n}\n\n.profile-canvas-decoration {\n    color: red;\n    margin: -14px 0 13px 22px;\n    padding-left: 14px;\n}\n\n.profile-canvas-decoration button {\n    margin: 0 0 0 10px !important;\n}\n\n.profiles.panel select.chrome-select {\n    font-size: 12px;\n    width: 150px;\n    margin-left: 10px;\n    margin-right: 10px;\n}\n\nbutton.load-profile {\n    margin-left: 20px;\n}\n\nbutton.load-profile.multi-target {\n    display: block;\n    margin-top: 14px;\n    margin-left: 0;\n}\n\n.cpu-profile-flame-chart-overview-container {\n    overflow: hidden;\n    position: absolute;\n    top: 0;\n    width: 100%;\n    height: 80px;\n}\n\n#cpu-profile-flame-chart-overview-container {\n    border-bottom: 1px solid rgba(0, 0, 0, 0.3);\n}\n\n.cpu-profile-flame-chart-overview-canvas {\n    position: absolute;\n    top: 20px;\n    left: 0;\n    right: 0;\n    bottom: 0;\n}\n\n#cpu-profile-flame-chart-overview-grid .resources-dividers-label-bar {\n    pointer-events: auto;\n}\n\n.cpu-profile-flame-chart-overview-pane {\n    flex: 0 0 80px !important;\n}\n\n/*# sourceURL=profiler/profilesPanel.css */";

@@ -1,0 +1,52 @@
+WebInspector.LayerPaintProfilerView=function(showImageForLayerCallback)
+{WebInspector.SplitView.call(this,true,false);this._showImageForLayerCallback=showImageForLayerCallback;this._logTreeView=new WebInspector.PaintProfilerCommandLogView();this.setSidebarView(this._logTreeView);this._paintProfilerView=new WebInspector.PaintProfilerView(this._showImage.bind(this));this.setMainView(this._paintProfilerView);this._paintProfilerView.addEventListener(WebInspector.PaintProfilerView.Events.WindowChanged,this._onWindowChanged,this);}
+WebInspector.LayerPaintProfilerView.prototype={profileLayer:function(layer)
+{this._logTreeView.setCommandLog(null,[]);this._paintProfilerView.setSnapshotAndLog(null,[],null);layer.requestSnapshot(onSnapshotDone.bind(this));function onSnapshotDone(snapshot)
+{this._layer=layer;snapshot.commandLog(onCommandLogDone.bind(this,snapshot));}
+function onCommandLogDone(snapshot,log)
+{this._logTreeView.setCommandLog(snapshot.target(),log);this._paintProfilerView.setSnapshotAndLog(snapshot||null,log||[],null);}},_onWindowChanged:function()
+{var window=this._paintProfilerView.windowBoundaries();this._logTreeView.updateWindow(window.left,window.right);},_showImage:function(imageURL)
+{this._showImageForLayerCallback(this._layer,imageURL);},__proto__:WebInspector.SplitView.prototype};;WebInspector.LayersPanel=function()
+{WebInspector.PanelWithSidebarTree.call(this,"layers",225);this.registerRequiredCSS("timeline/timelinePanel.css");this._target=null;this.panelSidebarElement().classList.add("outline-disclosure","layer-tree");this.sidebarTree.element.classList.remove("sidebar-tree");WebInspector.targetManager.observeTargets(this);this._currentlySelectedLayer=null;this._currentlyHoveredLayer=null;this._layerTreeOutline=new WebInspector.LayerTreeOutline(this.sidebarTree);this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerSelected,this._onObjectSelected,this);this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerHovered,this._onObjectHovered,this);this._rightSplitView=new WebInspector.SplitView(false,true,"layerDetailsSplitViewState");this.splitView().setMainView(this._rightSplitView);this._layers3DView=new WebInspector.Layers3DView();this._rightSplitView.setMainView(this._layers3DView);this._layers3DView.addEventListener(WebInspector.Layers3DView.Events.ObjectSelected,this._onObjectSelected,this);this._layers3DView.addEventListener(WebInspector.Layers3DView.Events.ObjectHovered,this._onObjectHovered,this);this._layers3DView.addEventListener(WebInspector.Layers3DView.Events.LayerSnapshotRequested,this._onSnapshotRequested,this);this._tabbedPane=new WebInspector.TabbedPane();this._rightSplitView.setSidebarView(this._tabbedPane);this._layerDetailsView=new WebInspector.LayerDetailsView();this._layerDetailsView.addEventListener(WebInspector.LayerDetailsView.Events.ObjectSelected,this._onObjectSelected,this);this._tabbedPane.appendTab(WebInspector.LayersPanel.DetailsViewTabs.Details,WebInspector.UIString("Details"),this._layerDetailsView);this._paintProfilerView=new WebInspector.LayerPaintProfilerView(this._layers3DView.showImageForLayer.bind(this._layers3DView));this._tabbedPane.appendTab(WebInspector.LayersPanel.DetailsViewTabs.Profiler,WebInspector.UIString("Profiler"),this._paintProfilerView);}
+WebInspector.LayersPanel.DetailsViewTabs={Details:"details",Profiler:"profiler"};WebInspector.LayersPanel.prototype={wasShown:function()
+{WebInspector.Panel.prototype.wasShown.call(this);this.sidebarTree.element.focus();if(this._target)
+this._target.layerTreeModel.enable();},willHide:function()
+{if(this._target)
+this._target.layerTreeModel.disable();WebInspector.Panel.prototype.willHide.call(this);},targetAdded:function(target)
+{if(this._target)
+return;this._target=target;this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged,this._onLayerTreeUpdated,this);this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerPainted,this._onLayerPainted,this);if(this.isShowing())
+this._target.layerTreeModel.enable();},targetRemoved:function(target)
+{if(this._target!==target)
+return;this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged,this._onLayerTreeUpdated,this);this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerPainted,this._onLayerPainted,this);this._target.layerTreeModel.disable();this._target=null;},_showLayerTree:function(deferredLayerTree)
+{deferredLayerTree.resolve(this._setLayerTree.bind(this));},_onLayerTreeUpdated:function()
+{if(this._target)
+this._setLayerTree(this._target.layerTreeModel.layerTree());},_setLayerTree:function(layerTree)
+{this._layers3DView.setLayerTree(layerTree);this._layerTreeOutline.update(layerTree);if(this._currentlySelectedLayer&&(!layerTree||!layerTree.layerById(this._currentlySelectedLayer.layer.id())))
+this._selectObject(null);if(this._currentlyHoveredLayer&&(!layerTree||!layerTree.layerById(this._currentlyHoveredLayer.layer.id())))
+this._hoverObject(null);this._layerDetailsView.update();},_onLayerPainted:function(event)
+{if(!this._target)
+return;this._layers3DView.setLayerTree(this._target.layerTreeModel.layerTree());if(this._currentlySelectedLayer&&this._currentlySelectedLayer.layer===event.data)
+this._layerDetailsView.update();},_onObjectSelected:function(event)
+{var selection=(event.data);this._selectObject(selection);},_onObjectHovered:function(event)
+{var selection=(event.data);this._hoverObject(selection);},_onSnapshotRequested:function(event)
+{var layer=(event.data);this._tabbedPane.selectTab(WebInspector.LayersPanel.DetailsViewTabs.Profiler);this._paintProfilerView.profileLayer(layer);},_selectObject:function(selection)
+{var layer=selection&&selection.layer;if(this._currentlySelectedLayer===selection)
+return;this._currentlySelectedLayer=selection;var node=layer?layer.nodeForSelfOrAncestor():null;if(node)
+node.highlightForTwoSeconds();else if(this._target)
+this._target.domModel.hideDOMNodeHighlight();this._layerTreeOutline.selectLayer(layer);this._layers3DView.selectObject(selection);this._layerDetailsView.setObject(selection);},_hoverObject:function(selection)
+{var layer=selection&&selection.layer;if(this._currentlyHoveredLayer===selection)
+return;this._currentlyHoveredLayer=selection;var node=layer?layer.nodeForSelfOrAncestor():null;if(node)
+node.highlight();else if(this._target)
+this._target.domModel.hideDOMNodeHighlight();this._layerTreeOutline.hoverLayer(layer);this._layers3DView.hoverObject(selection);},__proto__:WebInspector.PanelWithSidebarTree.prototype}
+WebInspector.LayersPanel.LayerTreeRevealer=function()
+{}
+WebInspector.LayersPanel.LayerTreeRevealer.prototype={reveal:function(snapshotData)
+{if(!(snapshotData instanceof WebInspector.DeferredLayerTree))
+return Promise.reject(new Error("Internal error: not a WebInspector.DeferredLayerTree"));var panel=WebInspector.LayersPanel._instance();WebInspector.inspectorView.setCurrentPanel(panel);panel._showLayerTree((snapshotData));return Promise.resolve();}}
+WebInspector.LayersPanel._instance=function()
+{if(!WebInspector.LayersPanel._instanceObject)
+WebInspector.LayersPanel._instanceObject=new WebInspector.LayersPanel();return WebInspector.LayersPanel._instanceObject;}
+WebInspector.LayersPanelFactory=function()
+{}
+WebInspector.LayersPanelFactory.prototype={createPanel:function()
+{return WebInspector.LayersPanel._instance();}};

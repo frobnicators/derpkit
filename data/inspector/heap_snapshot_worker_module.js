@@ -1,163 +1,7 @@
-var allDescriptors=[];var applicationDescriptor;var _loadedScripts={};function loadResource(url)
-{var xhr=new XMLHttpRequest();xhr.open("GET",url,false);try{xhr.send(null);}catch(e){console.error(url+" -> "+new Error().stack);throw e;}
-return xhr.status<400?xhr.responseText:"";}
-function normalizePath(path)
-{if(path.indexOf("..")===-1&&path.indexOf('.')===-1)
-return path;var normalizedSegments=[];var segments=path.split("/");for(var i=0;i<segments.length;i++){var segment=segments[i];if(segment===".")
-continue;else if(segment==="..")
-normalizedSegments.pop();else if(segment)
-normalizedSegments.push(segment);}
-var normalizedPath=normalizedSegments.join("/");if(normalizedPath[normalizedPath.length-1]==="/")
-return normalizedPath;if(path[0]==="/"&&normalizedPath)
-normalizedPath="/"+normalizedPath;if((path[path.length-1]==="/")||(segments[segments.length-1]===".")||(segments[segments.length-1]===".."))
-normalizedPath=normalizedPath+"/";return normalizedPath;}
-function loadScript(scriptName)
-{var sourceURL=self._importScriptPathPrefix+scriptName;var schemaIndex=sourceURL.indexOf("://")+3;sourceURL=sourceURL.substring(0,schemaIndex)+normalizePath(sourceURL.substring(schemaIndex));if(_loadedScripts[sourceURL])
-return;_loadedScripts[sourceURL]=true;var scriptSource=loadResource(sourceURL);if(!scriptSource){console.error("Empty response arrived for script '"+sourceURL+"'");return;}
-var oldPrefix=self._importScriptPathPrefix;self._importScriptPathPrefix+=scriptName.substring(0,scriptName.lastIndexOf("/")+1);try{self.eval(scriptSource+"\n//# sourceURL="+sourceURL);}finally{self._importScriptPathPrefix=oldPrefix;}}
-(function(){var baseUrl=self.location?self.location.origin+self.location.pathname:"";self._importScriptPathPrefix=baseUrl.substring(0,baseUrl.lastIndexOf("/")+1);})();var Runtime=function()
-{this._modules=[];this._modulesMap={};this._extensions=[];this._cachedTypeClasses={};this._descriptorsMap={};for(var i=0;i<allDescriptors.length;++i)
-this._descriptorsMap[allDescriptors[i]["name"]]=allDescriptors[i];}
-Runtime._queryParamsObject={__proto__:null};Runtime.isReleaseMode=function()
-{return!!allDescriptors.length;}
-Runtime.startSharedWorker=function(moduleName,workerName)
-{if(Runtime.isReleaseMode())
-return new SharedWorker(moduleName+"_module.js",workerName);var content=loadResource(moduleName+"/module.json");if(!content)
-throw new Error("Worker is not defined: "+moduleName+" "+new Error().stack);var scripts=JSON.parse(content)["scripts"];if(scripts.length!==1)
-throw Error("Runtime.startSharedWorker supports modules with only one script!");return new SharedWorker(moduleName+"/"+scripts[0],workerName);}
-Runtime.startWorker=function(moduleName)
-{if(Runtime.isReleaseMode())
-return new Worker(moduleName+"_module.js");var content=loadResource(moduleName+"/module.json");if(!content)
-throw new Error("Worker is not defined: "+moduleName+" "+new Error().stack);var message=[];var scripts=JSON.parse(content)["scripts"];for(var i=0;i<scripts.length;++i){var url=self._importScriptPathPrefix+moduleName+"/"+scripts[i];var parts=url.split("://");url=parts.length===1?url:parts[0]+"://"+normalizePath(parts[1]);message.push({source:loadResource(moduleName+"/"+scripts[i]),url:url});}
-var loader=function(){self.onmessage=function(event){self.onmessage=null;var scripts=event.data;for(var i=0;i<scripts.length;++i){var source=scripts[i]["source"];self.eval(source+"\n//# sourceURL="+scripts[i]["url"]);}};};var blob=new Blob(["("+loader.toString()+")()\n//# sourceURL="+moduleName],{type:"text/javascript"});var workerURL=window.URL.createObjectURL(blob);try{var worker=new Worker(workerURL);worker.postMessage(message);return worker;}finally{window.URL.revokeObjectURL(workerURL);}}
-Runtime.startApplication=function(appName)
-{console.timeStamp("Runtime.startApplication");var experiments=Runtime._experimentsSetting();var allDescriptorsByName={};for(var i=0;Runtime.isReleaseMode()&&i<allDescriptors.length;++i){var d=allDescriptors[i];allDescriptorsByName[d["name"]]=d;}
-var moduleDescriptors=applicationDescriptor||Runtime._parseJsonURL(appName+".json");var allModules=[];var coreModuleNames=[];moduleDescriptors.forEach(populateModules);function populateModules(desc)
-{if(!isActive(desc))
-return;var name=desc.name;var moduleJSON=allDescriptorsByName[name];if(!moduleJSON){moduleJSON=Runtime._parseJsonURL(name+"/module.json");moduleJSON["name"]=name;}
-allModules.push(moduleJSON);if(desc["type"]==="autostart")
-coreModuleNames.push(name);}
-function isActive(descriptor)
-{var activatorExperiment=descriptor["experiment"];if(activatorExperiment){var shouldBePresent=activatorExperiment.charAt(0)!=="!";if(!shouldBePresent)
-activatorExperiment=activatorExperiment.substr(1);if(!!experiments[activatorExperiment]!==shouldBePresent)
-return false;}
-return descriptor["type"]!=="worker";}
-Runtime._initializeApplication(allModules);self.runtime.loadAutoStartModules(coreModuleNames);}
-Runtime.queryParam=function(name)
-{return Runtime._queryParamsObject[name]||null;}
-Runtime._experimentsSetting=function()
-{try{return(JSON.parse(self.localStorage&&self.localStorage["experiments"]?self.localStorage["experiments"]:"{}"));}catch(e){console.error("Failed to parse localStorage['experiments']");return{};}}
-Runtime._initializeApplication=function(descriptors)
-{self.runtime=new Runtime();var names=[];for(var i=0;i<descriptors.length;++i){var name=descriptors[i]["name"];self.runtime._descriptorsMap[name]=descriptors[i];names.push(name);}
-self.runtime._registerModules(names);}
-Runtime._parseJsonURL=function(url)
-{var json=loadResource(url);if(!json)
-throw new Error("Resource not found at "+url+" "+new Error().stack);return JSON.parse(json);}
-Runtime.prototype={_registerModules:function(configuration)
-{for(var i=0;i<configuration.length;++i)
-this._registerModule(configuration[i]);},_registerModule:function(moduleName)
-{if(!this._descriptorsMap[moduleName]){var content=loadResource(moduleName+"/module.json");if(!content)
-throw new Error("Module is not defined: "+moduleName+" "+new Error().stack);var module=(self.eval("("+content+")"));module["name"]=moduleName;this._descriptorsMap[moduleName]=module;}
-var module=new Runtime.Module(this,this._descriptorsMap[moduleName]);this._modules.push(module);this._modulesMap[moduleName]=module;},loadModule:function(moduleName)
-{this._modulesMap[moduleName]._load();},loadAutoStartModules:function(moduleNames)
-{for(var i=0;i<moduleNames.length;++i){if(Runtime.isReleaseMode())
-self.runtime._modulesMap[moduleNames[i]]._loaded=true;else
-self.runtime.loadModule(moduleNames[i]);}},_checkExtensionApplicability:function(extension,predicate)
-{if(!predicate)
-return false;var contextTypes=(extension.descriptor().contextTypes);if(!contextTypes)
-return true;for(var i=0;i<contextTypes.length;++i){var contextType=this._resolve(contextTypes[i]);var isMatching=!!contextType&&predicate(contextType);if(isMatching)
-return true;}
-return false;},isExtensionApplicableToContext:function(extension,context)
-{if(!context)
-return true;return this._checkExtensionApplicability(extension,isInstanceOf);function isInstanceOf(targetType)
-{return context instanceof targetType;}},isExtensionApplicableToContextTypes:function(extension,currentContextTypes)
-{if(!extension.descriptor().contextTypes)
-return true;for(var i=0;i<currentContextTypes.length;++i)
-currentContextTypes[i]["__applicable"]=true;var result=this._checkExtensionApplicability(extension,currentContextTypes?isContextTypeKnown:null);for(var i=0;i<currentContextTypes.length;++i)
-delete currentContextTypes[i]["__applicable"];return result;function isContextTypeKnown(targetType)
-{return!!targetType["__applicable"];}},extensions:function(type,context)
-{function filter(extension)
-{if(extension._type!==type&&extension._typeClass()!==type)
-return false;var activatorExperiment=extension.descriptor()["experiment"];if(activatorExperiment&&!Runtime.experiments.isEnabled(activatorExperiment))
-return false;return!context||extension.isApplicable(context);}
-return this._extensions.filter(filter);},extension:function(type,context)
-{return this.extensions(type,context)[0]||null;},instances:function(type,context)
-{function instantiate(extension)
-{return extension.instance();}
-return this.extensions(type,context).filter(instantiate).map(instantiate);},instance:function(type,context)
-{var extension=this.extension(type,context);return extension?extension.instance():null;},orderComparator:function(type,nameProperty,orderProperty)
-{var extensions=this.extensions(type);var orderForName={};for(var i=0;i<extensions.length;++i){var descriptor=extensions[i].descriptor();orderForName[descriptor[nameProperty]]=descriptor[orderProperty];}
-function result(name1,name2)
-{if(name1 in orderForName&&name2 in orderForName)
-return orderForName[name1]-orderForName[name2];if(name1 in orderForName)
-return-1;if(name2 in orderForName)
-return 1;return compare(name1,name2);}
-function compare(left,right)
-{if(left>right)
-return 1;if(left<right)
-return-1;return 0;}
-return result;},_resolve:function(typeName)
-{if(!this._cachedTypeClasses[typeName]){var path=typeName.split(".");var object=window;for(var i=0;object&&(i<path.length);++i)
-object=object[path[i]];if(object)
-this._cachedTypeClasses[typeName]=(object);}
-return this._cachedTypeClasses[typeName];}}
-Runtime.ModuleDescriptor=function()
-{this.name;this.extensions;this.dependencies;this.scripts;}
-Runtime.ExtensionDescriptor=function()
-{this.type;this.className;this.contextTypes;}
-Runtime.Module=function(manager,descriptor)
-{this._manager=manager;this._descriptor=descriptor;this._name=descriptor.name;var extensions=(descriptor.extensions);for(var i=0;extensions&&i<extensions.length;++i)
-this._manager._extensions.push(new Runtime.Extension(this,extensions[i]));this._loaded=false;}
-Runtime.Module.prototype={name:function()
-{return this._name;},_load:function()
-{if(this._loaded)
-return;if(this._isLoading){var oldStackTraceLimit=Error.stackTraceLimit;Error.stackTraceLimit=50;console.assert(false,"Module "+this._name+" is loaded from itself: "+new Error().stack);Error.stackTraceLimit=oldStackTraceLimit;return;}
-this._isLoading=true;var dependencies=this._descriptor.dependencies;for(var i=0;dependencies&&i<dependencies.length;++i)
-this._manager.loadModule(dependencies[i]);if(this._descriptor.scripts){if(Runtime.isReleaseMode()){loadScript(this._name+"_module.js");}else{var scripts=this._descriptor.scripts;for(var i=0;i<scripts.length;++i)
-loadScript(this._name+"/"+scripts[i]);}}
-this._isLoading=false;this._loaded=true;}}
-Runtime.Extension=function(module,descriptor)
-{this._module=module;this._descriptor=descriptor;this._type=descriptor.type;this._hasTypeClass=this._type.charAt(0)==="@";this._className=descriptor.className||null;}
-Runtime.Extension.prototype={descriptor:function()
-{return this._descriptor;},module:function()
-{return this._module;},_typeClass:function()
-{if(!this._hasTypeClass)
-return null;return this._module._manager._resolve(this._type.substring(1));},isApplicable:function(context)
-{return this._module._manager.isExtensionApplicableToContext(this,context);},instance:function()
-{if(!this._className)
-return null;if(!this._instance){this._module._load();var constructorFunction=window.eval(this._className);if(!(constructorFunction instanceof Function))
-return null;this._instance=new constructorFunction();}
-return this._instance;}}
-Runtime.ExperimentsSupport=function()
-{this._supportEnabled=Runtime.queryParam("experiments")!==null;this._experiments=[];this._experimentNames={};this._enabledTransiently={};}
-Runtime.ExperimentsSupport.prototype={allExperiments:function()
-{return this._experiments.slice();},supportEnabled:function()
-{return this._supportEnabled;},_setExperimentsSetting:function(value)
-{if(!self.localStorage)
-return;self.localStorage["experiments"]=JSON.stringify(value);},register:function(experimentName,experimentTitle,hidden)
-{console.assert(!this._experimentNames[experimentName],"Duplicate registration of experiment "+experimentName);this._experimentNames[experimentName]=true;this._experiments.push(new Runtime.Experiment(this,experimentName,experimentTitle,!!hidden));},isEnabled:function(experimentName)
-{this._checkExperiment(experimentName);if(this._enabledTransiently[experimentName])
-return true;if(!this.supportEnabled())
-return false;return!!Runtime._experimentsSetting()[experimentName];},setEnabled:function(experimentName,enabled)
-{this._checkExperiment(experimentName);if(!enabled)
-delete this._enabledTransiently[experimentName];var experimentsSetting=Runtime._experimentsSetting();experimentsSetting[experimentName]=enabled;this._setExperimentsSetting(experimentsSetting);},setDefaultExperiments:function(experimentNames)
-{for(var i=0;i<experimentNames.length;++i){this._checkExperiment(experimentNames[i]);this._enabledTransiently[experimentNames[i]]=true;}},enableForTest:function(experimentName)
-{this._checkExperiment(experimentName);this._enabledTransiently[experimentName]=true;},cleanUpStaleExperiments:function()
-{var experimentsSetting=Runtime._experimentsSetting();var cleanedUpExperimentSetting={};for(var i=0;i<this._experiments.length;++i){var experimentName=this._experiments[i].name;if(experimentsSetting[experimentName])
-cleanedUpExperimentSetting[experimentName]=true;}
-this._setExperimentsSetting(cleanedUpExperimentSetting);},_checkExperiment:function(experimentName)
-{console.assert(this._experimentNames[experimentName],"Unknown experiment "+experimentName);}}
-Runtime.Experiment=function(experiments,name,title,hidden)
-{this.name=name;this.title=title;this.hidden=hidden;this._experiments=experiments;}
-Runtime.Experiment.prototype={isEnabled:function()
-{return this._experiments.isEnabled(this.name);},setEnabled:function(enabled)
-{this._experiments.setEnabled(this.name,enabled);}}
-{(function parseQueryParameters()
-{var queryParams=location.search;if(!queryParams)
-return;var params=queryParams.substring(1).split("&");for(var i=0;i<params.length;++i){var pair=params[i].split("=");Runtime._queryParamsObject[pair[0]]=pair[1];}
-var settingsParam=Runtime.queryParam("settings");if(settingsParam){try{var settings=JSON.parse(window.decodeURI(settingsParam));for(var key in settings)
-window.localStorage[key]=settings[key];}catch(e){}}})();}
-Runtime.experiments=new Runtime.ExperimentsSupport();var runtime;var ArrayLike;Object.isEmpty=function(obj)
+console=console;console.__originalAssert=console.assert;console.assert=function(value,message)
+{if(value)
+return;console.__originalAssert(value,message);}
+var ArrayLike;Object.isEmpty=function(obj)
 {for(var i in obj)
 return false;return true;}
 Object.values=function(obj)
@@ -392,85 +236,32 @@ function spacesPadding(spacesCount)
 {return Array(spacesCount).join("\u00a0");}
 function numberToStringWithSpacesPadding(value,symbolsCount)
 {var numberString=value.toString();var paddingLength=Math.max(0,symbolsCount-numberString.length);return spacesPadding(paddingLength)+numberString;}
-var createObjectIdentifier=function()
-{return"_"+ ++createObjectIdentifier._last;}
-createObjectIdentifier._last=0;var Set=function()
-{this._set={};this._size=0;}
+Array.from=function(iterator)
+{var values=[];for(var iteratorValue=iterator.next();!iteratorValue.done;iteratorValue=iterator.next())
+values.push(iteratorValue.value);return values;}
 Set.fromArray=function(array)
-{var result=new Set();array.forEach(function(item){result.add(item);});return result;}
-Set.prototype={add:function(item)
-{var objectIdentifier=item.__identifier;if(!objectIdentifier){objectIdentifier=createObjectIdentifier();item.__identifier=objectIdentifier;}
-if(!this._set[objectIdentifier])
-++this._size;this._set[objectIdentifier]=item;},remove:function(item)
-{if(this._set[item.__identifier]){--this._size;delete this._set[item.__identifier];return true;}
-return false;},values:function()
-{var result=new Array(this._size);var i=0;for(var objectIdentifier in this._set)
-result[i++]=this._set[objectIdentifier];return result;},contains:function(item)
-{return!!this._set[item.__identifier];},size:function()
-{return this._size;},clear:function()
-{this._set={};this._size=0;}}
-var Map=function()
-{this._map={};this._size=0;}
-Map.prototype={set:function(key,value)
-{var objectIdentifier=key.__identifier;if(!objectIdentifier){objectIdentifier=createObjectIdentifier();key.__identifier=objectIdentifier;}
-if(!this._map[objectIdentifier])
-++this._size;this._map[objectIdentifier]=[key,value];},remove:function(key)
-{var result=this._map[key.__identifier];if(!result)
-return undefined;--this._size;delete this._map[key.__identifier];return result[1];},keys:function()
-{return this._list(0);},values:function()
-{return this._list(1);},_list:function(index)
-{var result=new Array(this._size);var i=0;for(var objectIdentifier in this._map)
-result[i++]=this._map[objectIdentifier][index];return result;},get:function(key)
-{var entry=this._map[key.__identifier];return entry?entry[1]:undefined;},has:function(key)
-{var entry=this._map[key.__identifier];return!!entry;},get size()
-{return this._size;},clear:function()
-{this._map={};this._size=0;}}
-var StringMap=function()
-{this._map={};this._size=0;}
-StringMap.prototype={set:function(key,value)
-{if(key==="__proto__"){if(!this._hasProtoKey){++this._size;this._hasProtoKey=true;}
-this._protoValue=value;return;}
-if(!Object.prototype.hasOwnProperty.call(this._map,key))
-++this._size;this._map[key]=value;},remove:function(key)
-{var result;if(key==="__proto__"){if(!this._hasProtoKey)
-return undefined;--this._size;delete this._hasProtoKey;result=this._protoValue;delete this._protoValue;return result;}
-if(!Object.prototype.hasOwnProperty.call(this._map,key))
-return undefined;--this._size;result=this._map[key];delete this._map[key];return result;},keys:function()
-{var result=Object.keys(this._map)||[];if(this._hasProtoKey)
-result.push("__proto__");return result;},values:function()
-{var result=Object.values(this._map);if(this._hasProtoKey)
-result.push(this._protoValue);return result;},get:function(key)
-{if(key==="__proto__")
-return this._protoValue;if(!Object.prototype.hasOwnProperty.call(this._map,key))
-return undefined;return this._map[key];},has:function(key)
-{var result;if(key==="__proto__")
-return this._hasProtoKey;return Object.prototype.hasOwnProperty.call(this._map,key);},get size()
-{return this._size;},clear:function()
-{this._map={};this._size=0;delete this._hasProtoKey;delete this._protoValue;}}
+{return new Set(array);}
+Set.prototype.valuesArray=function()
+{return Array.from(this.values());}
+Set.prototype.remove=Set.prototype.delete;Map.prototype.remove=function(key)
+{var value=this.get(key);this.delete(key);return value;}
+Map.prototype.valuesArray=function()
+{return Array.from(this.values());}
+Map.prototype.keysArray=function()
+{return Array.from(this.keys());}
 var StringMultimap=function()
-{StringMap.call(this);}
+{this._map=new Map();}
 StringMultimap.prototype={set:function(key,value)
-{if(key==="__proto__"){if(!this._hasProtoKey){++this._size;this._hasProtoKey=true;this._protoValue=new Set();}
-this._protoValue.add(value);return;}
-if(!Object.prototype.hasOwnProperty.call(this._map,key)){++this._size;this._map[key]=new Set();}
-this._map[key].add(value);},get:function(key)
-{var result=StringMap.prototype.get.call(this,key);if(!result)
+{var set=this._map.get(key);if(!set){set=new Set();this._map.set(key,set);}
+set.add(value);},get:function(key)
+{var result=this._map.get(key);if(!result)
 result=new Set();return result;},remove:function(key,value)
-{var values=this.get(key);values.remove(value);if(!values.size())
-StringMap.prototype.remove.call(this,key)},removeAll:function(key)
-{StringMap.prototype.remove.call(this,key);},values:function()
-{var result=[];var keys=this.keys();for(var i=0;i<keys.length;++i)
-result.pushAll(this.get(keys[i]).values());return result;},__proto__:StringMap.prototype}
-var StringSet=function()
-{this._map=new StringMap();}
-StringSet.fromArray=function(array)
-{var result=new StringSet();array.forEach(function(item){result.add(item);});return result;}
-StringSet.prototype={add:function(value)
-{this._map.set(value,true);},remove:function(value)
-{return!!this._map.remove(value);},values:function()
-{return this._map.keys();},contains:function(value)
-{return this._map.has(value);},size:function()
-{return this._map.size;},clear:function()
+{var values=this.get(key);values.remove(value);if(!values.size)
+this._map.remove(key);},removeAll:function(key)
+{this._map.remove(key);},keysArray:function()
+{return this._map.keysArray();},valuesArray:function()
+{var result=[];var keys=this.keysArray();for(var i=0;i<keys.length;++i)
+result.pushAll(this.get(keys[i]).valuesArray());return result;},clear:function()
 {this._map.clear();}}
 function loadXHR(url)
 {return new Promise(load);function load(successCallback,failureCallback)
@@ -490,9 +281,19 @@ if(!--this._pendingIncomingCallbacksCount&&this._outgoingCallback)
 this._outgoingCallback();}}
 function suppressUnused(value)
 {}
-self.setImmediate=(function(){var callbacks=[];function run(){var cbList=callbacks.slice();callbacks.length=0;cbList.forEach(function(callback){callback();});};return function setImmediate(callback){if(!callbacks.length)
-new Promise(function(resolve,reject){resolve(null);}).then(run);callbacks.push(callback);};})();;self.WebInspector={};WebInspector.UIString=function(string,vararg)
+self.setImmediate=function(callback)
+{Promise.resolve().then(callback);return 0;}
+Promise.prototype.spread=function(callback)
+{return this.then(spreadPromise);function spreadPromise(arg)
+{return callback.apply(null,arg);}};self.WebInspector={};WebInspector.UIString=function(string,vararg)
 {return String.vsprintf(WebInspector.localize(string),Array.prototype.slice.call(arguments,1));}
+WebInspector.UIString.capitalize=function(string,vararg)
+{if(WebInspector._useLowerCaseMenuTitles===undefined)
+throw"WebInspector.setLocalizationPlatform() has not been called";var localized=WebInspector.localize(string);var capitalized;if(WebInspector._useLowerCaseMenuTitles)
+capitalized=localized.replace(/\^(.)/g,"$1");else
+capitalized=localized.replace(/\^(.)/g,function(str,char){return char.toUpperCase();});return String.vsprintf(capitalized,Array.prototype.slice.call(arguments,1));}
+WebInspector.setLocalizationPlatform=function(platform)
+{WebInspector._useLowerCaseMenuTitles=platform==="windows";}
 WebInspector.localize=function(string)
 {return string;}
 WebInspector.UIStringFormat=function(format)
@@ -514,18 +315,20 @@ return true;},isOpeningBraceChar:function(char)
 words.push(text.substring(startWord,i));startWord=-1;}else if(startWord===-1)
 startWord=i;}
 if(startWord!==-1)
-words.push(text.substring(startWord));return words;},findBalancedCurlyBrackets:function(source,startIndex,lastIndex){lastIndex=lastIndex||source.length;startIndex=startIndex||0;var counter=0;var inString=false;for(var index=startIndex;index<lastIndex;++index){var character=source[index];if(inString){if(character==="\\")
-++index;else if(character==="\"")
-inString=false;}else{if(character==="\"")
-inString=true;else if(character==="{")
+words.push(text.substring(startWord));return words;},findBalancedCurlyBrackets:function(source,startIndex,lastIndex)
+{lastIndex=lastIndex||source.length;startIndex=startIndex||0;var counter=0;var index=startIndex;while(index<lastIndex){for(;index<lastIndex;++index){var character=source[index];if(character==="\"")
+break;else if(character==="{")
 ++counter;else if(character==="}"){if(--counter===0)
-return index+1;}}}
+return index+1;}}
+if(index===lastIndex)
+return-1;var regexp=WebInspector.TextUtils._ClosingDoubleQuoteRegexp;regexp.lastIndex=index;if(!regexp.test(source))
+return-1;index=regexp.lastIndex;}
 return-1;},lineIndent:function(line)
 {var indentation=0;while(indentation<line.length&&WebInspector.TextUtils.isSpaceChar(line.charAt(indentation)))
 ++indentation;return line.substr(0,indentation);},isUpperCase:function(text)
 {return text===text.toUpperCase();},isLowerCase:function(text)
 {return text===text.toLowerCase();}}
-WebInspector.TextUtils._SpaceCharRegex=/\s/;WebInspector.TextUtils.Indent={TwoSpaces:"  ",FourSpaces:"    ",EightSpaces:"        ",TabCharacter:"\t"};WebInspector.HeapSnapshotProgressEvent={Update:"ProgressUpdate"};WebInspector.HeapSnapshotCommon={}
+WebInspector.TextUtils._SpaceCharRegex=/\s/;WebInspector.TextUtils._ClosingDoubleQuoteRegexp=/[^\\](?:\\\\)*"/g;WebInspector.TextUtils.Indent={TwoSpaces:"  ",FourSpaces:"    ",EightSpaces:"        ",TabCharacter:"\t"};WebInspector.HeapSnapshotProgressEvent={Update:"ProgressUpdate",BrokenSnapshot:"BrokenSnapshot"};WebInspector.HeapSnapshotCommon={}
 WebInspector.HeapSnapshotCommon.baseSystemDistance=100000000;WebInspector.HeapSnapshotCommon.AllocationNodeCallers=function(nodesWithSingleCaller,branchingCallers)
 {this.nodesWithSingleCaller=nodesWithSingleCaller;this.branchingCallers=branchingCallers;}
 WebInspector.HeapSnapshotCommon.SerializedAllocationNode=function(nodeId,functionName,scriptName,scriptId,line,column,count,size,liveCount,liveSize,hasChildren)
@@ -551,15 +354,16 @@ WebInspector.HeapSnapshotCommon.ItemsRange=function(startPosition,endPosition,to
 WebInspector.HeapSnapshotCommon.StaticData=function(nodeCount,rootNodeIndex,totalSize,maxJSObjectId)
 {this.nodeCount=nodeCount;this.rootNodeIndex=rootNodeIndex;this.totalSize=totalSize;this.maxJSObjectId=maxJSObjectId;}
 WebInspector.HeapSnapshotCommon.Statistics=function()
-{this.total;this.v8heap;this.native;this.code;this.jsArrays;this.strings;}
+{this.total;this.v8heap;this.native;this.code;this.jsArrays;this.strings;this.system;}
 WebInspector.HeapSnapshotCommon.NodeFilter=function(minNodeId,maxNodeId)
 {this.minNodeId=minNodeId;this.maxNodeId=maxNodeId;this.allocationNodeId;}
 WebInspector.HeapSnapshotCommon.NodeFilter.prototype={equals:function(o)
-{return this.minNodeId===o.minNodeId&&this.maxNodeId===o.maxNodeId&&this.allocationNodeId===o.allocationNodeId;}};WebInspector.AllocationProfile=function(profile,liveObjectStats)
-{this._strings=profile.strings;this._liveObjectStats=liveObjectStats;this._nextNodeId=1;this._functionInfos=[]
-this._idToNode={};this._idToTopDownNode={};this._collapsedTopNodeIdToFunctionInfo={};this._traceTops=null;this._buildFunctionAllocationInfos(profile);this._traceTree=this._buildAllocationTree(profile,liveObjectStats);}
+{return this.minNodeId===o.minNodeId&&this.maxNodeId===o.maxNodeId&&this.allocationNodeId===o.allocationNodeId;}}
+WebInspector.HeapSnapshotCommon.SearchConfig=function(query,caseSensitive,isRegex,shouldJump,jumpBackward)
+{this.query=query;this.caseSensitive=caseSensitive;this.isRegex=isRegex;this.shouldJump=shouldJump;this.jumpBackward=jumpBackward;};WebInspector.AllocationProfile=function(profile,liveObjectStats)
+{this._strings=profile.strings;this._liveObjectStats=liveObjectStats;this._nextNodeId=1;this._functionInfos=[];this._idToNode={};this._idToTopDownNode={};this._collapsedTopNodeIdToFunctionInfo={};this._traceTops=null;this._buildFunctionAllocationInfos(profile);this._traceTree=this._buildAllocationTree(profile,liveObjectStats);}
 WebInspector.AllocationProfile.prototype={_buildFunctionAllocationInfos:function(profile)
-{var strings=this._strings;var functionInfoFields=profile.snapshot.meta.trace_function_info_fields;var functionIdOffset=functionInfoFields.indexOf("function_id");var functionNameOffset=functionInfoFields.indexOf("name");var scriptNameOffset=functionInfoFields.indexOf("script_name");var scriptIdOffset=functionInfoFields.indexOf("script_id");var lineOffset=functionInfoFields.indexOf("line");var columnOffset=functionInfoFields.indexOf("column");var functionInfoFieldCount=functionInfoFields.length;var rawInfos=profile.trace_function_infos;var infoLength=rawInfos.length;var functionInfos=this._functionInfos=new Array(infoLength/functionInfoFieldCount);var index=0;for(var i=0;i<infoLength;i+=functionInfoFieldCount){functionInfos[index++]=new WebInspector.FunctionAllocationInfo(strings[rawInfos[i+functionNameOffset]],strings[rawInfos[i+scriptNameOffset]],rawInfos[i+scriptIdOffset],rawInfos[i+lineOffset],rawInfos[i+columnOffset]);}},_buildAllocationTree:function(profile,liveObjectStats)
+{var strings=this._strings;var functionInfoFields=profile.snapshot.meta.trace_function_info_fields;var functionNameOffset=functionInfoFields.indexOf("name");var scriptNameOffset=functionInfoFields.indexOf("script_name");var scriptIdOffset=functionInfoFields.indexOf("script_id");var lineOffset=functionInfoFields.indexOf("line");var columnOffset=functionInfoFields.indexOf("column");var functionInfoFieldCount=functionInfoFields.length;var rawInfos=profile.trace_function_infos;var infoLength=rawInfos.length;var functionInfos=this._functionInfos=new Array(infoLength/functionInfoFieldCount);var index=0;for(var i=0;i<infoLength;i+=functionInfoFieldCount){functionInfos[index++]=new WebInspector.FunctionAllocationInfo(strings[rawInfos[i+functionNameOffset]],strings[rawInfos[i+scriptNameOffset]],rawInfos[i+scriptIdOffset],rawInfos[i+lineOffset],rawInfos[i+columnOffset]);}},_buildAllocationTree:function(profile,liveObjectStats)
 {var traceTreeRaw=profile.trace_tree;var functionInfos=this._functionInfos;var idToTopDownNode=this._idToTopDownNode;var traceNodeFields=profile.snapshot.meta.trace_node_fields;var nodeIdOffset=traceNodeFields.indexOf("id");var functionInfoIndexOffset=traceNodeFields.indexOf("function_info_index");var allocationCountOffset=traceNodeFields.indexOf("count");var allocationSizeOffset=traceNodeFields.indexOf("size");var childrenOffset=traceNodeFields.indexOf("children");var nodeFieldCount=traceNodeFields.length;function traverseNode(rawNodeArray,nodeOffset,parent)
 {var functionInfo=functionInfos[rawNodeArray[nodeOffset+functionInfoIndexOffset]];var id=rawNodeArray[nodeOffset+nodeIdOffset];var stats=liveObjectStats[id];var liveCount=stats?stats.count:0;var liveSize=stats?stats.size:0;var result=new WebInspector.TopDownAllocationNode(id,functionInfo,rawNodeArray[nodeOffset+allocationCountOffset],rawNodeArray[nodeOffset+allocationSizeOffset],liveCount,liveSize,parent);idToTopDownNode[id]=result;functionInfo.addTraceTopNode(result);var rawChildren=rawNodeArray[nodeOffset+childrenOffset];for(var i=0;i<rawChildren.length;i+=nodeFieldCount){result.children.push(traverseNode(rawChildren,i,result));}
 return result;}
@@ -685,7 +489,7 @@ WebInspector.HeapSnapshotNodeIterator.prototype={hasNext:function()
 WebInspector.HeapSnapshotIndexRangeIterator=function(itemProvider,indexes)
 {this._itemProvider=itemProvider;this._indexes=indexes;this._position=0;}
 WebInspector.HeapSnapshotIndexRangeIterator.prototype={hasNext:function()
-{return this._position<this._indexes.length},item:function()
+{return this._position<this._indexes.length;},item:function()
 {var index=this._indexes[this._position];return this._itemProvider.itemForIndex(index);},next:function()
 {++this._position;}}
 WebInspector.HeapSnapshotFilteredIterator=function(iterator,filter)
@@ -699,9 +503,17 @@ WebInspector.HeapSnapshotProgress=function(dispatcher)
 {this._dispatcher=dispatcher;}
 WebInspector.HeapSnapshotProgress.prototype={updateStatus:function(status)
 {this._sendUpdateEvent(WebInspector.UIString(status));},updateProgress:function(title,value,total)
-{var percentValue=((total?(value/total):0)*100).toFixed(0);this._sendUpdateEvent(WebInspector.UIString(title,percentValue));},_sendUpdateEvent:function(text)
+{var percentValue=((total?(value/total):0)*100).toFixed(0);this._sendUpdateEvent(WebInspector.UIString(title,percentValue));},reportProblem:function(error)
+{if(this._dispatcher)
+this._dispatcher.sendEvent(WebInspector.HeapSnapshotProgressEvent.BrokenSnapshot,error);},_sendUpdateEvent:function(text)
 {if(this._dispatcher)
 this._dispatcher.sendEvent(WebInspector.HeapSnapshotProgressEvent.Update,text);}}
+WebInspector.HeapSnapshotProblemReport=function(title)
+{this._errors=[title];}
+WebInspector.HeapSnapshotProblemReport.prototype={addError:function(error)
+{if(this._errors.length>100)
+return;this._errors.push(error);},toString:function()
+{return this._errors.join("\n  ");}}
 WebInspector.HeapSnapshot=function(profile,progress)
 {this.nodes=profile.nodes;this.containmentEdges=profile.edges;this._metaNode=profile.snapshot.meta;this.strings=profile.strings;this._progress=progress;this._noDistance=-5;this._rootNodeIndex=0;if(profile.snapshot.root_index)
 this._rootNodeIndex=profile.snapshot.root_index;this._snapshotDiffs={};this._aggregatesForDiff=null;this._aggregates={};this._aggregatesSortedFlags={};this._init();if(profile.snapshot.trace_function_count){this._progress.updateStatus("Building allocation statistics\u2026");var nodes=this.nodes;var nodesLength=nodes.length;var nodeFieldCount=this._nodeFieldCount;var node=this.rootNode();var liveObjects={};for(var nodeIndex=0;nodeIndex<nodesLength;nodeIndex+=nodeFieldCount){node.nodeIndex=nodeIndex;var traceNodeId=node.traceNodeId();var stats=liveObjects[traceNodeId];if(!stats)
@@ -727,9 +539,21 @@ throw new Error("Invalid toNodeIndex "+toNodeIndex);var firstRetainerSlotIndex=f
 {return this._rootNodeIndex;},get totalSize()
 {return this.rootNode().retainedSize();},_getDominatedIndex:function(nodeIndex)
 {if(nodeIndex%this._nodeFieldCount)
-throw new Error("Invalid nodeIndex: "+nodeIndex);return this._firstDominatedNodeIndex[nodeIndex/this._nodeFieldCount];},aggregatesWithFilter:function(nodeFilter)
-{var minNodeId=nodeFilter.minNodeId;var maxNodeId=nodeFilter.maxNodeId;var allocationNodeId=nodeFilter.allocationNodeId;var key;var filter;if(typeof allocationNodeId==="number"){filter=this._createAllocationStackFilter(allocationNodeId);}else if(typeof minNodeId==="number"&&typeof maxNodeId==="number"){key=minNodeId+".."+maxNodeId;filter=this._createNodeIdFilter(minNodeId,maxNodeId);}else{key="allObjects";}
-return this.aggregates(false,key,filter);},_createNodeIdFilter:function(minNodeId,maxNodeId)
+throw new Error("Invalid nodeIndex: "+nodeIndex);return this._firstDominatedNodeIndex[nodeIndex/this._nodeFieldCount];},_createFilter:function(nodeFilter)
+{var minNodeId=nodeFilter.minNodeId;var maxNodeId=nodeFilter.maxNodeId;var allocationNodeId=nodeFilter.allocationNodeId;var filter;if(typeof allocationNodeId==="number"){filter=this._createAllocationStackFilter(allocationNodeId);filter.key="AllocationNodeId: "+allocationNodeId;}else if(typeof minNodeId==="number"&&typeof maxNodeId==="number"){filter=this._createNodeIdFilter(minNodeId,maxNodeId);filter.key="NodeIdRange: "+minNodeId+".."+maxNodeId;}
+return filter;},search:function(searchConfig,nodeFilter)
+{var query=searchConfig.query;function filterString(matchedStringIndexes,string,index)
+{if(string.indexOf(query)!==-1)
+matchedStringIndexes.add(index);return matchedStringIndexes;}
+var regexp=searchConfig.isRegex?new RegExp(query):createPlainTextSearchRegex(query,"i");function filterRegexp(matchedStringIndexes,string,index)
+{if(regexp.test(string))
+matchedStringIndexes.add(index);return matchedStringIndexes;}
+var stringFilter=(searchConfig.isRegex||!searchConfig.caseSensitive)?filterRegexp:filterString;var stringIndexes=this.strings.reduce(stringFilter,new Set());if(!stringIndexes.size)
+return[];var filter=this._createFilter(nodeFilter);var nodeIds=[];var nodesLength=this.nodes.length;var nodes=this.nodes;var nodeNameOffset=this._nodeNameOffset;var nodeIdOffset=this._nodeIdOffset;var nodeFieldCount=this._nodeFieldCount;var node=this.rootNode();for(var nodeIndex=0;nodeIndex<nodesLength;nodeIndex+=nodeFieldCount){node.nodeIndex=nodeIndex;if(filter&&!filter(node))
+continue;if(stringIndexes.has(nodes[nodeIndex+nodeNameOffset]))
+nodeIds.push(nodes[nodeIndex+nodeIdOffset]);}
+return nodeIds;},aggregatesWithFilter:function(nodeFilter)
+{var filter=this._createFilter(nodeFilter);var key=filter?filter.key:"allObjects";return this.aggregates(false,key,filter);},_createNodeIdFilter:function(minNodeId,maxNodeId)
 {function nodeIdFilter(node)
 {var id=node.id();return id>minNodeId&&id<=maxNodeId;}
 return nodeIdFilter;},_createAllocationStackFilter:function(bottomUpAllocationNodeId)
@@ -749,16 +573,16 @@ return null;return this._allocationProfile.serializeAllocationStack(allocationNo
 {if(this._aggregatesForDiff)
 return this._aggregatesForDiff;var aggregatesByClassName=this.aggregates(true,"allObjects");this._aggregatesForDiff={};var node=this.createNode();for(var className in aggregatesByClassName){var aggregate=aggregatesByClassName[className];var indexes=aggregate.idxs;var ids=new Array(indexes.length);var selfSizes=new Array(indexes.length);for(var i=0;i<indexes.length;i++){node.nodeIndex=indexes[i];ids[i]=node.id();selfSizes[i]=node.selfSize();}
 this._aggregatesForDiff[className]={indexes:indexes,ids:ids,selfSizes:selfSizes};}
-return this._aggregatesForDiff;},_isUserRoot:function(node)
+return this._aggregatesForDiff;},isUserRoot:function(node)
 {return true;},forEachRoot:function(action,userRootsOnly)
-{for(var iter=this.rootNode().edges();iter.hasNext();iter.next()){var node=iter.edge.node();if(!userRootsOnly||this._isUserRoot(node))
+{for(var iter=this.rootNode().edges();iter.hasNext();iter.next()){var node=iter.edge.node();if(!userRootsOnly||this.isUserRoot(node))
 action(node);}},calculateDistances:function(filter)
-{var nodeFieldCount=this._nodeFieldCount;var nodeCount=this.nodeCount;var distances=this._nodeDistances;var noDistance=this._noDistance;for(var i=0;i<nodeCount;++i)
+{var nodeCount=this.nodeCount;var distances=this._nodeDistances;var noDistance=this._noDistance;for(var i=0;i<nodeCount;++i)
 distances[i]=noDistance;var nodesToVisit=new Uint32Array(this.nodeCount);var nodesToVisitLength=0;function enqueueNode(distance,node)
 {var ordinal=node.ordinal();if(distances[ordinal]!==noDistance)
 return;distances[ordinal]=distance;nodesToVisit[nodesToVisitLength++]=node.nodeIndex;}
 this.forEachRoot(enqueueNode.bind(null,1),true);this._bfs(nodesToVisit,nodesToVisitLength,distances,filter);nodesToVisitLength=0;this.forEachRoot(enqueueNode.bind(null,WebInspector.HeapSnapshotCommon.baseSystemDistance),false);this._bfs(nodesToVisit,nodesToVisitLength,distances,filter);},_bfs:function(nodesToVisit,nodesToVisitLength,distances,filter)
-{var edgeFieldsCount=this._edgeFieldsCount;var nodeFieldCount=this._nodeFieldCount;var containmentEdges=this.containmentEdges;var firstEdgeIndexes=this._firstEdgeIndexes;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeTypeOffset=this._edgeTypeOffset;var nodeCount=this.nodeCount;var containmentEdgesLength=containmentEdges.length;var edgeWeakType=this._edgeWeakType;var noDistance=this._noDistance;var index=0;var edge=this.createEdge(0);var node=this.createNode(0);while(index<nodesToVisitLength){var nodeIndex=nodesToVisit[index++];var nodeOrdinal=nodeIndex/nodeFieldCount;var distance=distances[nodeOrdinal]+1;var firstEdgeIndex=firstEdgeIndexes[nodeOrdinal];var edgesEnd=firstEdgeIndexes[nodeOrdinal+1];node.nodeIndex=nodeIndex;for(var edgeIndex=firstEdgeIndex;edgeIndex<edgesEnd;edgeIndex+=edgeFieldsCount){var edgeType=containmentEdges[edgeIndex+edgeTypeOffset];if(edgeType===edgeWeakType)
+{var edgeFieldsCount=this._edgeFieldsCount;var nodeFieldCount=this._nodeFieldCount;var containmentEdges=this.containmentEdges;var firstEdgeIndexes=this._firstEdgeIndexes;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeTypeOffset=this._edgeTypeOffset;var nodeCount=this.nodeCount;var edgeWeakType=this._edgeWeakType;var noDistance=this._noDistance;var index=0;var edge=this.createEdge(0);var node=this.createNode(0);while(index<nodesToVisitLength){var nodeIndex=nodesToVisit[index++];var nodeOrdinal=nodeIndex/nodeFieldCount;var distance=distances[nodeOrdinal]+1;var firstEdgeIndex=firstEdgeIndexes[nodeOrdinal];var edgesEnd=firstEdgeIndexes[nodeOrdinal+1];node.nodeIndex=nodeIndex;for(var edgeIndex=firstEdgeIndex;edgeIndex<edgesEnd;edgeIndex+=edgeFieldsCount){var edgeType=containmentEdges[edgeIndex+edgeTypeOffset];if(edgeType===edgeWeakType)
 continue;var childNodeIndex=containmentEdges[edgeIndex+edgeToNodeOffset];var childNodeOrdinal=childNodeIndex/nodeFieldCount;if(distances[childNodeOrdinal]!==noDistance)
 continue;edge.edgeIndex=edgeIndex;if(filter&&!filter(node,edge))
 continue;distances[childNodeOrdinal]=distance;nodesToVisit[nodesToVisitLength++]=childNodeIndex;}}
@@ -775,26 +599,35 @@ for(var i=dominatedIndexFrom;i<dominatedIndexTo;i++)
 list.push(dominatedNodes[i]);var l=list.length;while(sizes[sizes.length-1]===l){sizes.pop();classIndex=classes.pop();seenClassNameIndexes[classIndex]=false;}}},_sortAggregateIndexes:function(aggregates)
 {var nodeA=this.createNode();var nodeB=this.createNode();for(var clss in aggregates)
 aggregates[clss].idxs.sort(function(idxA,idxB){nodeA.nodeIndex=idxA;nodeB.nodeIndex=idxB;return nodeA.id()<nodeB.id()?-1:1;});},_buildPostOrderIndex:function()
-{var nodeFieldCount=this._nodeFieldCount;var nodes=this.nodes;var nodeCount=this.nodeCount;var rootNodeOrdinal=this._rootNodeIndex/nodeFieldCount;var edgeFieldsCount=this._edgeFieldsCount;var edgeTypeOffset=this._edgeTypeOffset;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeShortcutType=this._edgeShortcutType;var firstEdgeIndexes=this._firstEdgeIndexes;var containmentEdges=this.containmentEdges;var mapAndFlag=this.userObjectsMapAndFlag();var flags=mapAndFlag?mapAndFlag.map:null;var flag=mapAndFlag?mapAndFlag.flag:0;var stackNodes=new Uint32Array(nodeCount);var stackCurrentEdge=new Uint32Array(nodeCount);var postOrderIndex2NodeOrdinal=new Uint32Array(nodeCount);var nodeOrdinal2PostOrderIndex=new Uint32Array(nodeCount);var visited=new Uint8Array(nodeCount);var postOrderIndex=0;var stackTop=0;stackNodes[0]=rootNodeOrdinal;stackCurrentEdge[0]=firstEdgeIndexes[rootNodeOrdinal];visited[rootNodeOrdinal]=1;while(stackTop>=0){var nodeOrdinal=stackNodes[stackTop];var edgeIndex=stackCurrentEdge[stackTop];var edgesEnd=firstEdgeIndexes[nodeOrdinal+1];if(edgeIndex<edgesEnd){stackCurrentEdge[stackTop]+=edgeFieldsCount;if(nodeOrdinal!==rootNodeOrdinal&&containmentEdges[edgeIndex+edgeTypeOffset]===edgeShortcutType)
+{var nodeFieldCount=this._nodeFieldCount;var nodeCount=this.nodeCount;var rootNodeOrdinal=this._rootNodeIndex/nodeFieldCount;var edgeFieldsCount=this._edgeFieldsCount;var edgeTypeOffset=this._edgeTypeOffset;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeShortcutType=this._edgeShortcutType;var edgeWeakType=this._edgeWeakType;var firstEdgeIndexes=this._firstEdgeIndexes;var containmentEdges=this.containmentEdges;var mapAndFlag=this.userObjectsMapAndFlag();var flags=mapAndFlag?mapAndFlag.map:null;var flag=mapAndFlag?mapAndFlag.flag:0;var stackNodes=new Uint32Array(nodeCount);var stackCurrentEdge=new Uint32Array(nodeCount);var postOrderIndex2NodeOrdinal=new Uint32Array(nodeCount);var nodeOrdinal2PostOrderIndex=new Uint32Array(nodeCount);var visited=new Uint8Array(nodeCount);var postOrderIndex=0;var stackTop=0;stackNodes[0]=rootNodeOrdinal;stackCurrentEdge[0]=firstEdgeIndexes[rootNodeOrdinal];visited[rootNodeOrdinal]=1;var iteration=0;while(true){++iteration;while(stackTop>=0){var nodeOrdinal=stackNodes[stackTop];var edgeIndex=stackCurrentEdge[stackTop];var edgesEnd=firstEdgeIndexes[nodeOrdinal+1];if(edgeIndex<edgesEnd){stackCurrentEdge[stackTop]+=edgeFieldsCount;var edgeType=containmentEdges[edgeIndex+edgeTypeOffset];if(edgeType===edgeWeakType||edgeType===edgeShortcutType)
 continue;var childNodeIndex=containmentEdges[edgeIndex+edgeToNodeOffset];var childNodeOrdinal=childNodeIndex/nodeFieldCount;if(visited[childNodeOrdinal])
 continue;var nodeFlag=!flags||(flags[nodeOrdinal]&flag);var childNodeFlag=!flags||(flags[childNodeOrdinal]&flag);if(nodeOrdinal!==rootNodeOrdinal&&childNodeFlag&&!nodeFlag)
 continue;++stackTop;stackNodes[stackTop]=childNodeOrdinal;stackCurrentEdge[stackTop]=firstEdgeIndexes[childNodeOrdinal];visited[childNodeOrdinal]=1;}else{nodeOrdinal2PostOrderIndex[nodeOrdinal]=postOrderIndex;postOrderIndex2NodeOrdinal[postOrderIndex++]=nodeOrdinal;--stackTop;}}
-if(postOrderIndex!==nodeCount){console.log("Error: Corrupted snapshot. "+(nodeCount-postOrderIndex)+" nodes are unreachable from the root:");var dumpNode=this.rootNode();for(var i=0;i<nodeCount;++i){if(!visited[i]){nodeOrdinal2PostOrderIndex[i]=postOrderIndex;postOrderIndex2NodeOrdinal[postOrderIndex++]=i;dumpNode.nodeIndex=i*nodeFieldCount;console.log(JSON.stringify(dumpNode.serialize()));for(var retainers=dumpNode.retainers();retainers.hasNext();retainers=retainers.item().node().retainers())
-console.log("  edgeName: "+retainers.item().name()+" nodeClassName: "+retainers.item().node().className());}}}
-return{postOrderIndex2NodeOrdinal:postOrderIndex2NodeOrdinal,nodeOrdinal2PostOrderIndex:nodeOrdinal2PostOrderIndex};},_buildDominatorTree:function(postOrderIndex2NodeOrdinal,nodeOrdinal2PostOrderIndex)
-{var nodeFieldCount=this._nodeFieldCount;var nodes=this.nodes;var firstRetainerIndex=this._firstRetainerIndex;var retainingNodes=this._retainingNodes;var retainingEdges=this._retainingEdges;var edgeFieldsCount=this._edgeFieldsCount;var edgeTypeOffset=this._edgeTypeOffset;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeShortcutType=this._edgeShortcutType;var firstEdgeIndexes=this._firstEdgeIndexes;var containmentEdges=this.containmentEdges;var containmentEdgesLength=this.containmentEdges.length;var rootNodeIndex=this._rootNodeIndex;var mapAndFlag=this.userObjectsMapAndFlag();var flags=mapAndFlag?mapAndFlag.map:null;var flag=mapAndFlag?mapAndFlag.flag:0;var nodesCount=postOrderIndex2NodeOrdinal.length;var rootPostOrderedIndex=nodesCount-1;var noEntry=nodesCount;var dominators=new Uint32Array(nodesCount);for(var i=0;i<rootPostOrderedIndex;++i)
-dominators[i]=noEntry;dominators[rootPostOrderedIndex]=rootPostOrderedIndex;var affected=new Uint8Array(nodesCount);var nodeOrdinal;{nodeOrdinal=this._rootNodeIndex/nodeFieldCount;var beginEdgeToNodeFieldIndex=firstEdgeIndexes[nodeOrdinal]+edgeToNodeOffset;var endEdgeToNodeFieldIndex=firstEdgeIndexes[nodeOrdinal+1];for(var toNodeFieldIndex=beginEdgeToNodeFieldIndex;toNodeFieldIndex<endEdgeToNodeFieldIndex;toNodeFieldIndex+=edgeFieldsCount){var childNodeOrdinal=containmentEdges[toNodeFieldIndex]/nodeFieldCount;affected[nodeOrdinal2PostOrderIndex[childNodeOrdinal]]=1;}}
+if(postOrderIndex===nodeCount||iteration>1)
+break;var errors=new WebInspector.HeapSnapshotProblemReport("Heap snapshot: "+(nodeCount-postOrderIndex)+" nodes are unreachable from the root. Following nodes have only weak retainers:");var dumpNode=this.rootNode();--postOrderIndex;stackTop=0;stackNodes[0]=rootNodeOrdinal;stackCurrentEdge[0]=firstEdgeIndexes[rootNodeOrdinal+1];for(var i=0;i<nodeCount;++i){if(!visited[i]){dumpNode.nodeIndex=i*nodeFieldCount;if(this._hasOnlyWeakRetainers(i)){stackNodes[++stackTop]=i;stackCurrentEdge[stackTop]=firstEdgeIndexes[i];visited[i]=1;errors.addError(dumpNode.name()+" @"+dumpNode.id());}}}
+console.warn(errors.toString());}
+if(postOrderIndex!==nodeCount){var errors=new WebInspector.HeapSnapshotProblemReport("Still found "+(nodeCount-postOrderIndex)+" unreachable nodes in heap snapshot:");var dumpNode=this.rootNode();--postOrderIndex;for(var i=0;i<nodeCount;++i){if(visited[i])
+continue;dumpNode.nodeIndex=i*nodeFieldCount;errors.addError(dumpNode.name()+" @"+dumpNode.id());nodeOrdinal2PostOrderIndex[i]=postOrderIndex;postOrderIndex2NodeOrdinal[postOrderIndex++]=i;}
+nodeOrdinal2PostOrderIndex[rootNodeOrdinal]=postOrderIndex;postOrderIndex2NodeOrdinal[postOrderIndex++]=rootNodeOrdinal;console.warn(errors.toString());}
+return{postOrderIndex2NodeOrdinal:postOrderIndex2NodeOrdinal,nodeOrdinal2PostOrderIndex:nodeOrdinal2PostOrderIndex};},_hasOnlyWeakRetainers:function(nodeOrdinal)
+{var edgeTypeOffset=this._edgeTypeOffset;var edgeWeakType=this._edgeWeakType;var edgeShortcutType=this._edgeShortcutType;var containmentEdges=this.containmentEdges;var retainingEdges=this._retainingEdges;var beginRetainerIndex=this._firstRetainerIndex[nodeOrdinal];var endRetainerIndex=this._firstRetainerIndex[nodeOrdinal+1];for(var retainerIndex=beginRetainerIndex;retainerIndex<endRetainerIndex;++retainerIndex){var retainerEdgeIndex=retainingEdges[retainerIndex];var retainerEdgeType=containmentEdges[retainerEdgeIndex+edgeTypeOffset];if(retainerEdgeType!==edgeWeakType&&retainerEdgeType!==edgeShortcutType)
+return false;}
+return true;},_buildDominatorTree:function(postOrderIndex2NodeOrdinal,nodeOrdinal2PostOrderIndex)
+{var nodeFieldCount=this._nodeFieldCount;var firstRetainerIndex=this._firstRetainerIndex;var retainingNodes=this._retainingNodes;var retainingEdges=this._retainingEdges;var edgeFieldsCount=this._edgeFieldsCount;var edgeTypeOffset=this._edgeTypeOffset;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeShortcutType=this._edgeShortcutType;var edgeWeakType=this._edgeWeakType;var firstEdgeIndexes=this._firstEdgeIndexes;var containmentEdges=this.containmentEdges;var rootNodeIndex=this._rootNodeIndex;var mapAndFlag=this.userObjectsMapAndFlag();var flags=mapAndFlag?mapAndFlag.map:null;var flag=mapAndFlag?mapAndFlag.flag:0;var nodesCount=postOrderIndex2NodeOrdinal.length;var rootPostOrderedIndex=nodesCount-1;var noEntry=nodesCount;var dominators=new Uint32Array(nodesCount);for(var i=0;i<rootPostOrderedIndex;++i)
+dominators[i]=noEntry;dominators[rootPostOrderedIndex]=rootPostOrderedIndex;var affected=new Uint8Array(nodesCount);var nodeOrdinal;{nodeOrdinal=this._rootNodeIndex/nodeFieldCount;var endEdgeIndex=firstEdgeIndexes[nodeOrdinal+1];for(var edgeIndex=firstEdgeIndexes[nodeOrdinal];edgeIndex<endEdgeIndex;edgeIndex+=edgeFieldsCount){var edgeType=containmentEdges[edgeIndex+edgeTypeOffset];if(edgeType===edgeWeakType||edgeType===edgeShortcutType)
+continue;var childNodeOrdinal=containmentEdges[edgeIndex+edgeToNodeOffset]/nodeFieldCount;affected[nodeOrdinal2PostOrderIndex[childNodeOrdinal]]=1;}}
 var changed=true;while(changed){changed=false;for(var postOrderIndex=rootPostOrderedIndex-1;postOrderIndex>=0;--postOrderIndex){if(affected[postOrderIndex]===0)
 continue;affected[postOrderIndex]=0;if(dominators[postOrderIndex]===rootPostOrderedIndex)
-continue;nodeOrdinal=postOrderIndex2NodeOrdinal[postOrderIndex];var nodeFlag=!flags||(flags[nodeOrdinal]&flag);var newDominatorIndex=noEntry;var beginRetainerIndex=firstRetainerIndex[nodeOrdinal];var endRetainerIndex=firstRetainerIndex[nodeOrdinal+1];for(var retainerIndex=beginRetainerIndex;retainerIndex<endRetainerIndex;++retainerIndex){var retainerEdgeIndex=retainingEdges[retainerIndex];var retainerEdgeType=containmentEdges[retainerEdgeIndex+edgeTypeOffset];var retainerNodeIndex=retainingNodes[retainerIndex];if(retainerNodeIndex!==rootNodeIndex&&retainerEdgeType===edgeShortcutType)
-continue;var retainerNodeOrdinal=retainerNodeIndex/nodeFieldCount;var retainerNodeFlag=!flags||(flags[retainerNodeOrdinal]&flag);if(retainerNodeIndex!==rootNodeIndex&&nodeFlag&&!retainerNodeFlag)
+continue;nodeOrdinal=postOrderIndex2NodeOrdinal[postOrderIndex];var nodeFlag=!flags||(flags[nodeOrdinal]&flag);var newDominatorIndex=noEntry;var beginRetainerIndex=firstRetainerIndex[nodeOrdinal];var endRetainerIndex=firstRetainerIndex[nodeOrdinal+1];var orphanNode=true;for(var retainerIndex=beginRetainerIndex;retainerIndex<endRetainerIndex;++retainerIndex){var retainerEdgeIndex=retainingEdges[retainerIndex];var retainerEdgeType=containmentEdges[retainerEdgeIndex+edgeTypeOffset];if(retainerEdgeType===edgeWeakType||retainerEdgeType===edgeShortcutType)
+continue;orphanNode=false;var retainerNodeIndex=retainingNodes[retainerIndex];var retainerNodeOrdinal=retainerNodeIndex/nodeFieldCount;var retainerNodeFlag=!flags||(flags[retainerNodeOrdinal]&flag);if(retainerNodeIndex!==rootNodeIndex&&nodeFlag&&!retainerNodeFlag)
 continue;var retanerPostOrderIndex=nodeOrdinal2PostOrderIndex[retainerNodeOrdinal];if(dominators[retanerPostOrderIndex]!==noEntry){if(newDominatorIndex===noEntry)
 newDominatorIndex=retanerPostOrderIndex;else{while(retanerPostOrderIndex!==newDominatorIndex){while(retanerPostOrderIndex<newDominatorIndex)
 retanerPostOrderIndex=dominators[retanerPostOrderIndex];while(newDominatorIndex<retanerPostOrderIndex)
 newDominatorIndex=dominators[newDominatorIndex];}}
 if(newDominatorIndex===rootPostOrderedIndex)
 break;}}
-if(newDominatorIndex!==noEntry&&dominators[postOrderIndex]!==newDominatorIndex){dominators[postOrderIndex]=newDominatorIndex;changed=true;nodeOrdinal=postOrderIndex2NodeOrdinal[postOrderIndex];beginEdgeToNodeFieldIndex=firstEdgeIndexes[nodeOrdinal]+edgeToNodeOffset;endEdgeToNodeFieldIndex=firstEdgeIndexes[nodeOrdinal+1];for(var toNodeFieldIndex=beginEdgeToNodeFieldIndex;toNodeFieldIndex<endEdgeToNodeFieldIndex;toNodeFieldIndex+=edgeFieldsCount){var childNodeOrdinal=containmentEdges[toNodeFieldIndex]/nodeFieldCount;affected[nodeOrdinal2PostOrderIndex[childNodeOrdinal]]=1;}}}}
+if(orphanNode)
+newDominatorIndex=rootPostOrderedIndex;if(newDominatorIndex!==noEntry&&dominators[postOrderIndex]!==newDominatorIndex){dominators[postOrderIndex]=newDominatorIndex;changed=true;nodeOrdinal=postOrderIndex2NodeOrdinal[postOrderIndex];var beginEdgeToNodeFieldIndex=firstEdgeIndexes[nodeOrdinal]+edgeToNodeOffset;var endEdgeToNodeFieldIndex=firstEdgeIndexes[nodeOrdinal+1];for(var toNodeFieldIndex=beginEdgeToNodeFieldIndex;toNodeFieldIndex<endEdgeToNodeFieldIndex;toNodeFieldIndex+=edgeFieldsCount){var childNodeOrdinal=containmentEdges[toNodeFieldIndex]/nodeFieldCount;affected[nodeOrdinal2PostOrderIndex[childNodeOrdinal]]=1;}}}}
 var dominatorsTree=new Uint32Array(nodesCount);for(var postOrderIndex=0,l=dominators.length;postOrderIndex<l;++postOrderIndex){nodeOrdinal=postOrderIndex2NodeOrdinal[postOrderIndex];dominatorsTree[nodeOrdinal]=postOrderIndex2NodeOrdinal[dominators[postOrderIndex]];}
 return dominatorsTree;},_calculateRetainedSizes:function(postOrderIndex2NodeOrdinal)
 {var nodeCount=this.nodeCount;var nodes=this.nodes;var nodeSelfSizeOffset=this._nodeSelfSizeOffset;var nodeFieldCount=this._nodeFieldCount;var dominatorsTree=this._dominatorsTree;var retainedSizes=this._retainedSizes;for(var nodeOrdinal=0;nodeOrdinal<nodeCount;++nodeOrdinal)
@@ -852,7 +685,7 @@ throw new Error("Start position > end position: "+begin+" > "+end);if(end>this._
 end=this._iterationOrder.length;if(this._sortedPrefixLength<end&&begin<this._iterationOrder.length-this._sortedSuffixLength){this.sort(this._currentComparator,this._sortedPrefixLength,this._iterationOrder.length-1-this._sortedSuffixLength,begin,end-1);if(begin<=this._sortedPrefixLength)
 this._sortedPrefixLength=end;if(end>=this._iterationOrder.length-this._sortedSuffixLength)
 this._sortedSuffixLength=this._iterationOrder.length-begin;}
-var position=begin;var count=end-begin;var result=new Array(count);var iterator=this._iterator;for(var i=0;i<count;++i){var itemIndex=this._iterationOrder[position++];var item=this._indexProvider.itemForIndex(itemIndex);result[i]=item.serialize();}
+var position=begin;var count=end-begin;var result=new Array(count);for(var i=0;i<count;++i){var itemIndex=this._iterationOrder[position++];var item=this._indexProvider.itemForIndex(itemIndex);result[i]=item.serialize();}
 return new WebInspector.HeapSnapshotCommon.ItemsRange(begin,end,this._iterationOrder.length,result);},sortAndRewind:function(comparator)
 {this._currentComparator=comparator;this._sortedPrefixLength=0;this._sortedSuffixLength=0;}}
 WebInspector.HeapSnapshotEdgesProvider=function(snapshot,filter,edgesIter,indexProvider)
@@ -950,13 +783,13 @@ case"getter":{var object=this._objects[data.objectId];var result=object[data.met
 case"factory":{var object=this._objects[data.objectId];var result=object[data.methodName].apply(object,data.methodArguments);if(result)
 this._objects[data.newObjectId]=result;response.result=!!result;break;}
 case"method":{var object=this._objects[data.objectId];response.result=object[data.methodName].apply(object,data.methodArguments);break;}
-case"evaluateForTest":{try{response.result=eval(data.source)}catch(e){response.result=e.toString();}
+case"evaluateForTest":{try{response.result=eval(data.source);}catch(e){response.result=e.toString();}
 break;}}}catch(e){response.error=e.toString();response.errorCallStack=e.stack;if(data.methodName)
 response.errorMethodName=data.methodName;}
 this._postMessage(response);}};;WebInspector.JSHeapSnapshot=function(profile,progress,showHiddenData)
 {this._nodeFlags={canBeQueried:1,detachedDOMTreeNode:2,pageObject:4,visitedMarkerMask:0x0ffff,visitedMarker:0x10000};this._lazyStringCache={};this._showHiddenData=showHiddenData;WebInspector.HeapSnapshot.call(this,profile,progress);}
 WebInspector.JSHeapSnapshot.prototype={createNode:function(nodeIndex)
-{return new WebInspector.JSHeapSnapshotNode(this,nodeIndex);},createEdge:function(edgeIndex)
+{return new WebInspector.JSHeapSnapshotNode(this,nodeIndex===undefined?-1:nodeIndex);},createEdge:function(edgeIndex)
 {return new WebInspector.JSHeapSnapshotEdge(this,edgeIndex);},createRetainingEdge:function(retainerIndex)
 {return new WebInspector.JSHeapSnapshotRetainerEdge(this,retainerIndex);},classNodesFilter:function()
 {var mapAndFlag=this.userObjectsMapAndFlag();if(!mapAndFlag)
@@ -977,7 +810,7 @@ return filter;},_calculateFlags:function()
 return edge.name()!=="sloppy_function_map"||node.rawName()!=="system / NativeContext";if(node.isArray()){if(node.rawName()!=="(map descriptors)")
 return true;var index=edge.name();return index<2||(index%3)!==1;}
 return true;}
-WebInspector.HeapSnapshot.prototype.calculateDistances.call(this,filter);},_isUserRoot:function(node)
+WebInspector.HeapSnapshot.prototype.calculateDistances.call(this,filter);},isUserRoot:function(node)
 {return node.isUserRoot()||node.isDocumentDOMTreesRoot();},forEachRoot:function(action,userRootsOnly)
 {function getChildNodeByName(node,name)
 {for(var iter=node.edges();iter.hasNext();iter.next()){var child=iter.edge.node();if(child.name()===name)
@@ -986,42 +819,43 @@ return null;}
 var visitedNodes={};function doAction(node)
 {var ordinal=node.ordinal();if(!visitedNodes[ordinal]){action(node);visitedNodes[ordinal]=true;}}
 var gcRoots=getChildNodeByName(this.rootNode(),"(GC roots)");if(!gcRoots)
-return;if(userRootsOnly){for(var iter=this.rootNode().edges();iter.hasNext();iter.next()){var node=iter.edge.node();if(this._isUserRoot(node))
+return;if(userRootsOnly){for(var iter=this.rootNode().edges();iter.hasNext();iter.next()){var node=iter.edge.node();if(this.isUserRoot(node))
 doAction(node);}}else{for(var iter=gcRoots.edges();iter.hasNext();iter.next()){var subRoot=iter.edge.node();for(var iter2=subRoot.edges();iter2.hasNext();iter2.next())
 doAction(iter2.edge.node());doAction(subRoot);}
 for(var iter=this.rootNode().edges();iter.hasNext();iter.next())
-doAction(iter.edge.node())}},userObjectsMapAndFlag:function()
+doAction(iter.edge.node());}},userObjectsMapAndFlag:function()
 {return this._showHiddenData?null:{map:this._flags,flag:this._nodeFlags.pageObject};},_flagsOfNode:function(node)
 {return this._flags[node.nodeIndex/this._nodeFieldCount];},_markDetachedDOMTreeNodes:function()
 {var flag=this._nodeFlags.detachedDOMTreeNode;var detachedDOMTreesRoot;for(var iter=this.rootNode().edges();iter.hasNext();iter.next()){var node=iter.edge.node();if(node.name()==="(Detached DOM trees)"){detachedDOMTreesRoot=node;break;}}
 if(!detachedDOMTreesRoot)
 return;var detachedDOMTreeRE=/^Detached DOM tree/;for(var iter=detachedDOMTreesRoot.edges();iter.hasNext();iter.next()){var node=iter.edge.node();if(detachedDOMTreeRE.test(node.className())){for(var edgesIter=node.edges();edgesIter.hasNext();edgesIter.next())
 this._flags[edgesIter.edge.node().nodeIndex/this._nodeFieldCount]|=flag;}}},_markQueriableHeapObjects:function()
-{var flag=this._nodeFlags.canBeQueried;var hiddenEdgeType=this._edgeHiddenType;var internalEdgeType=this._edgeInternalType;var invisibleEdgeType=this._edgeInvisibleType;var weakEdgeType=this._edgeWeakType;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeTypeOffset=this._edgeTypeOffset;var edgeFieldsCount=this._edgeFieldsCount;var containmentEdges=this.containmentEdges;var nodes=this.nodes;var nodeCount=this.nodeCount;var nodeFieldCount=this._nodeFieldCount;var firstEdgeIndexes=this._firstEdgeIndexes;var flags=this._flags;var list=[];for(var iter=this.rootNode().edges();iter.hasNext();iter.next()){if(iter.edge.node().isUserRoot())
+{var flag=this._nodeFlags.canBeQueried;var hiddenEdgeType=this._edgeHiddenType;var internalEdgeType=this._edgeInternalType;var invisibleEdgeType=this._edgeInvisibleType;var weakEdgeType=this._edgeWeakType;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeTypeOffset=this._edgeTypeOffset;var edgeFieldsCount=this._edgeFieldsCount;var containmentEdges=this.containmentEdges;var nodeFieldCount=this._nodeFieldCount;var firstEdgeIndexes=this._firstEdgeIndexes;var flags=this._flags;var list=[];for(var iter=this.rootNode().edges();iter.hasNext();iter.next()){if(iter.edge.node().isUserRoot())
 list.push(iter.edge.node().nodeIndex/nodeFieldCount);}
 while(list.length){var nodeOrdinal=list.pop();if(flags[nodeOrdinal]&flag)
 continue;flags[nodeOrdinal]|=flag;var beginEdgeIndex=firstEdgeIndexes[nodeOrdinal];var endEdgeIndex=firstEdgeIndexes[nodeOrdinal+1];for(var edgeIndex=beginEdgeIndex;edgeIndex<endEdgeIndex;edgeIndex+=edgeFieldsCount){var childNodeIndex=containmentEdges[edgeIndex+edgeToNodeOffset];var childNodeOrdinal=childNodeIndex/nodeFieldCount;if(flags[childNodeOrdinal]&flag)
 continue;var type=containmentEdges[edgeIndex+edgeTypeOffset];if(type===hiddenEdgeType||type===invisibleEdgeType||type===internalEdgeType||type===weakEdgeType)
 continue;list.push(childNodeOrdinal);}}},_markPageOwnedNodes:function()
-{var edgeShortcutType=this._edgeShortcutType;var edgeElementType=this._edgeElementType;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeTypeOffset=this._edgeTypeOffset;var edgeFieldsCount=this._edgeFieldsCount;var edgeWeakType=this._edgeWeakType;var firstEdgeIndexes=this._firstEdgeIndexes;var containmentEdges=this.containmentEdges;var containmentEdgesLength=containmentEdges.length;var nodes=this.nodes;var nodeFieldCount=this._nodeFieldCount;var nodesCount=this.nodeCount;var flags=this._flags;var flag=this._nodeFlags.pageObject;var visitedMarker=this._nodeFlags.visitedMarker;var visitedMarkerMask=this._nodeFlags.visitedMarkerMask;var markerAndFlag=visitedMarker|flag;var nodesToVisit=new Uint32Array(nodesCount);var nodesToVisitLength=0;var rootNodeOrdinal=this._rootNodeIndex/nodeFieldCount;var node=this.rootNode();for(var edgeIndex=firstEdgeIndexes[rootNodeOrdinal],endEdgeIndex=firstEdgeIndexes[rootNodeOrdinal+1];edgeIndex<endEdgeIndex;edgeIndex+=edgeFieldsCount){var edgeType=containmentEdges[edgeIndex+edgeTypeOffset];var nodeIndex=containmentEdges[edgeIndex+edgeToNodeOffset];if(edgeType===edgeElementType){node.nodeIndex=nodeIndex;if(!node.isDocumentDOMTreesRoot())
+{var edgeShortcutType=this._edgeShortcutType;var edgeElementType=this._edgeElementType;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeTypeOffset=this._edgeTypeOffset;var edgeFieldsCount=this._edgeFieldsCount;var edgeWeakType=this._edgeWeakType;var firstEdgeIndexes=this._firstEdgeIndexes;var containmentEdges=this.containmentEdges;var nodeFieldCount=this._nodeFieldCount;var nodesCount=this.nodeCount;var flags=this._flags;var flag=this._nodeFlags.pageObject;var visitedMarker=this._nodeFlags.visitedMarker;var visitedMarkerMask=this._nodeFlags.visitedMarkerMask;var markerAndFlag=visitedMarker|flag;var nodesToVisit=new Uint32Array(nodesCount);var nodesToVisitLength=0;var rootNodeOrdinal=this._rootNodeIndex/nodeFieldCount;var node=this.rootNode();for(var edgeIndex=firstEdgeIndexes[rootNodeOrdinal],endEdgeIndex=firstEdgeIndexes[rootNodeOrdinal+1];edgeIndex<endEdgeIndex;edgeIndex+=edgeFieldsCount){var edgeType=containmentEdges[edgeIndex+edgeTypeOffset];var nodeIndex=containmentEdges[edgeIndex+edgeToNodeOffset];if(edgeType===edgeElementType){node.nodeIndex=nodeIndex;if(!node.isDocumentDOMTreesRoot())
 continue;}else if(edgeType!==edgeShortcutType)
 continue;var nodeOrdinal=nodeIndex/nodeFieldCount;nodesToVisit[nodesToVisitLength++]=nodeOrdinal;flags[nodeOrdinal]|=visitedMarker;}
 while(nodesToVisitLength){var nodeOrdinal=nodesToVisit[--nodesToVisitLength];flags[nodeOrdinal]|=flag;flags[nodeOrdinal]&=visitedMarkerMask;var beginEdgeIndex=firstEdgeIndexes[nodeOrdinal];var endEdgeIndex=firstEdgeIndexes[nodeOrdinal+1];for(var edgeIndex=beginEdgeIndex;edgeIndex<endEdgeIndex;edgeIndex+=edgeFieldsCount){var childNodeIndex=containmentEdges[edgeIndex+edgeToNodeOffset];var childNodeOrdinal=childNodeIndex/nodeFieldCount;if(flags[childNodeOrdinal]&markerAndFlag)
 continue;var type=containmentEdges[edgeIndex+edgeTypeOffset];if(type===edgeWeakType)
 continue;nodesToVisit[nodesToVisitLength++]=childNodeOrdinal;flags[childNodeOrdinal]|=visitedMarker;}}},_calculateStatistics:function()
-{var nodeFieldCount=this._nodeFieldCount;var nodes=this.nodes;var nodesLength=nodes.length;var nodeTypeOffset=this._nodeTypeOffset;var nodeSizeOffset=this._nodeSelfSizeOffset;;var nodeNativeType=this._nodeNativeType;var nodeCodeType=this._nodeCodeType;var nodeConsStringType=this._nodeConsStringType;var nodeSlicedStringType=this._nodeSlicedStringType;var sizeNative=0;var sizeCode=0;var sizeStrings=0;var sizeJSArrays=0;var node=this.rootNode();for(var nodeIndex=0;nodeIndex<nodesLength;nodeIndex+=nodeFieldCount){node.nodeIndex=nodeIndex;var nodeType=nodes[nodeIndex+nodeTypeOffset];var nodeSize=nodes[nodeIndex+nodeSizeOffset];if(nodeType===nodeNativeType)
+{var nodeFieldCount=this._nodeFieldCount;var nodes=this.nodes;var nodesLength=nodes.length;var nodeTypeOffset=this._nodeTypeOffset;var nodeSizeOffset=this._nodeSelfSizeOffset;;var nodeNativeType=this._nodeNativeType;var nodeCodeType=this._nodeCodeType;var nodeConsStringType=this._nodeConsStringType;var nodeSlicedStringType=this._nodeSlicedStringType;var distances=this._nodeDistances;var sizeNative=0;var sizeCode=0;var sizeStrings=0;var sizeJSArrays=0;var sizeSystem=0;var node=this.rootNode();for(var nodeIndex=0;nodeIndex<nodesLength;nodeIndex+=nodeFieldCount){var nodeSize=nodes[nodeIndex+nodeSizeOffset];var ordinal=nodeIndex/nodeFieldCount;if(distances[ordinal]>=WebInspector.HeapSnapshotCommon.baseSystemDistance){sizeSystem+=nodeSize;continue;}
+var nodeType=nodes[nodeIndex+nodeTypeOffset];node.nodeIndex=nodeIndex;if(nodeType===nodeNativeType)
 sizeNative+=nodeSize;else if(nodeType===nodeCodeType)
 sizeCode+=nodeSize;else if(nodeType===nodeConsStringType||nodeType===nodeSlicedStringType||node.type()==="string")
 sizeStrings+=nodeSize;else if(node.name()==="Array")
 sizeJSArrays+=this._calculateArraySize(node);}
-this._statistics=new WebInspector.HeapSnapshotCommon.Statistics();this._statistics.total=this.totalSize;this._statistics.v8heap=this.totalSize-sizeNative;this._statistics.native=sizeNative;this._statistics.code=sizeCode;this._statistics.jsArrays=sizeJSArrays;this._statistics.strings=sizeStrings;},_calculateArraySize:function(node)
+this._statistics=new WebInspector.HeapSnapshotCommon.Statistics();this._statistics.total=this.totalSize;this._statistics.v8heap=this.totalSize-sizeNative;this._statistics.native=sizeNative;this._statistics.code=sizeCode;this._statistics.jsArrays=sizeJSArrays;this._statistics.strings=sizeStrings;this._statistics.system=sizeSystem;},_calculateArraySize:function(node)
 {var size=node.selfSize();var beginEdgeIndex=node.edgeIndexesStart();var endEdgeIndex=node.edgeIndexesEnd();var containmentEdges=this.containmentEdges;var strings=this.strings;var edgeToNodeOffset=this._edgeToNodeOffset;var edgeTypeOffset=this._edgeTypeOffset;var edgeNameOffset=this._edgeNameOffset;var edgeFieldsCount=this._edgeFieldsCount;var edgeInternalType=this._edgeInternalType;for(var edgeIndex=beginEdgeIndex;edgeIndex<endEdgeIndex;edgeIndex+=edgeFieldsCount){var edgeType=containmentEdges[edgeIndex+edgeTypeOffset];if(edgeType!==edgeInternalType)
 continue;var edgeName=strings[containmentEdges[edgeIndex+edgeNameOffset]];if(edgeName!=="elements")
 continue;var elementsNodeIndex=containmentEdges[edgeIndex+edgeToNodeOffset];node.nodeIndex=elementsNodeIndex;if(node.retainersCount()===1)
 size+=node.selfSize();break;}
 return size;},getStatistics:function()
 {return this._statistics;},__proto__:WebInspector.HeapSnapshot.prototype};WebInspector.JSHeapSnapshotNode=function(snapshot,nodeIndex)
-{WebInspector.HeapSnapshotNode.call(this,snapshot,nodeIndex)}
+{WebInspector.HeapSnapshotNode.call(this,snapshot,nodeIndex);}
 WebInspector.JSHeapSnapshotNode.prototype={canBeQueried:function()
 {var flags=this._snapshot._flagsOfNode(this);return!!(flags&this._snapshot._nodeFlags.canBeQueried);},rawName:WebInspector.HeapSnapshotNode.prototype.name,name:function()
 {var snapshot=this._snapshot;if(this._type()===snapshot._nodeConsStringType){var string=snapshot._lazyStringCache[this.nodeIndex];if(typeof string==="undefined"){string=this._consStringName();snapshot._lazyStringCache[this.nodeIndex]=string;}
@@ -1056,8 +890,8 @@ return this._hasStringName();return isNaN(parseInt(this._name(),10));},isElement
 {return this._type()===this._snapshot._edgeInternalType;},isInvisible:function()
 {return this._type()===this._snapshot._edgeInvisibleType;},isShortcut:function()
 {return this._type()===this._snapshot._edgeShortcutType;},name:function()
-{if(!this.isShortcut())
-return this._name();var numName=parseInt(this._name(),10);return isNaN(numName)?this._name():numName;},toString:function()
+{var name=this._name();if(!this.isShortcut())
+return String(name);var numName=parseInt(name,10);return String(isNaN(numName)?name:numName);},toString:function()
 {var name=this.name();switch(this.type()){case"context":return"->"+name;case"element":return"["+name+"]";case"weak":return"[["+name+"]]";case"property":return name.indexOf(" ")===-1?"."+name:"[\""+name+"\"]";case"shortcut":if(typeof name==="string")
 return name.indexOf(" ")===-1?"."+name:"[\""+name+"\"]";else
 return"["+name+"]";case"internal":case"hidden":case"invisible":return"{"+name+"}";};return"?"+name+"?";},_hasStringName:function()
@@ -1074,4 +908,6 @@ WebInspector.JSHeapSnapshotRetainerEdge.prototype={clone:function()
 {return this._edge().isShortcut();},isWeak:function()
 {return this._edge().isWeak();},__proto__:WebInspector.HeapSnapshotRetainerEdge.prototype};function postMessageWrapper(message)
 {postMessage(message);}
-var dispatcher=new WebInspector.HeapSnapshotWorkerDispatcher(this,postMessageWrapper);addEventListener("message",dispatcher.dispatchMessage.bind(dispatcher),false);;
+var dispatcher=new WebInspector.HeapSnapshotWorkerDispatcher(this,postMessageWrapper);function installMessageEventListener(listener)
+{self.addEventListener("message",listener,false);}
+installMessageEventListener(dispatcher.dispatchMessage.bind(dispatcher));;

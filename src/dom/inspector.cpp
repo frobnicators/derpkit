@@ -234,7 +234,7 @@ void InspectorImpl::on_http(WebSocket::Client* client, const std::map<std::strin
 			char buffer[256];
 			// TODO: replace localhost
 			sprintf(buffer, "HTTP/1.1 307 Temprary Redirect\r\n"
-				"Location: http://localhost:%d/devtools.html?ws=localhost:%d/\r\n"
+				"Location: http://localhost:%d/inspector.html?ws=localhost:%d/\r\n"
 				"Connection: close\r\n"
 				"\r\n", m_port, m_port);
 
