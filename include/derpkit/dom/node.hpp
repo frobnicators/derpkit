@@ -32,6 +32,7 @@ public:
 	Node(const Node& rhs);
 
 	bool exists() const;
+	bool is_textnode() const;
 
 	const char* get_attribute(const char* key) const;
 	bool has_attribute(const char* key) const;

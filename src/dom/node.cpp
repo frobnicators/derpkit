@@ -125,6 +125,10 @@ bool Node::exists() const {
 	return _impl.get();
 }
 
+bool Node::is_textnode() const {
+	return strcmp(tag_name(), "") == 0;
+}
+
 const std::map<std::string, std::string>& Node::attributes() const {
 	return _impl->attribute;
 }
