@@ -49,12 +49,12 @@ class DERPKIT_EXPORT Expression {
 	public:
 		std::vector<Term> terms;
 
-		std::string to_string() const;
-
 		void print() const;
 
 		static Expression single_term(Term::Type, const std::string& str);
 };
+
+std::ostream& operator<<(std::ostream& os, const Expression& expr);
 
 }
 

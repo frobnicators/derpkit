@@ -245,17 +245,7 @@ Node Node::from_internal_id(uint64_t id) {
 }
 
 std::string NodeCSSProperty::to_string() const {
-	std::stringstream ss;
-	auto it = expressions->begin();
-	if(it != expressions->end()) {
-		ss << (it++)->to_string();
-	}
-	while ( it != expressions->end()) {
-		ss << ", ";
-		ss << (it++)->to_string();
-	}
-
-	return ss.str();
+	return str_join(expressions->begin(), expressions->end(), ", ");
 }
 
 bool Node::operator==(const Node& rhs) const {

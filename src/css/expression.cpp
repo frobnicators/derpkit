@@ -67,31 +67,6 @@ Expression Expression::single_term(Term::Type type, const std::string& str){
 	return expr;
 }
 
-std::string Expression::to_string() const {
-	std::stringstream ss;
-	for(const auto& term : terms) {
-		ss << term.operator_as_string() << term.value;
-		if(term.type == Term::TYPE_FUNCTION) {
-			ss << "(";
-			if(term.function_args != nullptr) {
-				auto it=term.function_args->expressions.begin();
-
-				if(it != term.function_args->expressions.end()) {
-					ss << (it++)->to_string();
-				}
-				while ( it != term.function_args->expressions.end()) {
-					ss << ", ";
-					ss << (it++)->to_string();
-				}
-				//TODO: Print selector
-			}
-			ss << ")";
-		}
-	}
-
-	return str_trim(ss.str());
-}
-
 Term::Term(Term&& term) : op(OP_NONE), type(TYPE_INVALID), value(std::move(term.value)), function_args(term.function_args) {
 	term.function_args = nullptr;
 }
@@ -106,6 +81,24 @@ Term::Term(const Term& term) : op(term.op), type(term.type), value(term.value) {
 
 Term::~Term() {
 	delete function_args;
+}
+
+std::ostream& operator<<(std::ostream& os, const Expression& expr) {
+	bool first = true;
+	for(const auto& term : expr.terms) {
+		if(!first) os << term.operator_as_string();
+		first = false;
+		os << term.value;
+		if(term.type == Term::TYPE_FUNCTION) {
+			os << "(";
+			if(term.function_args != nullptr) {
+				str_join(os, term.function_args->expressions.begin(), term.function_args->expressions.end(), ", ");;
+			}
+			os << ")";
+		}
+	}
+
+	return os;
 }
 
 }
