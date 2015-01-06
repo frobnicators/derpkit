@@ -35,6 +35,7 @@ libderpkit_la_SOURCES = \
 	src/css/rule.cpp src/css/rule.hpp \
 	src/css/selector.cpp src/css/selector.hpp \
 	src/css/specificity.cpp src/css/specificity.hpp \
+	src/css/datatype/position.cpp \
 	src/ffs_compat.cpp src/ffs_compat.hpp \
 	src/dom/inspector.cpp include/derpkit/dom/inspector.hpp \
 	include/derpkit/dom/document.hpp src/dom/document.cpp \

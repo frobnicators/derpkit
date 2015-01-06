@@ -38,6 +38,22 @@ DERPKIT_EXPORT std::string display_to_string(const Display& src);
 DERPKIT_EXPORT std::string length_to_string(const Length& src);
 DERPKIT_EXPORT std::string color_to_string(const Color& src);
 
+class Position {
+public:
+	enum Value {
+		STATIC,
+		RELATIVE,
+		ABSOLUTE
+	};
+
+	Value value;
+
+	static void parse(void* ptr, const Expression* val){ static_cast<Position*>(ptr)->parse(val); }
+	bool parse(const Expression* val);
+
+	std::string to_string() const;
+};
+
 }
 
 #endif /* DERPKIT_CSS_DATATYPE_HPP */

@@ -244,6 +244,7 @@ void Document::prepare_render(){
 		printf("tag: %s\n", cur.tag_name());
 		printf("  id: %s\n", cur.get_attribute("id"));
 		printf("  display: %d\n", state.display);
+		printf("  position: %s\n", state.position.to_string().c_str());
 		printf("  color: #%08x\n", state.color.val);
 		printf("  background-color: #%08x\n", state.background_color.val);
 		printf("  width: %f %d\n", state.width.scalar, state.width.unit);
@@ -258,6 +259,7 @@ struct css::parsers::property property_table[] = {
 	{"color",               "#000",             INHERIT, offsetof(State, color),             sizeof(State::color),             css::parsers::color},
 	{"display",             "inline",        NO_INHERIT, offsetof(State, display),           sizeof(State::display),           css::parsers::display},
 	{"height",              "auto",          NO_INHERIT, offsetof(State, height),            sizeof(State::height),            css::parsers::length},
+	{"position",            "static",        NO_INHERIT, offsetof(State, position),          sizeof(State::position),          css::Position::parse},
 	{"width",               "auto",          NO_INHERIT, offsetof(State, width),             sizeof(State::width),             css::parsers::length},
 	{nullptr, nullptr, NO_INHERIT, 0, 0, nullptr}, /* sentinel */
 };

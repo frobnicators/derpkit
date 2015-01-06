@@ -10,6 +10,7 @@ struct State {
 	css::Color color;
 	css::Color background_color;
 	css::Length width;
+	css::Position position;
 	css::Length height;
 };
 
