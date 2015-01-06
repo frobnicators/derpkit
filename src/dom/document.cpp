@@ -7,13 +7,17 @@
 #include "state.hpp"
 #include "css/parsers.hpp"
 #include <cassert>
+#include <cstddef>
 #include <sstream>
 
 static const int MAX_DEPTH = 200;
 
+using css::parsers::INHERIT;
+using css::parsers::NO_INHERIT;
+
 namespace dom {
 
-static void apply_css_to_state(Node node, State& state);
+static void apply_css_to_state(Node node, State* state, const State* parent);
 
 Document::Document(){
 
@@ -22,7 +26,6 @@ Document::Document(){
 Node Document::create_element(const char* tag){
 	return Node(tag);
 }
-
 
 Node Document::create_element(const char* tag, Node parent){
 	return Node(tag, parent);
@@ -212,8 +215,14 @@ static void prepare_render(std::function<void(Node node, const State&)> callback
 		return;
 	}
 
-	State state = parent_state;
-	apply_css_to_state(node, state);
+	State state;
+	state.display = DISPLAY_INLINE;
+	state.color.val = 0x000000ff;
+	state.background_color.val = 0xffffffff;
+	state.width = {0, UNIT_AUTO};
+	state.height = {0, UNIT_AUTO};
+
+	apply_css_to_state(node, &state, &parent_state);
 
 	for ( auto it : node.children() ){
 		prepare_render(callback, it, depth+1, state);
@@ -253,12 +262,44 @@ void Document::prepare_render(){
 	}, root_node);
 }
 
-static void apply_css_to_state(Node node, State& state) {
-	css::parsers::display(state.display, node.get_css_property("display"));
-	css::parsers::color(state.color, node.get_css_property("color"));
-	css::parsers::color(state.background_color, node.get_css_property("background-color"));
-	css::parsers::length(state.width, node.get_css_property("width"));
-	css::parsers::length(state.height, node.get_css_property("height"));
+struct css::parsers::property property_table[] = {
+	{"background-color",    "transparent",   NO_INHERIT, offsetof(State, background_color),  sizeof(State::background_color),  css::parsers::color},
+	{"color",               "#000",             INHERIT, offsetof(State, color),             sizeof(State::color),             css::parsers::color},
+	{"display",             "inline",        NO_INHERIT, offsetof(State, display),           sizeof(State::display),           css::parsers::display},
+	{"height",              "auto",          NO_INHERIT, offsetof(State, height),            sizeof(State::height),            css::parsers::length},
+	{"width",               "auto",          NO_INHERIT, offsetof(State, width),             sizeof(State::width),             css::parsers::length},
+	{nullptr, nullptr, NO_INHERIT, 0, 0, nullptr}, /* sentinel */
+};
+
+static void apply_property_to_state(Node node, css::parsers::property* property, State* state, const State* parent){
+	auto value = node.get_css_property(property->name);
+	void* dst = ((char*)state) + property->offset;
+	const void* inherit = ((const char*)parent) + property->offset;
+
+	if ( value != nullptr ){
+		property->parser(dst, value);
+	} else {
+		switch ( property->inherit ){
+		case INHERIT:
+			memcpy(dst, inherit, property->size);
+			break;
+		case NO_INHERIT:
+		{
+			/* @todo create initial values only once */
+			auto expr = css::Expression::single_term(css::Term::TYPE_STRING, property->initial);
+			property->parser(dst, &expr);
+			break;
+		}
+		}
+	}
+}
+
+static void apply_css_to_state(Node node, State* state, const State* parent) {
+	auto cur = property_table;
+	while ( cur->name ){
+		apply_property_to_state(node, cur, state, parent);
+		cur++;
+	}
 }
 
 }

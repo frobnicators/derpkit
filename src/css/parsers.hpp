@@ -7,11 +7,29 @@
 namespace css {
 namespace parsers {
 
-void display(dom::Display& out, const Expression* val);
-void length(dom::Length& out, const Expression* val);
-void color(dom::Color& out, const Expression* val);
+enum Inherit {
+	INHERIT,
+	NO_INHERIT,
+};
+
+typedef void (*parser_func)(void* ptr, const Expression* val);
+
+struct property {
+	const char* name;
+	const char* initial;
+	Inherit inherit;
+	size_t offset;
+	size_t size;
+	parser_func parser;
+};
+
+void display(void* ptr, const Expression* val);
+void length(void* ptr, const Expression* val);
+void color(void* ptr, const Expression* val);
 
 void number(float& out, const Term& val);
+
+
 
 }
 
