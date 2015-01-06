@@ -106,4 +106,44 @@ void Selector::calculate_specificity() {
 	}
 }
 
+std::ostream& operator<<(std::ostream& os, const SelectorAtom& atom) {
+	switch(atom.type) {
+		case TYPE_TAG:
+			os << atom.value;
+			break;
+		case TYPE_CLASS:
+			os << "." << atom.value;
+			break;
+		case TYPE_ID:
+			os << "#" << atom.value;
+			break;
+		case TYPE_PSEUDO:
+			os << ":" << atom.value;
+			break;
+		case TYPE_ANY:
+			os << "*";
+			break;
+		default:
+			break;
+	}
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const SelectorUnit& unit) {
+	for(const auto& atom : unit.atoms()) {
+		os << atom;
+	}
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const Selector& selector) {
+	for(const auto& unit : selector.units()) {
+		os << unit;
+		if(unit.combinator != COMBINATOR_NONE) {
+			os << unit.combinator_as_string();
+		}
+	}
+	return os;
+}
+
 }

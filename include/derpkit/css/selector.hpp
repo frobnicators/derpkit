@@ -82,6 +82,10 @@ class DERPKIT_EXPORT Selector {
 		friend class CSS;
 };
 
+std::ostream& operator<<(std::ostream& os, const SelectorAtom&);
+std::ostream& operator<<(std::ostream& os, const SelectorUnit&);
+std::ostream& operator<<(std::ostream& os, const Selector&);
+
 }
 
 #endif
