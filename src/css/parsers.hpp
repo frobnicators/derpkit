@@ -1,9 +1,9 @@
 #ifndef DERPKIT_CSS_PARSER_HPP
 #define DERPKIT_CSS_PARSER_HPP
 
-#include "dom/state.hpp"
 #include <derpkit/css/datatype.hpp>
 #include <derpkit/css/expression.hpp>
+#include <derpkit/css/state.hpp>
 
 namespace css {
 namespace parsers {

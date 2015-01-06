@@ -29,6 +29,7 @@ libderpkit_la_SOURCES = \
 	src/css/css.cpp src/css/css.hpp \
 	src/css/colors.cpp src/css/colors.hpp \
 	include/derpkit/css/datatype.hpp src/css/datatype.cpp \
+	include/derpkit/css/state.hpp \
 	src/css/expression.cpp src/css/expression.hpp \
 	src/css/parsers.cpp src/css/parsers.hpp \
 	src/css/property.cpp src/css/property.hpp \
@@ -40,7 +41,6 @@ libderpkit_la_SOURCES = \
 	src/dom/inspector.cpp include/derpkit/dom/inspector.hpp \
 	include/derpkit/dom/document.hpp src/dom/document.cpp \
 	include/derpkit/dom/node.hpp src/dom/node.cpp \
-	include/derpkit/dom/state.hpp \
 	include/derpkit/utils/utils.hpp src/utils/utils.cpp \
 	include/derpkit/utils/logging.hpp src/utils/logging.cpp \
 	include/derpkit/utils/base64.hpp src/utils/base64.cpp \
