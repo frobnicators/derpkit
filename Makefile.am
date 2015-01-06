@@ -38,6 +38,7 @@ libderpkit_la_SOURCES = \
 	src/dom/inspector.cpp include/derpkit/dom/inspector.hpp \
 	include/derpkit/dom/document.hpp src/dom/document.cpp \
 	include/derpkit/dom/node.hpp src/dom/node.cpp \
+	include/derpkit/dom/state.hpp src/dom/state.cpp \
 	include/derpkit/utils/utils.hpp src/utils/utils.cpp \
 	include/derpkit/utils/logging.hpp src/utils/logging.cpp \
 	include/derpkit/utils/base64.hpp src/utils/base64.cpp \

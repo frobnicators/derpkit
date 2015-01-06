@@ -2,6 +2,7 @@
 #define DERPKIT_DOM_STATE_HPP
 
 #include <cstdint>
+#include <string>
 
 namespace dom {
 
@@ -40,6 +41,10 @@ struct State {
 	Length width;
 	Length height;
 };
+
+std::string display_to_string(const Display& src);
+std::string length_to_string(const Length& src);
+std::string color_to_string(const Color& src);
 
 }
 
