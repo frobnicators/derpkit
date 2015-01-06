@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 AM_LDFLAGS = -pthread
-AM_CXXFLAGS = -Wall -fvisibility=hidden -I${top_srcdir}/include -I${top_srcdir}/src
+AM_CXXFLAGS = -Wall -Wcast-qual -fvisibility=hidden -I${top_srcdir}/include -I${top_srcdir}/src
 AM_CFLAGS = ${AM_CXXFLAGS}
 
 lib_LTLIBRARIES = libderpkit.la
