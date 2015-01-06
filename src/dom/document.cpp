@@ -207,11 +207,11 @@ static void prepare_render(std::function<void(Node node, const State&)> callback
 	}
 
 	State state;
-	state.display = DISPLAY_INLINE;
+	state.display = css::DISPLAY_INLINE;
 	state.color.val = 0x000000ff;
 	state.background_color.val = 0xffffffff;
-	state.width = {0, UNIT_AUTO};
-	state.height = {0, UNIT_AUTO};
+	state.width = {0, css::UNIT_AUTO};
+	state.height = {0, css::UNIT_AUTO};
 
 	apply_css_to_state(node, &state, &parent_state);
 
@@ -224,11 +224,11 @@ static void prepare_render(std::function<void(Node node, const State&)> callback
 
 static void prepare_render(std::function<void(Node node, const State&)> callback, Node node){
 	State state;
-	state.display = DISPLAY_BLOCK;
+	state.display = css::DISPLAY_BLOCK;
 	state.color.val = 0x000000ff;
 	state.background_color.val = 0xffffffff;
-	state.width = {0, UNIT_AUTO};
-	state.height = {0, UNIT_AUTO};
+	state.width = {0, css::UNIT_AUTO};
+	state.height = {0, css::UNIT_AUTO};
 
 	prepare_render(callback, node, 0, state);
 }

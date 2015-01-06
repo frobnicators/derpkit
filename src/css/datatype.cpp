@@ -2,10 +2,10 @@
 #include "config.h"
 #endif
 
-#include "state.hpp"
+#include <derpkit/css/datatype.hpp>
 #include <sstream>
 
-namespace dom {
+namespace css {
 
 std::string display_to_string(const Display& src){
 	switch ( src ){

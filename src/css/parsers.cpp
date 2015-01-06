@@ -28,7 +28,7 @@ void display(void* ptr, const Expression* val) {
 
 	if(val == nullptr || val->terms.empty()) return;
 
-	dom::Display* out = (dom::Display*)ptr;
+	css::Display* out = (css::Display*)ptr;
 
 	const Term& term = val->terms[0];
 	if(term.type != Term::TYPE_STRING) return;
@@ -36,13 +36,13 @@ void display(void* ptr, const Expression* val) {
 	std::string v = lcase(term.value);
 
 	if(v == "none") {
-		*out = dom::DISPLAY_NONE;
+		*out = css::DISPLAY_NONE;
 	} else if(v == "block") {
-		*out = dom::DISPLAY_BLOCK;
+		*out = css::DISPLAY_BLOCK;
 	} else if(v == "inline") {
-		*out = dom::DISPLAY_INLINE;
+		*out = css::DISPLAY_INLINE;
 	} else if(v == "inline-block") {
-		*out = dom::DISPLAY_INLINE_BLOCK;
+		*out = css::DISPLAY_INLINE_BLOCK;
 	}
 }
 
@@ -51,7 +51,7 @@ void length(void* ptr, const Expression* val) {
 
 	if(val == nullptr || val->terms.empty()) return;
 
-	dom::Length* out = (dom::Length*)ptr;
+	css::Length* out = (css::Length*)ptr;
 
 	const float px_per_in = 96.f;
 	const float px_per_pt = 96.f / 72.f;
@@ -64,10 +64,10 @@ void length(void* ptr, const Expression* val) {
 	std::string v = lcase(term.value);
 
 	if(term.type == Term::TYPE_STRING && v == "auto") {
-		*out = {0, dom::UNIT_AUTO};
+		*out = {0, css::UNIT_AUTO};
 	} else if(term.type == Term::TYPE_NUMBER) {
 		number(out->scalar, term);
-		out->unit = dom::UNIT_PX;
+		out->unit = css::UNIT_PX;
 		size_t unit_start = v.find_first_not_of("0123456789.");
 		if(unit_start != std::string::npos) {
 			std::string unit = v.substr(unit_start);
@@ -84,7 +84,7 @@ void length(void* ptr, const Expression* val) {
 			} else if(unit == "pc") {
 				out->scalar *= px_per_pc;
 			} else if(unit == "%") {
-				out->unit = dom::UNIT_PERCENT;
+				out->unit = css::UNIT_PERCENT;
 			}
 			// TODO: Relative units
 		}
@@ -97,7 +97,7 @@ void color(void* ptr, const Expression* val) {
 
 	if(val == nullptr || val->terms.empty()) return;
 
-	dom::Color* out = (dom::Color*)ptr;
+	css::Color* out = (css::Color*)ptr;
 
 	const Term& term = val->terms[0];
 
