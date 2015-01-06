@@ -386,7 +386,9 @@ json_object* serialize_node(dom::Node node, bool recurse) {
 Node* get_node(json_object* params) {
 	json_object* objid = json_object_object_get(params, "nodeId");
 	if(objid != nullptr) {
-		Node node = Node::from_internal_id(json_object_get_int64(objid));
+		int64_t id = json_object_get_int64(objid);
+		if(id == 0 || id == 1) return nullptr; // Document or document type
+		Node node = Node::from_internal_id(id);
 		return new Node(node);
 	} else {
 		Logging::error("[Inspector] Missing param: nodeId\n");
@@ -540,6 +542,13 @@ namespace CSS {
 			}
 			if(!excludeInherited) {
 				response.set("inherited", inherited);
+				Node parent = node->parent();
+				while(parent.exists()) {
+					json_object* obj = json_object_new_object();
+					// TODO: inlineStyle
+
+					parent = parent.parent();
+				}
 			}
 
 
@@ -570,7 +579,7 @@ void InspectorImpl::log(const std::string& msg, const char* severity) {
 
 std::map<std::string,std::function<void(InspectorImpl*,json_object*,JsonResponse& response)>> InspectorImpl::s_method_mapping = {
 	{ "DOM.getDocument", &json::DOM::getDocument },
-	{ "DOM.highlightNode", &json::DOM::highlightNode },
+	//{ "DOM.highlightNode", &json::DOM::highlightNode },
 	{ "CSS.getComputedStyleForNode", &json::CSS::getComputedStyleForNode },
 	{ "CSS.getMatchedStylesForNode", &json::CSS::getMatchedStylesForNode },
 };
