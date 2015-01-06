@@ -280,6 +280,12 @@ void WebSocket::update() {
 }
 
 void WebSocket::send_raw(Client* client, const char* data, size_t size) {
+	if(client == nullptr) {
+		for(auto* c : m_clients) {
+			if(c->sck) send_raw(c, data, size);
+		}
+		return;
+	}
 	client->sck->send(data, size);
 }
 
@@ -292,6 +298,12 @@ void WebSocket::send_text(Client* client, const std::string& text) {
 }
 
 void WebSocket::send_frame(Client* client, int opcode, const void* payload, uint16_t payload_length) {
+	if(client == nullptr) {
+		for(auto* c : m_clients) {
+			if(c->sck && c->established) send_frame(c, opcode, payload, payload_length);
+		}
+		return;
+	}
 	if(client->sck && client->established) {
 		size_t msg_size = 2 + payload_length;
 		char pl;

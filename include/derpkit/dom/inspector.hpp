@@ -2,6 +2,7 @@
 #define DERPKIT_INSPECTOR_HPP
 
 #include <derpkit/dom/document.hpp>
+#include <derpkit/utils/logging.hpp>
 
 namespace dom {
 
@@ -14,6 +15,8 @@ class DERPKIT_EXPORT Inspector {
 
 		static void initialize();
 		static void cleanup();
+
+		void log(const std::string& msg, Logging::Severity severity = Logging::INFO);
 
 		void update();
 

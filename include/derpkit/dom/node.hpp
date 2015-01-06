@@ -22,6 +22,8 @@ struct NodeCSSProperty {
 		expressions = o.expressions;
 		specificity = specificity;
 	}
+
+	std::string to_string() const;
 };
 
 class NodeImpl;
@@ -36,6 +38,7 @@ public:
 	void set_attribute(const char* key, const char* value);
 	const std::map<std::string, std::string>& attributes() const;
 
+	size_t children_count() const;
 	std::vector<Node> children() const;
 	const char* tag_name() const;
 	const char* text_content() const;
@@ -52,6 +55,10 @@ public:
 	void invalidate();
 	void clear_invalidated();
 	bool is_invalidated() const;
+
+	uint64_t get_internal_id() const;
+
+	static Node from_internal_id(uint64_t);
 
 private:
 	friend class Document;

@@ -44,11 +44,17 @@ class WebSocket {
 		void close(Client* client);
 
 		void update();
+
+		/*
+		 * Set client to nullptr to send to all established clients
+		 */
+
 		void send_binary(Client* client, const void* data, size_t size);
 		void send_text(Client* client, const std::string& text);
 
 		/**
 		 * Send raw data on the socket (bypass websocket protocol)
+		 * Set client to nullptr to send to all connected clients
 		 */
 		void send_raw(Client* client, const char* data, size_t size);
 	private:

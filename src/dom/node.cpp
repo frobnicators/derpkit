@@ -6,6 +6,7 @@
 #include <derpkit/utils/string_utils.hpp>
 #include <cstring>
 #include <string>
+#include <sstream>
 #include <map>
 #include <cassert>
 
@@ -153,6 +154,11 @@ const char* Node::text_content() const {
 	return _impl->text.c_str();
 }
 
+size_t Node::children_count() const {
+	assert(_impl.get());
+	return _impl->children.size();
+}
+
 std::vector<Node> Node::children() const {
 	assert(_impl.get());
 	std::vector<Node> children;
@@ -216,6 +222,30 @@ void Node::clear_invalidated(){
 bool Node::is_invalidated() const {
 	assert(_impl.get());
 	return _impl->invalid;
+}
+
+uint64_t Node::get_internal_id() const {
+	assert(_impl.get());
+	return (uint64_t)_impl.get();
+}
+
+Node Node::from_internal_id(uint64_t id) {
+	NodeImpl* impl = (NodeImpl*)id;
+	return Node(impl->self.lock());
+}
+
+std::string NodeCSSProperty::to_string() const {
+	std::stringstream ss;
+	auto it = expressions->begin();
+	if(it != expressions->end()) {
+		ss << (it++)->to_string();
+	}
+	while ( it != expressions->end()) {
+		ss << ", ";
+		ss << (it++)->to_string();
+	}
+
+	return ss.str();
 }
 
 }
