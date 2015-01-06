@@ -32,6 +32,9 @@ class DERPKIT_EXPORT CSS {
 		void print() const;
 
 		void apply_to_document(dom::Document& doc) const;
+
+		/* Indicate that this is a user agent style */
+		bool user_agent_style;
 	private:
 		CSS(const std::string &filename);
 

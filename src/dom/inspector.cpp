@@ -4,6 +4,7 @@
 
 #include <derpkit/dom/inspector.hpp>
 #include <derpkit/css/rule.hpp>
+#include <derpkit/css/css.hpp>
 #include <derpkit/utils/network/websocket.hpp>
 #include <derpkit/utils/string_utils.hpp>
 #include <derpkit/utils/logging.hpp>
@@ -449,6 +450,8 @@ namespace CSS {
 			json_object* prop_obj = json_object_new_object();
 			set(prop_obj, "name", prop.property.c_str());
 			set(prop_obj, "value", str_join(prop.expressions.begin(), prop.expressions.end(), ", ").c_str());
+			set(prop_obj, "important", prop.important);
+			// TODO: implicit <bool>, parsedOk <bool>, range <SourceRange>
 			add(prop_ary, prop_obj);
 		}
 		return prop_ary;
@@ -456,8 +459,9 @@ namespace CSS {
 
 	static json_object* serialize_rule(const css::Rule& rule) {
 		json_object* rule_obj = json_object_new_object();
-		//set(rule_obj, "styleSheetId", 0); // TODO!
-		set(rule_obj, "origin", "regular"); // TODO!
+		//set(rule_obj, "styleSheetId", rule.css()->filename().c_str()); // TODO: Store css in document and send before we send this
+		// TODO: range <SourceRange>
+		set(rule_obj, "origin", rule.css()->user_agent_style ? "user-agent" : "regular");
 
 		json_object* selectorList = json_object_new_object();
 		json_object* selectors = json_object_new_array();
@@ -502,6 +506,7 @@ namespace CSS {
 	}
 
 
+	// TODO: Actual computed
 	static void getComputedStyleForNode(InspectorImpl* inspector, json_object* params, JsonResponse& response) {
 		Node* node = get_node(params);
 		if(node) {
@@ -575,7 +580,7 @@ void InspectorImpl::log(const std::string& msg, const char* severity) {
 
 std::map<std::string,std::function<void(InspectorImpl*,json_object*,JsonResponse& response)>> InspectorImpl::s_method_mapping = {
 	{ "DOM.getDocument", &json::DOM::getDocument },
-	//{ "DOM.highlightNode", &json::DOM::highlightNode },
+	{ "DOM.highlightNode", &json::DOM::highlightNode },
 	{ "CSS.getComputedStyleForNode", &json::CSS::getComputedStyleForNode },
 	{ "CSS.getMatchedStylesForNode", &json::CSS::getMatchedStylesForNode },
 };
@@ -583,201 +588,10 @@ std::map<std::string,std::function<void(InspectorImpl*,json_object*,JsonResponse
 /**
  *
  *
- // From me:
+ // Required before we can include id:
  {"method":"CSS.styleSheetAdded","params":{"header":{"styleSheetId":"35","origin":"user","disabled":false,"sourceURL":"","title":"","frameId":"171.1","isInline":false,"startLine":0,"startColumn":0}}}
 
 
  */
-
-// CSS Data:
-/*
-
-    {
-                "id": "StyleSheetId",
-                "type": "string"
-            },
-            {
-                "id": "StyleSheetOrigin",
-                "type": "string",
-                "enum": ["injected", "user-agent", "inspector", "regular"],
-                "description": "Stylesheet type: \"injected\" for stylesheets injected via extension, \"user-agent\" for user-agent stylesheets, \"inspector\" for stylesheets created by the inspector (i.e. those holding the \"via inspector\" rules), \"regular\" for regular stylesheets."
-            },
-            {
-                "id": "PseudoIdMatches",
-                "type": "object",
-                "properties": [
-                    { "name": "pseudoId", "type": "integer", "description": "Pseudo style identifier (see <code>enum PseudoId</code> in <code>RenderStyleConstants.h</code>)."},
-                    { "name": "matches", "type": "array", "items": { "$ref": "RuleMatch" }, "description": "Matches of CSS rules applicable to the pseudo style."}
-                ],
-                "description": "CSS rule collection for a single pseudo style."
-            },
-            {
-                "id": "InheritedStyleEntry",
-                "type": "object",
-                "properties": [
-                    { "name": "inlineStyle", "$ref": "CSSStyle", "optional": true, "description": "The ancestor node's inline style, if any, in the style inheritance chain." },
-                    { "name": "matchedCSSRules", "type": "array", "items": { "$ref": "RuleMatch" }, "description": "Matches of CSS rules matching the ancestor node in the style inheritance chain." }
-                ],
-                "description": "Inherited CSS rule collection from ancestor node."
-            },
-            {
-                "id": "RuleMatch",
-                "type": "object",
-                "properties": [
-                    { "name": "rule", "$ref": "CSSRule", "description": "CSS rule in the match." },
-                    { "name": "matchingSelectors", "type": "array", "items": { "type": "integer" }, "description": "Matching selector indices in the rule's selectorList selectors (0-based)." }
-                ],
-                "description": "Match data for a CSS rule."
-            },
-            {
-                "id": "Selector",
-                "type": "object",
-                "properties": [
-                    { "name": "value", "type": "string", "description": "Selector text." },
-                    { "name": "range", "$ref": "SourceRange", "optional": true, "description": "Selector range in the underlying resource (if available)." }
-                ],
-                "description": "Data for a simple selector (these are delimited by commas in a selector list)."
-            },
-            {
-                "id": "SelectorList",
-                "type": "object",
-                "properties": [
-                    { "name": "selectors", "type": "array", "items": { "$ref": "Selector" }, "description": "Selectors in the list." },
-                    { "name": "text", "type": "string", "description": "Rule selector text." }
-                ],
-                "description": "Selector list data."
-            },
-            {
-                "id": "CSSStyleSheetHeader",
-                "type": "object",
-                "properties": [
-                    { "name": "styleSheetId", "$ref": "StyleSheetId", "description": "The stylesheet identifier."},
-                    { "name": "frameId", "$ref": "Page.FrameId", "description": "Owner frame identifier."},
-                    { "name": "sourceURL", "type": "string", "description": "Stylesheet resource URL."},
-                    { "name": "sourceMapURL", "type": "string", "optional": true, "description": "URL of source map associated with the stylesheet (if any)." },
-                    { "name": "origin", "$ref": "StyleSheetOrigin", "description": "Stylesheet origin."},
-                    { "name": "title", "type": "string", "description": "Stylesheet title."},
-                    { "name": "ownerNode", "$ref": "DOM.BackendNodeId", "optional": true, "description": "The backend id for the owner node of the stylesheet." },
-                    { "name": "disabled", "type": "boolean", "description": "Denotes whether the stylesheet is disabled."},
-                    { "name": "hasSourceURL", "type": "boolean", "optional": true, "description": "Whether the sourceURL field value comes from the sourceURL comment." },
-                    { "name": "isInline", "type": "boolean", "description": "Whether this stylesheet is created for STYLE tag by parser. This flag is not set for document.written STYLE tags." },
-                    { "name": "startLine", "type": "number", "description": "Line offset of the stylesheet within the resource (zero based)." },
-                    { "name": "startColumn", "type": "number", "description": "Column offset of the stylesheet within the resource (zero based)." }
-                ],
-                "description": "CSS stylesheet metainformation."
-            },
-            {
-                "id": "CSSRule",
-                "type": "object",
-                "properties": [
-                    { "name": "styleSheetId", "$ref": "StyleSheetId", "optional": true, "description": "The css style sheet identifier (absent for user agent stylesheet and user-specified stylesheet rules) this rule came from." },
-                    { "name": "selectorList", "$ref": "SelectorList", "description": "Rule selector data." },
-                    { "name": "origin", "$ref": "StyleSheetOrigin", "description": "Parent stylesheet's origin."},
-                    { "name": "style", "$ref": "CSSStyle", "description": "Associated style declaration." },
-                    { "name": "media", "type": "array", "items": { "$ref": "CSSMedia" }, "optional": true, "description": "Media list array (for rules involving media queries). The array enumerates media queries starting with the innermost one, going outwards." }
-                ],
-                "description": "CSS rule representation."
-            },
-            {
-                "id": "SourceRange",
-                "type": "object",
-                "properties": [
-                    { "name": "startLine", "type": "integer", "description": "Start line of range." },
-                    { "name": "startColumn", "type": "integer", "description": "Start column of range (inclusive)." },
-                    { "name": "endLine", "type": "integer", "description": "End line of range" },
-                    { "name": "endColumn", "type": "integer", "description": "End column of range (exclusive)." }
-                ],
-                "description": "Text range within a resource. All numbers are zero-based."
-            },
-            {
-                "id": "ShorthandEntry",
-                "type": "object",
-                "properties": [
-                    { "name": "name", "type": "string", "description": "Shorthand name." },
-                    { "name": "value", "type": "string", "description": "Shorthand value." }
-                ]
-            },
-            {
-                "id": "CSSComputedStyleProperty",
-                "type": "object",
-                "properties": [
-                    { "name": "name", "type": "string", "description": "Computed style property name." },
-                    { "name": "value", "type": "string", "description": "Computed style property value." }
-                ]
-            },
-            {
-                "id": "CSSStyle",
-                "type": "object",
-                "properties": [
-                    { "name": "styleSheetId", "$ref": "StyleSheetId", "optional": true, "description": "The css style sheet identifier (absent for user agent stylesheet and user-specified stylesheet rules) this rule came from." },
-                    { "name": "cssProperties", "type": "array", "items": { "$ref": "CSSProperty" }, "description": "CSS properties in the style." },
-                    { "name": "shorthandEntries", "type": "array", "items": { "$ref": "ShorthandEntry" }, "description": "Computed values for all shorthands found in the style." },
-                    { "name": "cssText", "type": "string", "optional": true, "description": "Style declaration text (if available)." },
-                    { "name": "range", "$ref": "SourceRange", "optional": true, "description": "Style declaration range in the enclosing stylesheet (if available)." }
-                ],
-                "description": "CSS style representation."
-            },
-            {
-                "id": "CSSProperty",
-                "type": "object",
-                "properties": [
-                    { "name": "name", "type": "string", "description": "The property name." },
-                    { "name": "value", "type": "string", "description": "The property value." },
-                    { "name": "important", "type": "boolean", "optional": true, "description": "Whether the property has \"!important\" annotation (implies <code>false</code> if absent)." },
-                    { "name": "implicit", "type": "boolean", "optional": true, "description": "Whether the property is implicit (implies <code>false</code> if absent)." },
-                    { "name": "text", "type": "string", "optional": true, "description": "The full property text as specified in the style." },
-                    { "name": "parsedOk", "type": "boolean", "optional": true, "description": "Whether the property is understood by the browser (implies <code>true</code> if absent)." },
-                    { "name": "disabled", "type": "boolean", "optional": true, "description": "Whether the property is disabled by the user (present for source-based properties only)." },
-                    { "name": "range", "$ref": "SourceRange", "optional": true, "description": "The entire property range in the enclosing style declaration (if available)." }
-                ],
-                "description": "CSS property declaration data."
-            },
-            {
-                "id": "CSSMedia",
-                "type": "object",
-                "properties": [
-                    { "name": "text", "type": "string", "description": "Media query text." },
-                    { "name": "source", "type": "string", "enum": ["mediaRule", "importRule", "linkedSheet", "inlineSheet"], "description": "Source of the media query: \"mediaRule\" if specified by a @media rule, \"importRule\" if specified by an @import rule, \"linkedSheet\" if specified by a \"media\" attribute in a linked stylesheet's LINK tag, \"inlineSheet\" if specified by a \"media\" attribute in an inline stylesheet's STYLE tag." },
-                    { "name": "sourceURL", "type": "string", "optional": true, "description": "URL of the document containing the media query description." },
-                    { "name": "range", "$ref": "SourceRange", "optional": true, "description": "The associated rule (@media or @import) header range in the enclosing stylesheet (if available)." },
-                    { "name": "parentStyleSheetId", "$ref": "StyleSheetId", "optional": true, "description": "Identifier of the stylesheet containing this object (if exists)." },
-                    { "name": "mediaList", "type": "array", "items": { "$ref": "MediaQuery" }, "optional": true, "hidden": true, "description": "Array of media queries." }
-                ],
-                "description": "CSS media rule descriptor."
-            },
-            {
-                "id": "MediaQuery",
-                "type": "object",
-                "properties": [
-                    { "name": "expressions", "type": "array", "items": { "$ref": "MediaQueryExpression" }, "description": "Array of media query expressions." },
-                    { "name": "active", "type": "boolean", "description": "Whether the media query condition is satisfied." }
-                ],
-                "description": "Media query descriptor.",
-                "hidden": true
-            },
-            {
-                "id": "MediaQueryExpression",
-                "type": "object",
-                "properties": [
-                    { "name": "value", "type": "number", "description": "Media query expression value."},
-                    { "name": "unit", "type": "string", "description": "Media query expression units."},
-                    { "name": "feature", "type": "string", "description": "Media query expression feature."},
-                    { "name": "valueRange", "$ref": "SourceRange", "optional": true, "description": "The associated range of the value text in the enclosing stylesheet (if available)." },
-                    { "name": "computedLength", "type": "number", "optional": true, "description": "Computed length of media query expression (if applicable)."}
-                ],
-                "description": "Media query expression descriptor.",
-                "hidden": true
-            },
-            {
-                "id": "PlatformFontUsage",
-                "type": "object",
-                "properties": [
-                    { "name": "familyName", "type": "string", "description": "Font's family name reported by platform."},
-                    { "name": "glyphCount", "type": "number", "description": "Amount of glyphs that were rendered with this font."}
-                ],
-                "description": "Information about amount of glyphs that were rendered with given font.",
-                "hidden": true
-            }
-*/
 
 }

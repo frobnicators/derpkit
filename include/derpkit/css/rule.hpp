@@ -10,6 +10,7 @@ namespace css {
 
 class Rule {
 	public:
+		Rule(const CSS* css) : m_css(css) {}
 		/**
 		 * Debug print
 		 */
@@ -23,9 +24,15 @@ class Rule {
 			return m_properties;
 		}
 
+		const CSS* css() const {
+			return m_css;
+		}
+
 	private:
 		std::vector<Selector> m_selectors;
 		std::vector<Property> m_properties;
+
+		const CSS* m_css;
 
 		friend class CSS;
 };

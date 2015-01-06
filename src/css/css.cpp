@@ -65,7 +65,7 @@ static std::string convert_string(pANTLR3_STRING str) {
 	return std::string((const char*)str->chars);
 }
 
-CSS::CSS(const std::string &filename) : m_filename(filename) { }
+CSS::CSS(const std::string &filename) : user_agent_style(false), m_filename(filename) { }
 
 CSS::~CSS() { }
 
@@ -224,7 +224,7 @@ void CSS::parse_selector(pANTLR3_BASE_TREE tree, Selector& selector) {
 }
 
 void CSS::parse_rule(pANTLR3_BASE_TREE node) {
-	m_rules.emplace_back();
+	m_rules.emplace_back(this);
 	Rule& rule = m_rules.back();
 	traverse_tree(node, [&rule, this](pANTLR3_BASE_TREE node) {
 		pANTLR3_COMMON_TOKEN token = node->getToken(node);
