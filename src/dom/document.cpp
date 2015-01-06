@@ -46,7 +46,7 @@ Node Document::root() const{
 std::string Document::to_string(bool inline_css) const {
 	std::stringstream ss;
 
-	traverse([&](TraversalState it){
+	traverse(BOTH_ORDER, [&](TraversalState it){
 		Node node = it.node;
 		int indent = (it.depth-1) * 2;
 
@@ -79,7 +79,7 @@ std::string Document::to_string(bool inline_css) const {
 				ss << node.text_content() << std::endl;
 			}
 		}
-	}, BOTH_ORDER);
+	});
 
 	return ss.str();
 }
@@ -91,13 +91,13 @@ Node Document::getElementById(const char* id) const {
 Node Document::getElementById(const char* id, Node root) const {
 	Node match;
 
-	traverse([&id,&match](TraversalState it){
+	traverse(root, PRE_ORDER, [&id,&match](TraversalState it){
 		Node node = it.node;
 		if ( node.get_attribute("id") == id ){
 			match = node;
 			it.stop = true;
 		}
-	}, root, PRE_ORDER);
+	});
 
 	return match;
 }
@@ -130,7 +130,7 @@ std::vector<Node> Document::find(const css::Selector& selector, Node node, size_
 	const bool last = (begin+1) == num;
 	const auto unit = units[begin];
 
-	traverse([&](TraversalState it){
+	traverse(node, PRE_ORDER, [&](TraversalState it){
 		Node node = it.node;
 
 		assert(node.exists());
@@ -144,23 +144,23 @@ std::vector<Node> Document::find(const css::Selector& selector, Node node, size_
 				matches.push_back(node);
 			}
 		}
-	}, node, PRE_ORDER);
+	});
 
 	return matches;
 }
 
-void Document::traverse(std::function<void(TraversalState& it)> callback, TraversalOrder order) const {
-	return traverse(callback, root_node, order);
+void Document::traverse(TraversalOrder order, std::function<void(TraversalState& it)> callback) const {
+	return traverse(root_node, order, callback);
 }
 
-void Document::traverse(std::function<void(TraversalState& it)> callback, Node node, TraversalOrder order) const {
+void Document::traverse(Node node, TraversalOrder order, std::function<void(TraversalState& it)> callback) const {
 	TraversalState state = {
 		node, 0, order, false, false
 	};
-	return traverse(callback, state, order);
+	return traverse(state, order, callback);
 }
 
-void Document::traverse(std::function<void(TraversalState& it)> callback, TraversalState& parent_state, TraversalOrder order) const {
+void Document::traverse(TraversalState& parent_state, TraversalOrder order, std::function<void(TraversalState& it)> callback) const {
 	Node current = parent_state.node;
 	TraversalState state = {
 		current, parent_state.depth + 1, order, false, false
@@ -180,7 +180,7 @@ void Document::traverse(std::function<void(TraversalState& it)> callback, Traver
 
 	for ( auto it : state.node.children() ){
 		state.node = it;
-		traverse(callback, state, order);
+		traverse(state, order, callback);
 		if ( state.stop  ){
 			parent_state.stop = false;
 			return;

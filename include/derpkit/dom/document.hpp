@@ -57,15 +57,15 @@ public:
 	/**
 	 * Visits all nodes, depth first
 	 */
-	void traverse(std::function<void(TraversalState& it)>, TraversalOrder order) const;
-	void traverse(std::function<void(TraversalState& it)>, Node node, TraversalOrder order) const;
+	void traverse(TraversalOrder order, std::function<void(TraversalState& it)>) const;
+	void traverse(Node node, TraversalOrder order, std::function<void(TraversalState& it)>) const;
 
 	void prepare_render();
 
 private:
 	std::vector<Node> find(const css::Selector& selector, Node node, size_t state) const;
 
-	void traverse(std::function<void(TraversalState& it)>, TraversalState& state, TraversalOrder order) const;
+	void traverse(TraversalState& state, TraversalOrder order, std::function<void(TraversalState& it)>) const;
 
 	Node root_node;
 };
