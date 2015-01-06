@@ -62,14 +62,13 @@ std::string Document::to_string(bool inline_css) const {
 					if(inline_css && attr.first == "style") continue;
 					ss << ' ' << attr.first << '=' << '"' << attr.second << '"';
 				}
-			}
-
-			if(inline_css) {
-				ss << " style='";
-				for(const auto& prop : node.css_properties()) {
-					ss << prop.first << ": " << prop.second.to_string() << ";";
+				if(inline_css) {
+					ss << " style=\"";
+					for(const auto& prop : node.css_properties()) {
+						ss << prop.first << ": " << prop.second.to_string() << ";";
+					}
+					ss << '"';
 				}
-				ss << "'";
 			}
 
 			ss << '>' << std::endl;
