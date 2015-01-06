@@ -60,7 +60,7 @@ public:
 	void traverse(TraversalOrder order, std::function<void(TraversalState& it)>) const;
 	void traverse(Node node, TraversalOrder order, std::function<void(TraversalState& it)>) const;
 
-	void prepare_render();
+	void prepare_render(int width, int height);
 
 private:
 	std::vector<Node> find(const css::Selector& selector, Node node, size_t state) const;

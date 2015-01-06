@@ -106,6 +106,10 @@ static int min(int a, int b){
 	return (a<b) ? a : b;
 }
 
+static int max(int a, int b){
+	return (a>b) ? a : b;
+}
+
 std::vector<Node> Document::find(const char* selector) const {
 	return find(css::Selector(selector), root_node, 0);
 }
@@ -201,57 +205,137 @@ void Document::apply_css(const css::CSS* css) {
 	css->apply_to_document(*this);
 }
 
-static void prepare_render(std::function<void(Node node, const css::State&)> callback, Node node, int depth, const css::State& parent_state){
+static void compute_state(Node node, int depth, const css::State* parent_state){
 	if ( depth >= MAX_DEPTH ){
 		return;
 	}
 
-	css::State state;
-	state.display = css::DISPLAY_INLINE;
-	state.color.val = 0x000000ff;
-	state.background_color.val = 0xffffffff;
-	state.width = {0, css::UNIT_AUTO};
-	state.height = {0, css::UNIT_AUTO};
-
-	apply_css_to_state(node, &state, &parent_state);
+	apply_css_to_state(node, node.computed_state(), parent_state);
 
 	for ( auto it : node.children() ){
-		prepare_render(callback, it, depth+1, state);
+		compute_state(it, depth+1, node.computed_state());
 	}
 
-	callback(node, state);
+	node.clear_invalidated();
 }
 
-static void prepare_render(std::function<void(Node node, const css::State&)> callback, Node node){
+static void compute_state(Node node, int root_width, int root_height){
 	css::State state;
 	state.display = css::DISPLAY_BLOCK;
 	state.color.val = 0x000000ff;
 	state.background_color.val = 0xffffffff;
-	state.width = {0, css::UNIT_AUTO};
-	state.height = {0, css::UNIT_AUTO};
-
-	prepare_render(callback, node, 0, state);
+	state.width = {(float)root_width, css::UNIT_PX};
+	state.height = {(float)root_height, css::UNIT_PX};
+	compute_state(node, 0, &state);
 }
 
-void Document::prepare_render(){
+static float estimate_text_width(const char* text){
+	/* hack until font-rendering is in place */
+	const size_t num_chars = strlen(text);
+	return num_chars * 15;
+}
+
+static float estimate_text_height(){
+	return 15;
+}
+
+static void expand_auto_size(css::Length& dst, const css::Length& src){
+	if ( dst.unit != css::UNIT_AUTO ) return;
+	if ( src.unit != css::UNIT_PX ) return;
+
+	dst.unit = css::UNIT_PX;
+	dst.scalar = src.scalar; /* @todo padding */
+}
+
+static void expand_inline(Node node){
+	auto state = node.computed_state();
+
+	state->width.unit  = css::UNIT_PX;
+	state->height.unit = css::UNIT_PX;
+
+	if ( node.is_textnode() ){
+		state->width.scalar  = estimate_text_width(node.text_content());
+		state->height.scalar = estimate_text_height();
+	} else {
+		/* On this pass no breaks is inserted, just keep adding those inlines
+		 * together. Breaks is resolved later when container size is known */
+		state->width.scalar = 0;
+		state->height.scalar = 0;
+		for ( auto child: node.children() ){
+			state->width.scalar += child.computed_state()->width.scalar;
+			state->height.scalar = max(state->height.scalar, child.computed_state()->height.scalar);
+		}
+	}
+}
+
+void Document::prepare_render(int width, int height){
 	if ( !root_node.is_invalidated() ){
 		return;
 	}
 
 	printf("prepare render\n");
 
-	dom::prepare_render([](Node cur, const css::State& state){
-		printf("tag: %s\n", cur.tag_name());
-		printf("  id: %s\n", cur.get_attribute("id"));
-		printf("  display: %d\n", state.display);
-		printf("  position: %s\n", state.position.to_string().c_str());
-		printf("  color: #%08x\n", state.color.val);
-		printf("  background-color: #%08x\n", state.background_color.val);
-		printf("  width: %f %d\n", state.width.scalar, state.width.unit);
-		printf("  height: %f %d\n", state.height.scalar, state.height.unit);
+	/* compute initial style */
+	dom::compute_state(root_node, width, height);
 
-		cur.clear_invalidated();
-	}, root_node);
+	/* derpkit: size of root node is always the window size */
+	{
+		auto state = root_node.computed_state();
+		state->width.scalar  = width;
+		state->height.scalar = height;
+		state->width.unit  = css::UNIT_PX;
+		state->height.unit = css::UNIT_PX;
+	}
+
+	/* preliminary sizes for nodes which expands themselves (e.g. inline text)*/
+	traverse(POST_ORDER, [](TraversalState it){
+		auto node = it.node;
+		auto state = node.computed_state();
+
+		switch ( state->display ){
+		case css::DISPLAY_INLINE:
+			expand_inline(node);
+			break;
+
+		case css::DISPLAY_NONE:
+		case css::DISPLAY_BLOCK:
+			break;
+		}
+	});
+
+	/* starting from root, resolve relative sizes and shrink children to fit (e.g. by inserting breaks on inline) */
+	traverse(PRE_ORDER, [this](TraversalState it){
+		auto node = it.node;
+		if ( node == root_node ) return;
+
+		auto state = node.computed_state();
+		auto parent = node.parent().computed_state();
+
+		switch ( state->display ){
+		case css::DISPLAY_BLOCK:
+			expand_auto_size(state->width,  parent->width);
+			expand_auto_size(state->height, parent->height);
+			break;
+
+		case css::DISPLAY_NONE:
+		case css::DISPLAY_INLINE:
+			break;
+		}
+	});
+
+	/* final pass: debug print */
+	traverse(PRE_ORDER, [](TraversalState it){
+		auto node = it.node;
+		auto state = node.computed_state();
+		printf("tag: %s\n", node.tag_name());
+		printf("  id: %s\n", node.get_attribute("id"));
+		printf("  display: %s\n", display_to_string(state->display).c_str());
+		printf("  position: %s\n", state->position.to_string().c_str());
+		printf("  color: #%08x\n", state->color.val);
+		printf("  background-color: #%08x\n", state->background_color.val);
+		printf("  width: %s\n", length_to_string(state->width).c_str());
+		printf("  height: %s\n", length_to_string(state->height).c_str());
+	});
 }
 
 struct css::parsers::property property_table[] = {

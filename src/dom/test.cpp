@@ -91,17 +91,15 @@ int main(){
 
 	doc.apply_css(css);
 
-	css->print();
-
 	printf("%s\n", doc.to_string(true).c_str());
 
 	for ( auto match : doc.find("#my-div1 b") ){
 		printf("match: %s#%s\n", match.tag_name(), match.get_attribute("id"));
 	}
 
-	doc.prepare_render();
-	doc.prepare_render();
-	doc.prepare_render();
+	doc.prepare_render(800,600);
+	doc.prepare_render(800,600);
+	doc.prepare_render(800,600);
 
 	return 0;
 }

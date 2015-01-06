@@ -24,6 +24,7 @@ public:
 	std::map<const css::Rule*, std::vector<int>> matched_css_rules;
 	bool invalid;
 	std::string text;
+	css::State computed_state;
 
 	NodeImpl(const char* tag)
 		: tag(tag)
@@ -157,6 +158,11 @@ const char* Node::tag_name() const {
 const char* Node::text_content() const {
 	assert(_impl.get());
 	return _impl->text.c_str();
+}
+
+css::State* Node::computed_state(){
+	assert(_impl.get());
+	return &_impl->computed_state;
 }
 
 Node Node::parent() const {

@@ -4,6 +4,7 @@
 #include <derpkit/utils/string.hpp>
 #include <derpkit/css/specificity.hpp>
 #include <derpkit/css/expression.hpp>
+#include <derpkit/css/state.hpp>
 #include <vector>
 #include <map>
 #include <memory>
@@ -48,6 +49,7 @@ public:
 	std::vector<Node> children() const;
 	const char* tag_name() const;
 	const char* text_content() const;
+	css::State* computed_state();
 
 	const std::vector<std::string>& classes() const;
 
