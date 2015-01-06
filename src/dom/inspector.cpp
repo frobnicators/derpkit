@@ -493,6 +493,14 @@ namespace CSS {
 		return rm_obj;
 	}
 
+	static json_object* serialize_rule_matches(const std::map<const css::Rule*, std::vector<int>>& matches) {
+		json_object* matchedRules = json_object_new_array();
+		for(const RuleMatch& match : matches) {
+			add(matchedRules, serialize_rule_match(match));
+		}
+		return matchedRules;
+	}
+
 
 	static void getComputedStyleForNode(InspectorImpl* inspector, json_object* params, JsonResponse& response) {
 		Node* node = get_node(params);
@@ -511,44 +519,32 @@ namespace CSS {
 		}
 	}
 
-	/*
-	{
-	   "name": "getMatchedStylesForNode",
-	   "returns": [
-		   { "name": "matchedCSSRules", "type": "array", "items": { "$ref": "RuleMatch" }, "optional": true, "description": "CSS rules matching this node, from all applicable stylesheets." },
-		   { "name": "pseudoElements", "type": "array", "items": { "$ref": "PseudoIdMatches" }, "optional": true, "description": "Pseudo style matches for this node." },
-		   { "name": "inherited", "type": "array", "items": { "$ref": "InheritedStyleEntry" }, "optional": true, "description": "A chain of inherited styles (from the immediate node parent up to the DOM tree root)." }
-	   ],
-	   "description": "Returns requested styles for a DOM node identified by <code>nodeId</code>."
-   }
-   */
 	void getMatchedStylesForNode(InspectorImpl* inspector, json_object* params, JsonResponse& response) {
 		Node* node = get_node(params);
 		if(node) {
 			bool excludePseudo = json_object_get_boolean(json_object_object_get(params, "excludePseudo"));
 			bool excludeInherited = json_object_get_boolean(json_object_object_get(params, "excludeInherited"));
 
-			json_object* matchedRules = json_object_new_array();
-			for(const RuleMatch& match : node->matched_css_rules()) {
-				add(matchedRules, serialize_rule_match(match));
-			}
-			response.set("matchedCSSRules", matchedRules);
-
-			json_object* pseudoElements = json_object_new_array();
-			json_object* inherited = json_object_new_array();
+			response.set("matchedCSSRules", serialize_rule_matches(node->matched_css_rules()));
 
 			if(!excludePseudo) {
+				json_object* pseudoElements = json_object_new_array();
 				response.set("pseudoElements", pseudoElements);
+				//{ "name": "pseudoElements", "type": "array", "items": { "$ref": "PseudoIdMatches" }},
 			}
 			if(!excludeInherited) {
-				response.set("inherited", inherited);
+				json_object* inherited = json_object_new_array();
 				Node parent = node->parent();
 				while(parent.exists()) {
 					json_object* obj = json_object_new_object();
 					// TODO: inlineStyle
+					set(obj, "matchedCSSRules", serialize_rule_matches(parent.matched_css_rules()));
+					add(inherited, obj);
 
 					parent = parent.parent();
 				}
+
+				response.set("inherited", inherited);
 			}
 
 
