@@ -39,6 +39,7 @@ public:
 	void set_attribute(const char* key, const char* value);
 	const std::map<std::string, std::string>& attributes() const;
 
+	Node parent() const;
 	size_t children_count() const;
 	std::vector<Node> children() const;
 	const char* tag_name() const;

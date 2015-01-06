@@ -158,6 +158,12 @@ const char* Node::text_content() const {
 	return _impl->text.c_str();
 }
 
+Node Node::parent() const {
+	assert(_impl.get());
+	auto ptr = _impl->parent.lock();
+	return Node(ptr);
+}
+
 size_t Node::children_count() const {
 	assert(_impl.get());
 	return _impl->children.size();
