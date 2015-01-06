@@ -68,12 +68,12 @@ class InspectorImpl {
 		~InspectorImpl();
 
 		void update();
-		void set_document(const dom::Document* doc);
+		void set_document(dom::Document* doc);
 
 		void send(WebSocket::Client* client, const JsonCall* call);
 		void log(const std::string& msg, const char* severity);
 
-		const dom::Document* m_doc;
+		dom::Document* m_doc;
 		WebSocket m_ws;
 		int m_port;
 
@@ -156,7 +156,7 @@ void InspectorImpl::update() {
 	m_ws.update();
 }
 
-void InspectorImpl::set_document(const dom::Document* doc) {
+void InspectorImpl::set_document(dom::Document* doc) {
 	m_doc = doc;
 }
 
@@ -267,7 +267,7 @@ void Inspector::update() {
 	m_pimpl->update();
 }
 
-void Inspector::set_document(const dom::Document* doc) {
+void Inspector::set_document(dom::Document* doc) {
 	m_pimpl->set_document(doc);
 }
 void Inspector::initialize() {
@@ -430,6 +430,74 @@ namespace DOM {
 	}
 
 	static void highlightNode(InspectorImpl* inspector, json_object* params, JsonResponse& response) {
+		json_object* highlightConfig = json_object_object_get(params, "highlightConfig");
+		Node* node = get_node(params);
+		if(highlightConfig != nullptr) {
+			if(node == nullptr) {
+				inspector->m_doc->reset_highlight();
+			} else {
+				dom::Document::InspectorHighlightInfo& info = inspector->m_doc->highlight_info();
+				info.node = *node;
+				info.show_info = json_object_get_boolean(json_object_object_get(highlightConfig, "showInfo"));
+				info.content = false;
+				info.padding = false;
+				info.margin = false;
+				info.border = false;
+
+				json_object* tmp = json_object_object_get(highlightConfig, "contentColor");
+				if(tmp) {
+					tmp = json_object_object_get(tmp, "a");
+					if(tmp) {
+						float alpha = json_object_get_double(tmp);
+						if(alpha > 0.f) {
+							info.content = true;
+						}
+					} else {
+						info.content = true;
+					}
+				}
+
+				tmp = json_object_object_get(highlightConfig, "paddingColor");
+				if(tmp) {
+					tmp = json_object_object_get(tmp, "a");
+					if(tmp) {
+						float alpha = json_object_get_double(tmp);
+						if(alpha > 0.f) {
+							info.padding = true;
+						}
+					} else {
+						info.padding = true;
+					}
+				}
+
+				tmp = json_object_object_get(highlightConfig, "marginColor");
+				if(tmp) {
+					tmp = json_object_object_get(tmp, "a");
+					if(tmp) {
+						float alpha = json_object_get_double(tmp);
+						if(alpha > 0.f) {
+							info.margin = true;
+						}
+					} else {
+						info.margin = true;
+					}
+				}
+
+				tmp = json_object_object_get(highlightConfig, "borderColor");
+				if(tmp) {
+					tmp = json_object_object_get(tmp, "a");
+					if(tmp) {
+						float alpha = json_object_get_double(tmp);
+						if(alpha > 0.f) {
+							info.border = true;
+						}
+					} else {
+						info.border = true;
+					}
+				}
+			}
+		}
+		delete node;
 	}
 }
 

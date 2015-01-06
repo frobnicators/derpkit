@@ -62,12 +62,26 @@ public:
 
 	void prepare_render(int width, int height);
 
+	struct InspectorHighlightInfo {
+		Node node;
+		bool content;
+		bool padding;
+		bool margin;
+		bool border;
+		bool show_info;
+	};
+
+	InspectorHighlightInfo& highlight_info() { return m_highlight_info; }
+	void reset_highlight();
+
 private:
 	std::vector<Node> find(const css::Selector& selector, Node node, size_t state) const;
 
 	void traverse(TraversalState& state, TraversalOrder order, std::function<void(TraversalState& it)>) const;
 
 	Node root_node;
+
+	InspectorHighlightInfo m_highlight_info;
 };
 
 }

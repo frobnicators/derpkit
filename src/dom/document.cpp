@@ -337,6 +337,10 @@ void Document::prepare_render(int width, int height){
 	});
 }
 
+void Document::reset_highlight() {
+	m_highlight_info.node = Node();
+}
+
 struct css::parsers::property property_table[] = {
 	{"background-color",    "transparent",   NO_INHERIT, offsetof(css::State, background_color),  sizeof(css::State::background_color),  css::parsers::color},
 	{"color",               "#000",             INHERIT, offsetof(css::State, color),             sizeof(css::State::color),             css::parsers::color},
