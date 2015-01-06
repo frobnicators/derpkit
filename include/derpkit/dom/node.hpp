@@ -62,6 +62,11 @@ public:
 
 	static Node from_internal_id(uint64_t);
 
+	/**
+	 * Tests if two nodes are the same. Unset nodes always compare false.
+	 */
+	bool operator==(const Node& rhs) const;
+
 private:
 	friend class Document;
 

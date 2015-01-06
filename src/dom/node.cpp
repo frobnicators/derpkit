@@ -258,4 +258,8 @@ std::string NodeCSSProperty::to_string() const {
 	return ss.str();
 }
 
+bool Node::operator==(const Node& rhs) const {
+	return (_impl.get() == rhs._impl.get()) && _impl.get();
+}
+
 }
