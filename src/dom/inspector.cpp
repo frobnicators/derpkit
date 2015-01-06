@@ -6,7 +6,7 @@
 #include <derpkit/utils/network/websocket.hpp>
 #include <derpkit/utils/string_utils.hpp>
 #include <derpkit/utils/logging.hpp>
-#include <json/json.h>
+#include <json.h>
 
 #include <cstdlib>
 

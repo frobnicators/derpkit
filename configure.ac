@@ -39,7 +39,7 @@ AM_PATH_CPPUNIT(1.9.6,,[AC_MSG_NOTICE([cppunit not found, tests disabled])])
 AM_CONDITIONAL([BUILD_TESTS], [test "x$no_cppunit" != "xyes"])
 
 # Only required for inspector
-PKG_CHECK_MODULES([json],[json])
+PKG_CHECK_MODULES([json],[json-c])
 
 AC_CHECK_FUNCS([access stat gettimeofday usleep setitimer])
 AC_SEARCH_LIBS([clock_gettime], [rt])
