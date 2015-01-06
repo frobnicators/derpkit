@@ -98,7 +98,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	#my-div3 {
-		width: .024cm + 12;
+		width: .024cm;
 		height: 24.54mm;
 		background-color: rgba(200, 50, 24, 125);
 	}
