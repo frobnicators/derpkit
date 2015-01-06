@@ -53,6 +53,7 @@ class DERPKIT_EXPORT Expression {
 
 		void print() const;
 
+		static Expression single_term(Term::Type, const std::string& str);
 };
 
 }

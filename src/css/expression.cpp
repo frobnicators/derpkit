@@ -56,6 +56,17 @@ void Term::print() const {
 	}
 }
 
+Expression Expression::single_term(Term::Type type, const std::string& str){
+	Term term;
+	Expression expr;
+
+	term.type = type;
+	term.value = str;
+	expr.terms.push_back(term);
+
+	return expr;
+}
+
 std::string Expression::to_string() const {
 	std::stringstream ss;
 	for(const auto& term : terms) {
