@@ -21,6 +21,8 @@ class DERPKIT_EXPORT Inspector {
 		void update();
 
 		void set_document(Document* doc);
+
+		void document_update();
 	private:
 		InspectorImpl* m_pimpl;
 };

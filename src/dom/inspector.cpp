@@ -69,6 +69,7 @@ class InspectorImpl {
 
 		void update();
 		void set_document(dom::Document* doc);
+		void document_update();
 
 		void send(WebSocket::Client* client, const JsonCall* call);
 		void log(const std::string& msg, const char* severity);
@@ -84,6 +85,9 @@ class InspectorImpl {
 		void on_http(WebSocket::Client* client, const std::map<std::string,std::string>& headers, const std::string&);
 
 		static std::map<std::string,std::function<void(InspectorImpl*,json_object*,JsonResponse& response)>> s_method_mapping;
+
+		bool dom_enabled;
+		bool css_enabled;
 };
 
 JsonRequest::JsonRequest(const std::string& method_name) {
@@ -141,7 +145,7 @@ void JsonCall::set(const char* key, json_object* obj) {
 
 /* Implementation */
 
-InspectorImpl::InspectorImpl(int port) : m_doc(nullptr), m_ws(port), m_port(port) {
+InspectorImpl::InspectorImpl(int port) : m_doc(nullptr), m_ws(port), m_port(port), dom_enabled(false), css_enabled(true) {
 	using namespace std::placeholders;
 	m_ws.set_connected_callback(std::bind(&InspectorImpl::connected, this, _1));
 	m_ws.set_text_data_callback(std::bind(&InspectorImpl::message, this, _1, _2));
@@ -203,7 +207,7 @@ static void serve_file(WebSocket& ws, WebSocket::Client* client, std::string fil
 
 	filename = filename.substr(start, len);
 
-	std::string _filename = srcdir "/data/inspector/" + filename;
+	std::string _filename = srcdir "/data/" + filename;
 	FILE* file = fopen(_filename.c_str(), "rb");
 	if(file) {
 		size_t filelen = file_size(file);
@@ -234,8 +238,8 @@ void InspectorImpl::on_http(WebSocket::Client* client, const std::map<std::strin
 		if(get[1] == "/") {
 			char buffer[256];
 			// TODO: replace localhost
-			sprintf(buffer, "HTTP/1.1 307 Temprary Redirect\r\n"
-				"Location: http://localhost:%d/inspector.html?ws=localhost:%d/\r\n"
+			sprintf(buffer, "HTTP/1.1 307 Temporary Redirect\r\n"
+				"Location: http://localhost:%d/inspector/inspector.html?ws=localhost:%d/\r\n"
 				"Connection: close\r\n"
 				"\r\n", m_port, m_port);
 
@@ -247,6 +251,13 @@ void InspectorImpl::on_http(WebSocket::Client* client, const std::map<std::strin
 		Logging::error("[Inspector] Not a get request: %s\n", request.c_str());
 	}
 	m_ws.close(client);
+}
+
+void InspectorImpl::document_update() {
+	if(dom_enabled) {
+		JsonRequest req("DOM.documentUpdated");
+		send(nullptr, &req);
+	}
 }
 
 void InspectorImpl::send(WebSocket::Client* client, const JsonCall* call) {
@@ -275,6 +286,10 @@ void Inspector::initialize() {
 }
 void Inspector::cleanup() {
 	Socket::cleanup();
+}
+
+void Inspector::document_update() {
+	m_pimpl->document_update();
 }
 
 void Inspector::log(const std::string& msg, Logging::Severity severity) {
@@ -400,6 +415,10 @@ Node* get_node(json_object* params) {
 /* Methods */
 
 namespace DOM {
+	static void enable(InspectorImpl* inspector, json_object* params, JsonResponse& response) {
+		inspector->dom_enabled = true;
+	}
+
 	static void getDocument(InspectorImpl* inspector, json_object* params, JsonResponse& response) {
 		if(inspector->m_doc != nullptr) {
 			json_object* obj = json_object_new_object();
@@ -573,6 +592,9 @@ namespace CSS {
 		return matchedRules;
 	}
 
+	static void enable(InspectorImpl* inspector, json_object* params, JsonResponse& response) {
+		inspector->css_enabled = true;
+	}
 
 	// TODO: Actual computed
 	static void getComputedStyleForNode(InspectorImpl* inspector, json_object* params, JsonResponse& response) {
@@ -628,6 +650,28 @@ namespace CSS {
 
 }
 
+namespace Page {
+	void getResourceTree(InspectorImpl* inspector, json_object* params, JsonResponse& response) {
+		json_object* frameTree = json_object_new_object();
+
+		json_object* frame = json_object_new_object();
+
+		set(frame, "id", "<derpkit-frame>");
+		set(frame, "url", "http://localhost"); // TODO
+		set(frame, "securityOrigin", "localhost");
+		set(frame, "mimeType", "text/html");
+
+
+		set(frameTree, "frame", frame);
+
+		json_object* resources = json_object_new_array();
+		// TODO: Fill resource array
+		set(frameTree, "resources", resources);
+
+		response.set("frameTree", frameTree);
+	}
+};
+
 }
 
 void InspectorImpl::log(const std::string& msg, const char* severity) {
@@ -647,10 +691,13 @@ void InspectorImpl::log(const std::string& msg, const char* severity) {
 /* method mapping */
 
 std::map<std::string,std::function<void(InspectorImpl*,json_object*,JsonResponse& response)>> InspectorImpl::s_method_mapping = {
+	{ "DOM.enable", &json::DOM::enable },
 	{ "DOM.getDocument", &json::DOM::getDocument },
 	{ "DOM.highlightNode", &json::DOM::highlightNode },
+	{ "CSS.enable", &json::CSS::enable },
 	{ "CSS.getComputedStyleForNode", &json::CSS::getComputedStyleForNode },
 	{ "CSS.getMatchedStylesForNode", &json::CSS::getMatchedStylesForNode },
+	{ "Page.getResourceTree", &json::Page::getResourceTree },
 };
 
 /**
