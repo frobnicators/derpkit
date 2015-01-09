@@ -17,6 +17,9 @@ AH_BOTTOM([
 using namespace derpkit;
 ])
 
+# TODO: Toggle via argument
+AC_DEFINE_UNQUOTED([ENABLE_DEBUG],  [1], [Enable debug])
+
 VERSION_MAJOR=_VERSION_MAJOR
 VERSION_MINOR=_VERSION_MINOR
 VERSION_MICRO=_VERSION_MICRO
