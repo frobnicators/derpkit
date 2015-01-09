@@ -8,24 +8,12 @@
 #include <derpkit/utils/network/websocket.hpp>
 #include <derpkit/utils/string_utils.hpp>
 #include <derpkit/utils/logging.hpp>
-#include <json.h>
+#include <derpkit/utils/file.hpp>
 
-#include <cstdlib>
+#include <json.h>
 
 namespace dom {
 
-static long file_size(FILE* fp){
-	const long cur = ftell(fp);
-	fseek (fp , 0 , SEEK_END);
-	const long bytes = ftell(fp);
-	fseek(fp, cur, SEEK_SET);
-
-	if ( bytes == -1 ){
-		Logging::fatal("ftell(%d) failed: %s\n", fileno(fp), strerror(errno));
-	}
-
-	return bytes;
-}
 class JsonCall {
 	public:
 		JsonCall();
@@ -208,25 +196,17 @@ static void serve_file(WebSocket& ws, WebSocket::Client* client, std::string fil
 	filename = filename.substr(start, len);
 
 	std::string _filename = srcdir "/data/" + filename;
-	FILE* file = fopen(_filename.c_str(), "rb");
-	if(file) {
-		size_t filelen = file_size(file);
+	FileData file = load_file(_filename);
+	if(file.valid()) {
 		char buffer[256];
 		sprintf(buffer, "HTTP/1.1 200 OK\r\n"
 			"Connection: close\r\n"
 			"Content-Length: %lu\r\n"
-			"\r\n", filelen);
+			"\r\n", file.size());
 
 		ws.send_raw(client, buffer, strlen(buffer));
 
-		char* tmp = (char*)malloc(filelen);
-		if(fread(tmp, 1, filelen, file) == filelen) {
-			ws.send_raw(client, tmp, filelen);
-		} else {
-			Logging::error("[Inspector] Failed to read all bytes from file %s.\n", _filename.c_str());
-		}
-
-		free(tmp);
+		ws.send_raw(client, file.data(), file.size());
 	} else {
 		Logging::error("[Inspector] Failed to open file %s\n", _filename.c_str());
 	}

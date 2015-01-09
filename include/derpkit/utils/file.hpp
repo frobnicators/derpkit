@@ -68,4 +68,26 @@ std::string path_join(const char* a, const std::string& b);
 template<typename T1, typename T2, typename... Args>
 std::string path_join(const T1& a, const T2& b, Args... args){ return path_join(a, path_join(b, args...)); }
 
+#ifdef ENABLE_DEBUG
+
+class FileData {
+public:
+	FileData();
+	FileData(char* data, size_t size);
+	FileData(FileData&& other);
+	~FileData();
+
+	bool valid() const { return m_data != nullptr; }
+
+	const char* data() const { return m_data; }
+	size_t size() const { return m_size; }
+private:
+	char* m_data;
+	size_t m_size;
+};
+
+FileData load_file(const std::string& filename);
+
+#endif
+
 #endif

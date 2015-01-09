@@ -3,7 +3,10 @@
 #endif
 
 #include <derpkit/utils/file.hpp>
+#include <derpkit/utils/logging.hpp>
 #include <algorithm>
+#include <cstdlib>
+#include <cstring>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -153,3 +156,53 @@ std::string path_join(const std::string& a, const char* b){
 std::string path_join(const char* a, const std::string& b){
 	return path_join(std::string(a), b);
 }
+
+#ifdef ENABLE_DEBUG
+
+static long file_size(FILE* fp) {
+	const long cur = ftell(fp);
+	fseek (fp , 0 , SEEK_END);
+	const long bytes = ftell(fp);
+	fseek(fp, cur, SEEK_SET);
+
+	if ( bytes == -1 ){
+		Logging::fatal("ftell(%d) failed: %s\n", fileno(fp), strerror(errno));
+	}
+
+	return bytes;
+}
+
+FileData::FileData() : m_data(nullptr), m_size(0) { }
+
+FileData::FileData(char* data, size_t size) : m_data(data), m_size(size) { }
+
+FileData::FileData(FileData&& other) : m_size(other.m_size) {
+	m_data = other.m_data;
+	other.m_data = nullptr;
+}
+
+FileData::~FileData() {
+	delete m_data;
+}
+
+
+FileData load_file(const std::string& filename) {
+	FILE* file = fopen(filename.c_str(), "rb");
+	if(file) {
+		size_t filelen = file_size(file);
+		char* tmp = new char[filelen];
+		if(fread(tmp, 1, filelen, file) == filelen) {
+			return FileData(tmp, filelen);
+		} else {
+			Logging::error("Failed to read all bytes from file %s.\n", filename.c_str());
+		}
+
+		fclose(file);
+
+		return FileData(tmp, filelen);
+	} else {
+		return FileData();
+	}
+}
+
+#endif
