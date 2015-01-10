@@ -73,6 +73,7 @@ namespace Logging {
 		free(message);
 	}
 
+#ifdef ENABLE_DEBUG
 	void fatal(const char* fmt, ...){
 		va_list ap;
 		va_start(ap, fmt);
@@ -81,6 +82,7 @@ namespace Logging {
 
 		abort();
 	}
+#endif
 
 	void error(const char* fmt, ...){
 		va_list ap;

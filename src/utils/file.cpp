@@ -186,11 +186,13 @@ FileData::~FileData() {
 }
 
 
-FileData load_file(const std::string& filename) {
+FileData load_file(const std::string& in_filename) {
+	std::string filename = srcdir + in_filename;
 	FILE* file = fopen(filename.c_str(), "rb");
 	if(file) {
 		size_t filelen = file_size(file);
-		char* tmp = new char[filelen];
+		char* tmp = new char[filelen+1];
+		tmp[filelen] = 0;
 		if(fread(tmp, 1, filelen, file) == filelen) {
 			return FileData(tmp, filelen);
 		} else {

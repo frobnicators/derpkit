@@ -195,7 +195,7 @@ static void serve_file(WebSocket& ws, WebSocket::Client* client, std::string fil
 
 	filename = filename.substr(start, len);
 
-	std::string _filename = srcdir "/data/" + filename;
+	std::string _filename = "/data/" + filename;
 	FileData file = load_file(_filename);
 	if(file.valid()) {
 		char buffer[256];

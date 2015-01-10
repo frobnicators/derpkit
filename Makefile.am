@@ -7,7 +7,7 @@ AM_CFLAGS = ${AM_CXXFLAGS}
 
 lib_LTLIBRARIES = libderpkit.la
 noinst_LTLIBRARIES = libantlr3c.la libsha1.la libb64.la
-noinst_PROGRAMS = parse domtest
+noinst_PROGRAMS = derptest domtest
 
 TESTS = test/dom
 if BUILD_TESTS
@@ -37,6 +37,13 @@ libderpkit_la_SOURCES = \
 	src/css/selector.cpp src/css/selector.hpp \
 	src/css/specificity.cpp src/css/specificity.hpp \
 	src/css/datatype/position.cpp \
+	include/derpkit/render/rendertarget.hpp src/render/rendertarget.cpp \
+	include/derpkit/render/shader.hpp src/render/shader.cpp \
+	include/derpkit/render/math.hpp src/render/math.cpp \
+	include/derpkit/render/utils.hpp src/render/utils.cpp \
+	src/render/impl.hpp src/render/gl/impl.cpp \
+	src/render/gl/shader.cpp \
+	src/render/gl/fbo.cpp \
 	src/ffs_compat.cpp src/ffs_compat.hpp \
 	src/dom/inspector.cpp include/derpkit/dom/inspector.hpp \
 	include/derpkit/dom/document.hpp src/dom/document.cpp \
@@ -84,12 +91,12 @@ libb64_la_CXXFLAGS =
 libb64_la_CFLAGS = ${VENDOR_CFLAGS} -I${top_srcdir}/vendor/b64/include
 libb64_la_SOURCES = vendor/b64/src/cdecode.c vendor/b64/src/cencode.c vendor/b64/include/b64/cdecode.h vendor/b64/include/b64/cencode.h
 
-parse_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include
-parse_LDADD = libderpkit.la ${json_LIBS}
-parse_SOURCES = src/main.cpp
+derptest_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include
+derptest_LDADD = libderpkit.la ${json_LIBS} -lGL -lSDL -lGLEW -lGLU
+derptest_SOURCES = src/test/window.cpp src/test/main.cpp
 
 domtest_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include -I${top_srcdir}/src
-domtest_LDADD = libderpkit.la ${json_LIBS}
+domtest_LDADD = libderpkit.la ${json_LIBS} -lGL -lGLU
 domtest_SOURCES = src/dom/test.cpp
 
 test_dom_CXXFLAGS = ${AM_CXXFLAGS} $(CPPUNIT_CFLAGS)
