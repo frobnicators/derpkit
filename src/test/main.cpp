@@ -17,6 +17,7 @@
 
 #include "window.hpp"
 #include "render/impl.hpp"
+#include "render/text.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -136,6 +137,9 @@ int main(int argc, char * argv[]) {
 
 		Texture texture("/data/debug.jpg");
 
+		TextHandle text;
+		text.update(box(50,50,200,50), "lorem ipsum dolor sit amet", FontDefinition::manual("/usr/share/fonts/corefonts/arial.ttf", 12));
+
 		while(window.running()) {
 			utils::usleep(100);
 			inspector.update();
@@ -149,6 +153,11 @@ int main(int argc, char * argv[]) {
 
 			shader->set_projection(window.screenortho());
 			Utils::draw_rect(0.f, 0.f, 512.f, 512.f);
+
+			if ( text.is_dirty() ){
+				Text::draw(text);
+			}
+			Text::blit(text);
 
 			shader->unbind();
 

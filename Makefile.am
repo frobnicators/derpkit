@@ -43,6 +43,8 @@ libderpkit_la_SOURCES = \
 	include/derpkit/render/utils.hpp src/render/utils.cpp \
 	include/derpkit/render/texture.hpp src/render/texture.cpp \
 	src/render/impl.hpp src/render/gl/impl.cpp \
+	src/render/font.cpp src/render/font.hpp \
+	src/render/text.cpp src/render/text.hpp \
 	src/render/gl/shader.cpp \
 	src/render/gl/fbo.cpp \
 	src/render/gl/texture.cpp \
