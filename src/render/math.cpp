@@ -81,6 +81,14 @@ mat3 model_matrix(const vec2& pos, const vec2& size) {
 		pos.x , pos.y , 1.f);
 }
 
+mat3 model_matrix(const box& box){
+	return mat3(
+		box.w, 0.0f,  0.0f,
+		0.0f,  box.h, 0.0f,
+		box.x, box.y, 1.0f
+	);
+}
+
 /*
 mat3 mat3::operator*(const mat3& m1, const mat3& m2)
 {

@@ -74,6 +74,7 @@ vec3 DERPKIT_EXPORT normalized(const vec3& v);
 
 mat3 DERPKIT_EXPORT ortho(const ivec2& size);
 mat3 DERPKIT_EXPORT model_matrix(const vec2& pos, const vec2& size);
+mat3 DERPKIT_EXPORT model_matrix(const box& box);
 
 }
 }
