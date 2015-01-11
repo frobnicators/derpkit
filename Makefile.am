@@ -20,9 +20,9 @@ libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Dsrcdir=\"${top_srcdir}\" -I${top_build
 libderpkit_la_CFLAGS = ${libderpkit_la_CXXFLAGS} -Wno-unused
 libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la ${freetype_LIBS}
 libderpkit_la_SOURCES = \
-	include/derpkit/derpkit.hpp \
 	include/derpkit/export.hpp \
 	include/derpkit/forward.hpp \
+	src/derpkit.cpp include/derpkit/derpkit.hpp \
 	src/css/parser/css3.g \
 	src/css/parser/css3Parser.c src/css/parser/css3Parser.h \
 	src/css/parser/css3Lexer.c src/css/parser/css3Lexer.h \

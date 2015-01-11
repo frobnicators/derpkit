@@ -2,6 +2,7 @@
 #include "config.h"
 #endif
 
+#include <derpkit/derpkit.hpp>
 #include <derpkit/version.hpp>
 
 #include <derpkit/utils/utils.hpp>
@@ -37,7 +38,7 @@ int main(int argc, char * argv[]) {
 			//exit(1);
 		//}
 
-		Inspector::initialize();
+		derpkit::initialize();
 		Document doc;
 
 		//css::CSS * css = css::CSS::from_file(argv[1]);
@@ -169,5 +170,5 @@ int main(int argc, char * argv[]) {
 		delete shader;
 	}
 
-	Inspector::cleanup();
+	derpkit::cleanup();
 }

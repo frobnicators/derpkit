@@ -32,7 +32,7 @@ private:
 
 class DERPKIT_EXPORT Text {
  public:
-	static void init();
+	static void initialize();
 	static void cleanup();
 
 	static void draw(const TextHandle& text);
