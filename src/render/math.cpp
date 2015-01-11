@@ -10,6 +10,7 @@ namespace render {
 vec2::vec2(float x, float y) : x(x), y(y) { }
 ivec2::ivec2(int x, int y) : x(x), y(y) { }
 vec3::vec3(float x, float y, float z) : x(x), y(y), z(z) { }
+box::box(float x, float y, float w, float h) : x(x), y(y), w(w), h(h) { }
 
 mat3::mat3(float m00, float m01, float m02,
 	       float m10, float m11, float m12,

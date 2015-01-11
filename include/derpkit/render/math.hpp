@@ -42,6 +42,16 @@ struct DERPKIT_EXPORT vec3 {
 	float length() const;
 };
 
+struct DERPKIT_EXPORT box {
+	box() {};
+	box(float x, float y, float w, float h);
+
+	float x;
+	float y;
+	float w;
+	float h;
+};
+
 struct DERPKIT_EXPORT mat3 {
 	mat3() {};
 	mat3(float m00, float m01, float m02,
