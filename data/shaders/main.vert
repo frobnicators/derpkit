@@ -1,12 +1,10 @@
-#version 150
-
-#extension GL_ARB_explicit_attrib_location: enable
+#version 130
 
 uniform mat3 u_proj;
 uniform mat3 u_model;
 
-layout (location=0) in vec2 in_pos;
-layout (location=1) in vec2 in_uv;
+in vec2 in_pos;
+in vec2 in_uv;
 
 out vec2 uv;
 

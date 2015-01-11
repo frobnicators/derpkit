@@ -118,6 +118,7 @@ void unbind_shader() {
 }
 
 static void init_shader(Shader* shader) {
+	// TODO: Move some of this stuff to generic code paths
 	Uniform* tmp = get_uniform(shader, "u_proj");
 	shader->u_proj = *tmp;
 	free_uniform(tmp);
@@ -125,6 +126,9 @@ static void init_shader(Shader* shader) {
 	tmp = get_uniform(shader, "u_model");
 	shader->u_model = *tmp;
 	free_uniform(tmp);
+
+	glBindAttribLocation(shader->resource, 0, "in_pos");
+	glBindAttribLocation(shader->resource, 1, "in_uv");
 }
 
 #ifdef ENABLE_DEBUG
