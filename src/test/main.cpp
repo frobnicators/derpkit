@@ -139,7 +139,7 @@ int main(int argc, char * argv[]) {
 		Texture texture("/data/debug.jpg");
 
 		TextHandle text;
-		text.update(box(50,50,200,50), "lorem ipsum dolor sit amet", FontDefinition::manual("/usr/share/fonts/corefonts/arial.ttf", 12));
+		text.update(box(50,50,200,50), "abcdefiwiwi 012", FontDefinition::create("arial", 24));
 
 		while(window.running()) {
 			utils::usleep(100);

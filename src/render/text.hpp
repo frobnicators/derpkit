@@ -3,6 +3,7 @@
 
 #include "font.hpp"
 #include <derpkit/render/math.hpp>
+#include <derpkit/render/texture.hpp>
 #include <string>
 
 namespace derpkit { namespace render {
@@ -21,13 +22,20 @@ public:
 
 	bool is_dirty() const { return dirty; }
 
+protected:
+	void resize_buffer();
+
 private:
 	friend class Text;
 
-	bool dirty;
+	size_t buffer_size;
+	unsigned char* buffer;
+
+	mutable bool dirty;
 	std::string text;
 	struct box box;
 	FontDefinition font;
+	mutable Texture texture;
 };
 
 class DERPKIT_EXPORT Text {

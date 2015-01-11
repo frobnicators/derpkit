@@ -6,20 +6,9 @@
 
 namespace derpkit { namespace render {
 
-FontDefinition::FontDefinition(){
-
-}
-
-FontDefinition::~FontDefinition(){
-
-}
-
-FontDefinition FontDefinition::default_font(){
-	return FontDefinition();
-}
-
-FontDefinition FontDefinition::manual(const char* filename, signed long size){
-	return FontDefinition();
+const char* FontLookup::filename_from_family(const char* family){
+	/** @todo replace with real implementation */
+	return "/usr/share/fonts/corefonts/arial.ttf";
 }
 
 }}
