@@ -166,7 +166,8 @@ def build_source_def(filename):
         return g_shader_sources[filename]["index"]
 
 def write_output():
-    os.makedirs("gen/")
+    if not os.path.exists("gen"):
+        os.makedirs("gen")
     hpp_in_f = open(g_root_dir + "shaderdefs.hpp.in")
     cpp_in_f = open(g_root_dir + "shaderdefs.cpp.in")
 
