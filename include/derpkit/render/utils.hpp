@@ -13,6 +13,7 @@ class DERPKIT_EXPORT Utils {
 		}
 
 		static void draw_rect(const vec2& pos, const vec2& size);
+		static void draw_rect(const box& box);
 
 		static void check_for_errors(const char* context);
 };

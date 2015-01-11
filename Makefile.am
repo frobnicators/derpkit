@@ -16,13 +16,13 @@ endif
 
 #TODO: Remove srcdir define (used for inspector file include)
 
-libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Dsrcdir=\"${top_srcdir}\" -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include ${json_CFLAGS}
+libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Dsrcdir=\"${top_srcdir}\" -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include ${json_CFLAGS} ${freetype_CFLAGS}
 libderpkit_la_CFLAGS = ${libderpkit_la_CXXFLAGS} -Wno-unused
-libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la
+libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la ${freetype_LIBS}
 libderpkit_la_SOURCES = \
-	include/derpkit/derpkit.hpp \
 	include/derpkit/export.hpp \
 	include/derpkit/forward.hpp \
+	src/derpkit.cpp include/derpkit/derpkit.hpp \
 	src/css/parser/css3.g \
 	src/css/parser/css3Parser.c src/css/parser/css3Parser.h \
 	src/css/parser/css3Lexer.c src/css/parser/css3Lexer.h \
@@ -43,6 +43,10 @@ libderpkit_la_SOURCES = \
 	include/derpkit/render/utils.hpp src/render/utils.cpp \
 	include/derpkit/render/texture.hpp src/render/texture.cpp \
 	src/render/impl.hpp src/render/gl/impl.cpp \
+	src/render/font.cpp src/render/font.hpp \
+	src/render/text.cpp src/render/text.hpp \
+	src/render/freetype/font.cpp \
+	src/render/freetype/text.cpp \
 	src/render/gl/shader.cpp \
 	src/render/gl/fbo.cpp \
 	src/render/gl/texture.cpp \

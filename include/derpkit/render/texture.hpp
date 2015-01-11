@@ -1,6 +1,7 @@
 #ifndef DERPKIT_TEXTURE_HPP
 #define DERPKIT_TEXTURE_HPP
 
+#include <derpkit/render/math.hpp>
 #include <string>
 
 namespace derpkit {
@@ -12,8 +13,11 @@ namespace impl {
 
 class DERPKIT_EXPORT Texture {
 	public:
+		Texture();
 		Texture(const std::string& path);
 		~Texture();
+
+		void upload(unsigned char* pixels, ivec2 size); /** @todo format */
 
 		void bind(int unit=0);
 		void unbind();

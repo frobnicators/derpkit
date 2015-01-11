@@ -11,6 +11,7 @@ vec2::vec2(float x, float y) : x(x), y(y) { }
 ivec2::ivec2(int x, int y) : x(x), y(y) { }
 vec3::vec3(float x, float y, float z) : x(x), y(y), z(z) { }
 vec4::vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) { }
+box::box(float x, float y, float w, float h) : x(x), y(y), w(w), h(h) { }
 
 mat3::mat3(float m00, float m01, float m02,
 	       float m10, float m11, float m12,
@@ -92,6 +93,14 @@ mat3 model_matrix(const vec2& pos, const vec2& size) {
 		size.x, 0.f   , 0.f,
 		0.f   , size.y, 0.f,
 		pos.x , pos.y , 1.f);
+}
+
+mat3 model_matrix(const box& box){
+	return mat3(
+		box.w, 0.0f,  0.0f,
+		0.0f,  box.h, 0.0f,
+		box.x, box.y, 1.0f
+	);
 }
 
 /*

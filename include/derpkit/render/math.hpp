@@ -73,6 +73,16 @@ struct DERPKIT_EXPORT vec4 {
 	float length() const;
 };
 
+struct DERPKIT_EXPORT box {
+	box() {};
+	box(float x, float y, float w, float h);
+
+	float x;
+	float y;
+	float w;
+	float h;
+};
+
 struct DERPKIT_EXPORT mat3 {
 	mat3() {};
 	mat3(float m00, float m01, float m02,
@@ -98,6 +108,7 @@ vec4 DERPKIT_EXPORT normalized(const vec4& v);
 
 mat3 DERPKIT_EXPORT ortho(const ivec2& size);
 mat3 DERPKIT_EXPORT model_matrix(const vec2& pos, const vec2& size);
+mat3 DERPKIT_EXPORT model_matrix(const box& box);
 
 }
 }

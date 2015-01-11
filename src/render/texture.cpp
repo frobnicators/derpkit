@@ -9,6 +9,10 @@
 namespace derpkit {
 namespace render {
 
+Texture::Texture() : m_unit(-1) {
+	m_impl = impl::empty_texture();
+}
+
 Texture::Texture(const std::string& path) : m_unit(-1) {
 	m_impl = impl::load_texture(path);
 }
@@ -16,6 +20,11 @@ Texture::Texture(const std::string& path) : m_unit(-1) {
 Texture::~Texture() {
 	impl::free_texture(m_impl);
 }
+
+void Texture::upload(unsigned char* pixels, ivec2 size){
+	impl::texture_upload(m_impl, pixels, size);
+}
+
 
 void Texture::bind(int unit) {
 	impl::bind_texture(m_impl, unit);

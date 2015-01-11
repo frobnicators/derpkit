@@ -31,6 +31,23 @@ struct ImageData {
 
 static bool load_jpeg(const std::string& path, ImageData& img);
 
+Texture2D* empty_texture() {
+	Texture2D* texture = new Texture2D();
+
+	glGenTextures(1, &texture->resource);
+	glBindTexture(GL_TEXTURE_2D, texture->resource);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);   /** @todo add option for filter */
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return texture;
+}
+
 Texture2D* load_texture(const std::string& path) {
 	std::string ext = lcase(file_ext(path));
 	ImageData img;
@@ -65,6 +82,12 @@ void free_texture(Texture2D* texture) {
 	if(texture == nullptr) return;
 	glDeleteTextures(1, &texture->resource);
 	delete texture;
+}
+
+void texture_upload(Texture2D* texture, unsigned char* pixels, ivec2 size){
+	glBindTexture(GL_TEXTURE_2D, texture->resource);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.x, size.y, 0, GL_RED, GL_UNSIGNED_BYTE, pixels);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void bind_texture(Texture2D* tex, int unit) {

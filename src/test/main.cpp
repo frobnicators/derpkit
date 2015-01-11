@@ -2,6 +2,7 @@
 #include "config.h"
 #endif
 
+#include <derpkit/derpkit.hpp>
 #include <derpkit/version.hpp>
 
 #include <derpkit/utils/utils.hpp>
@@ -18,6 +19,7 @@
 #include "window.hpp"
 #include "render/impl.hpp"
 #include "gen/shaderdefs.hpp"
+#include "render/text.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -38,7 +40,7 @@ int main(int argc, char * argv[]) {
 			//exit(1);
 		//}
 
-		Inspector::initialize();
+		derpkit::initialize();
 		Document doc;
 
 		//css::CSS * css = css::CSS::from_file(argv[1]);
@@ -122,9 +124,9 @@ int main(int argc, char * argv[]) {
 
 		doc.apply_css(css);
 
-		css->print();
+		//css->print();
 
-		printf("%s\n", doc.to_string(true).c_str());
+		//printf("%s\n", doc.to_string(true).c_str());
 
 		Inspector inspector;
 		inspector.set_document(&doc);
@@ -133,6 +135,9 @@ int main(int argc, char * argv[]) {
 		const Shader* shader = Shader::get(Shader_main);
 
 		Texture texture("/data/debug.jpg");
+
+		TextHandle text;
+		text.update(box(50,50,200,50), "abcdefiwiwi 012", FontDefinition::create("arial", 24));
 
 		while(window.running()) {
 			utils::usleep(100);
@@ -148,6 +153,11 @@ int main(int argc, char * argv[]) {
 			Shader::set_projection(window.screenortho());
 			Utils::draw_rect(0.f, 0.f, 512.f, 512.f);
 
+			if ( text.is_dirty() ){
+				Text::draw(text);
+			}
+			Text::blit(text);
+
 			shader->unbind();
 
 			window.update();
@@ -158,5 +168,5 @@ int main(int argc, char * argv[]) {
 		Shader::cleanup();
 	}
 
-	Inspector::cleanup();
+	derpkit::cleanup();
 }
