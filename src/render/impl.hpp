@@ -48,10 +48,6 @@ Shader* create_shader_from_filename(const std::string& filename);
 
 // Uniforms
 
-// The shader must be bound
-void set_projection(Shader* shader, const mat3& m);
-void set_model_matrix(Shader* shader, const mat3& m);
-
 Uniform* get_uniform(Shader* shader, const std::string& name);
 Uniform* copy_uniform(const Uniform* uniform);
 void free_uniform(Uniform* uniform);

@@ -26,8 +26,6 @@ struct Uniform {
 
 struct Shader {
 	GLuint resource;
-	Uniform u_proj;
-	Uniform u_model;
 };
 
 #ifdef ENABLE_DEBUG
@@ -100,6 +98,7 @@ GLuint link_program(const std::string &shader_name, const std::vector<GLuint> &s
 }
 
 void free_shader(Shader* shader) {
+	if(shader == nullptr) return;
 	glDeleteProgram(shader->resource);
 	delete shader;
 }
@@ -118,15 +117,6 @@ void unbind_shader() {
 }
 
 static void init_shader(Shader* shader) {
-	// TODO: Move some of this stuff to generic code paths
-	Uniform* tmp = get_uniform(shader, "u_proj");
-	shader->u_proj = *tmp;
-	free_uniform(tmp);
-
-	tmp = get_uniform(shader, "u_model");
-	shader->u_model = *tmp;
-	free_uniform(tmp);
-
 	glBindAttribLocation(shader->resource, 0, "in_pos");
 	glBindAttribLocation(shader->resource, 1, "in_uv");
 }
@@ -224,16 +214,6 @@ void uniform_set(Uniform* uniform, int i) {
 	check_uniform(uniform);
 	glUniform1i(uniform->location, i);
 }
-
-void DERPKIT_DEBUG_EXPORT set_projection(Shader* shader, const mat3& m) {
-	// TODO: Maybe cache which proj matrix resolution is bound, to prevent reupload every time
-	uniform_set(&shader->u_proj, m);
-}
-
-void DERPKIT_DEBUG_EXPORT set_model_matrix(Shader* shader, const mat3& m) {
-	uniform_set(&shader->u_model, m);
-}
-
 
 }
 }

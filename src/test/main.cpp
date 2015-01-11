@@ -147,7 +147,7 @@ int main(int argc, char * argv[]) {
 			shader->bind();
 			texture.bind();
 
-			shader->set_projection(window.screenortho());
+			Shader::set_projection(window.screenortho());
 			Utils::draw_rect(0.f, 0.f, 512.f, 512.f);
 
 			shader->unbind();

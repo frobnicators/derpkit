@@ -36,10 +36,14 @@ class DERPKIT_EXPORT Shader {
 
 			bool valid() const { return m_uniform != nullptr; }
 
+			Uniform();
 			Uniform(impl::Uniform* uniform);
 			Uniform(const Uniform& u);
 			Uniform(Uniform&& u);
 			~Uniform();
+
+			Uniform& operator=(const Uniform& u);
+			Uniform& operator=(Uniform&& u);
 		private:
 			impl::Uniform* m_uniform;
 		};
@@ -52,6 +56,9 @@ class DERPKIT_EXPORT Shader {
 	private:
 		Shader(impl::Shader* shader);
 		impl::Shader* m_impl;
+
+		Uniform m_proj_mat;
+		Uniform m_model_mat;
 
 		static Shader* s_current;
 };

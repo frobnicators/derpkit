@@ -73,6 +73,7 @@ RenderTarget* create_rendertarget(const ivec2& resolution) {
 }
 
 void free_rendertarget(RenderTarget* target) {
+	if(target == nullptr) return;
 	glDeleteFramebuffers(1, &target->resource);
 	glDeleteTextures(1, &target->texture);
 	delete target;
