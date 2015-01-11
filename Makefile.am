@@ -45,6 +45,7 @@ libderpkit_la_SOURCES = \
 	src/render/impl.hpp src/render/gl/impl.cpp \
 	src/render/font.cpp src/render/font.hpp \
 	src/render/text.cpp src/render/text.hpp \
+	src/render/freetype/text.cpp \
 	src/render/gl/shader.cpp \
 	src/render/gl/fbo.cpp \
 	src/render/gl/texture.cpp \
