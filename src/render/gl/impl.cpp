@@ -16,6 +16,7 @@ namespace render {
 namespace impl {
 
 static GLuint vbo[2];
+static GLuint vao;
 
 // General
 
@@ -30,11 +31,21 @@ void DERPKIT_DEBUG_EXPORT initialize() {
 
 	static const unsigned int indices[] = { 0, 1, 3, 2 };
 
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
 	glGenBuffers(2, vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, 0); // pos
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (const GLvoid*)(sizeof(float)*2)); //uv
+
+	glBindVertexArray(0);
 
 	check_for_errors("initialize()");
 
@@ -44,6 +55,7 @@ void DERPKIT_DEBUG_EXPORT initialize() {
 
 void DERPKIT_DEBUG_EXPORT cleanup() {
 	glDeleteBuffers(2, vbo);
+	glDeleteVertexArrays(1, &vao);
 }
 
 void DERPKIT_DEBUG_EXPORT clear() {
@@ -52,18 +64,9 @@ void DERPKIT_DEBUG_EXPORT clear() {
 }
 
 void DERPKIT_DEBUG_EXPORT draw_rect() {
-	// TODO: Push attribs
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, 0); // pos
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (const GLvoid*)(sizeof(float)*2)); //uv
+	glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_INT, 0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 void DERPKIT_DEBUG_EXPORT check_for_errors(const char* context) {
