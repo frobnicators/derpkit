@@ -20,7 +20,6 @@ static GLuint vao;
 
 // General
 
-#ifdef ENABLE_DEBUG
 void DERPKIT_DEBUG_EXPORT initialize() {
 	static const float vertices[] = {
 		0.f, 0.f, 0.f, 0.f,
@@ -48,10 +47,7 @@ void DERPKIT_DEBUG_EXPORT initialize() {
 	glBindVertexArray(0);
 
 	check_for_errors("initialize()");
-
-	printf("created quad buffers\n");
 }
-#endif
 
 void DERPKIT_DEBUG_EXPORT cleanup() {
 	glDeleteBuffers(2, vbo);
