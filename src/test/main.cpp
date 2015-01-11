@@ -122,9 +122,9 @@ int main(int argc, char * argv[]) {
 
 		doc.apply_css(css);
 
-		css->print();
+		//css->print();
 
-		printf("%s\n", doc.to_string(true).c_str());
+		//printf("%s\n", doc.to_string(true).c_str());
 
 		Inspector inspector;
 		inspector.set_document(&doc);
