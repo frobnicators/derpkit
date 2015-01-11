@@ -26,11 +26,11 @@ class DERPKIT_EXPORT Shader {
 		static void set_model_matrix(const mat3& m);
 
 		struct Uniform {
-			void set(const ivec2 &v);
-			void set(const vec3 &v);
-			void set(const css::Color &color);
-			void set(const vec2 &v);
-			void set(const mat3 &m);
+			void set(const ivec2& v);
+			void set(const vec3& v);
+			void set(const vec4& v);
+			void set(const vec2& v);
+			void set(const mat3& m);
 			void set(float f);
 			void set(int i);
 

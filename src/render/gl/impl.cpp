@@ -54,8 +54,8 @@ void DERPKIT_DEBUG_EXPORT cleanup() {
 	glDeleteVertexArrays(1, &vao);
 }
 
-void DERPKIT_DEBUG_EXPORT clear() {
-	glClearColor(1.f, 0.f, 1.f, 1.f); //TODO: Allow color specification
+void DERPKIT_DEBUG_EXPORT clear(const vec4& color) {
+	glClearColor(color.r, color.g, color.b, color.a);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 

@@ -10,6 +10,7 @@ namespace render {
 vec2::vec2(float x, float y) : x(x), y(y) { }
 ivec2::ivec2(int x, int y) : x(x), y(y) { }
 vec3::vec3(float x, float y, float z) : x(x), y(y), z(z) { }
+vec4::vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) { }
 
 mat3::mat3(float m00, float m01, float m02,
 	       float m10, float m11, float m12,
@@ -45,12 +46,20 @@ float vec3::length() const {
 	return (float)sqrt(dot(*this, *this));
 }
 
+float vec4::length() const {
+	return (float)sqrt(dot(*this, *this));
+}
+
 float dot(const vec2& v1, const vec2& v2) {
 	return v1.x * v2.x + v1.y * v2.y;
 }
 
 float dot(const vec3& v1, const vec3& v2) {
 	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+float dot(const vec4& v1, const vec4& v2) {
+	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w;
 }
 
 vec2 normalized(const vec2& v) {
@@ -61,6 +70,11 @@ vec2 normalized(const vec2& v) {
 vec3 normalized(const vec3& v) {
 	float n= v.length();
 	return vec3(v.x / n, v.y / n, v.z / n);
+}
+
+vec4 normalized(const vec4& v) {
+	float n = v.length();
+	return vec4(v.x / n, v.y / n, v.z / n, v.w / n);
 }
 
 mat3 ortho(const ivec2& size) {

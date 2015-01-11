@@ -200,9 +200,9 @@ void uniform_set(Uniform* uniform, const ivec2 &v) {
 	glUniform2i(uniform->location, v.x, v.y);
 }
 
-void uniform_set(Uniform* uniform, const css::Color &v) {
+void uniform_set(Uniform* uniform, const vec4& v) {
 	check_uniform(uniform);
-	glUniform4f(uniform->location, v.r, v.g, v.b, v.a);
+	glUniform4f(uniform->location, v.x, v.y, v.z, v.w);
 }
 
 void uniform_set(Uniform* uniform, const vec3 &v) {

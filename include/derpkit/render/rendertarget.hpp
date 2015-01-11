@@ -15,6 +15,8 @@ class DERPKIT_EXPORT RenderTarget {
 		RenderTarget(int width, int height);
 		~RenderTarget();
 
+		void set_background_color(const vec4& color);
+
 		void begin_frame();
 		void end_frame();
 
@@ -26,6 +28,7 @@ class DERPKIT_EXPORT RenderTarget {
 	private:
 		mat3 m_ortho;
 		ivec2 m_resolution;
+		vec4 m_background_color;
 
 		impl::RenderTarget* m_impl;
 

@@ -143,7 +143,7 @@ int main(int argc, char * argv[]) {
 			//rt.begin_frame();
 			//rt.end_frame();
 
-			impl::clear();
+			impl::clear(vec4(1.f, 1.f, 1.f, 1.f));
 			shader->bind();
 			texture.bind();
 

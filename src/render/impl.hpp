@@ -2,7 +2,6 @@
 #define DERPKIT_IMPL_HPP
 
 #include <derpkit/render/math.hpp>
-#include <derpkit/css/datatype.hpp>
 #include <string>
 
 namespace derpkit {
@@ -26,7 +25,7 @@ void check_for_errors(const char* context);
 
 // Drawing
 
-void clear();
+void clear(const vec4& color);
 void draw_rect();
 
 // RenderTargets
@@ -58,11 +57,11 @@ Uniform* copy_uniform(const Uniform* uniform);
 void free_uniform(Uniform* uniform);
 
 // These requires the correct shader to be set
-void uniform_set(Uniform* uniform, const ivec2 &v);
-void uniform_set(Uniform* uniform, const vec3 &v);
-void uniform_set(Uniform* uniform, const css::Color &color);
-void uniform_set(Uniform* uniform, const vec2 &v);
-void uniform_set(Uniform* uniform, const mat3 &m);
+void uniform_set(Uniform* uniform, const ivec2& v);
+void uniform_set(Uniform* uniform, const vec3& v);
+void uniform_set(Uniform* uniform, const vec4& v);
+void uniform_set(Uniform* uniform, const vec2& v);
+void uniform_set(Uniform* uniform, const mat3& m);
 void uniform_set(Uniform* uniform, float f);
 void uniform_set(Uniform* uniform, int i);
 

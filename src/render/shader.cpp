@@ -77,8 +77,8 @@ void Shader::Uniform::set(const vec3 &v) {
 	impl::uniform_set(m_uniform, v);
 }
 
-void Shader::Uniform::set(const css::Color &color) {
-	impl::uniform_set(m_uniform, color);
+void Shader::Uniform::set(const vec4& v) {
+	impl::uniform_set(m_uniform, v);
 }
 
 void Shader::Uniform::set(const vec2 &v) {

@@ -26,8 +26,6 @@ RenderTarget* create_rendertarget(const ivec2& resolution) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, target->resource);
 
-	// TODO: Do we need to init gl-stuff here?
-
 	glBindTexture(GL_TEXTURE_2D, target->texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
