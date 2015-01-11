@@ -58,6 +58,7 @@ libderpkit_la_SOURCES = \
 	include/derpkit/utils/string_utils.hpp src/utils/string_utils.cpp \
 	include/derpkit/utils/network/socket.hpp src/utils/network/socket.cpp \
 	include/derpkit/utils/network/websocket.hpp src/utils/network/websocket.cpp \
+	gen/shaderdefs.cpp gen/shaderdefs.hpp \
 	src/version.cpp include/derpkit/version.hpp
 
 libantlr3c_la_CFLAGS  = -fvisibility=hidden -w -I${top_srcdir}/vendor/antlr3/include

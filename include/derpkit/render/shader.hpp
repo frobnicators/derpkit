@@ -2,9 +2,11 @@
 #define DERPKIT_RENDER_SHADER_HPP
 
 #include <derpkit/render/math.hpp>
-#include <derpkit/css/datatype.hpp>
+#include <derpkit/render/shaderresource.hpp>
+#include "gen/shaderdefs.hpp"
 
 #include <string>
+#include <map>
 
 namespace derpkit {
 namespace render {
@@ -19,20 +21,22 @@ namespace impl {
 class DERPKIT_EXPORT Shader {
 	public:
 		~Shader();
-		void bind();
-		void unbind();
+		void bind() const;
+		void unbind() const;
+
+		bool valid() const { return m_impl != nullptr; }
 
 		static void set_projection(const mat3& m);
 		static void set_model_matrix(const mat3& m);
 
 		struct Uniform {
-			void set(const ivec2& v);
-			void set(const vec3& v);
-			void set(const vec4& v);
-			void set(const vec2& v);
-			void set(const mat3& m);
-			void set(float f);
-			void set(int i);
+			void set(const ivec2& v) const;
+			void set(const vec3& v) const;
+			void set(const vec4& v) const;
+			void set(const vec2& v) const;
+			void set(const mat3& m) const;
+			void set(float f) const;
+			void set(int i) const;
 
 			bool valid() const { return m_uniform != nullptr; }
 
@@ -48,11 +52,12 @@ class DERPKIT_EXPORT Shader {
 			impl::Uniform* m_uniform;
 		};
 
-		Uniform get_uniform(const std::string& name) const;
+		const Uniform& get_uniform(UniformId uniformId) const;
 
-#ifdef ENABLE_DEBUG
-		static Shader* from_file(const std::string& filename);
-#endif
+		static void initialize();
+		static void cleanup();
+
+		static const Shader* get(ShaderId shaderId);
 	private:
 		Shader(impl::Shader* shader);
 		impl::Shader* m_impl;
@@ -60,7 +65,10 @@ class DERPKIT_EXPORT Shader {
 		Uniform m_proj_mat;
 		Uniform m_model_mat;
 
+		std::map<UniformId, Uniform> m_uniforms;
+
 		static Shader* s_current;
+		static Shader** s_shaders;
 };
 
 }

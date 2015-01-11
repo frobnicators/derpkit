@@ -1,0 +1,14 @@
+#ifndef DERPKIT_SHADERDEFS_HPP
+#define DERPKIT_SHADERDEFS_HPP
+
+#include <derpkit/render/shaderresource.hpp>
+
+namespace derpkit {
+namespace render {
+
+<yield>
+
+}
+}
+
+#endif

@@ -17,6 +17,7 @@
 
 #include "window.hpp"
 #include "render/impl.hpp"
+#include "gen/shaderdefs.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -30,6 +31,7 @@ int main(int argc, char * argv[]) {
 
 	{
 		Window window(1280, 720);
+		Shader::initialize();
 
 		//if(argc != 2) {
 			//printf("Requires exactly one argument: %s css-file\n", argv[0]);
@@ -128,11 +130,7 @@ int main(int argc, char * argv[]) {
 		inspector.set_document(&doc);
 
 		RenderTarget rt(1280, 720);
-		Shader* shader = Shader::from_file("/data/shaders/main");
-
-		Shader::Uniform u_tex0 = shader->get_uniform("texture0");
-		shader->bind();
-		u_tex0.set(0);
+		const Shader* shader = Shader::get(Shader_main);
 
 		Texture texture("/data/debug.jpg");
 
@@ -157,7 +155,7 @@ int main(int argc, char * argv[]) {
 			Utils::check_for_errors("end_main");
 		}
 
-		delete shader;
+		Shader::cleanup();
 	}
 
 	Inspector::cleanup();

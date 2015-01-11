@@ -24,6 +24,12 @@ struct Uniform {
 #endif
 };
 
+struct ShaderStage {
+	GLuint resource;
+
+	ShaderStage(GLuint i) : resource(i) {}
+};
+
 struct Shader {
 	GLuint resource;
 };
@@ -32,7 +38,7 @@ struct Shader {
 static GLuint bound_shader = 0;
 #endif
 
-GLuint compile_shader(GLenum shaderType, const char* source) {
+GLuint compile_shader(GLenum shaderType, const char* name, const char* source) {
 	const GLuint shader = glCreateShader(shaderType);
 
 	glShaderSource(shader, 1, &source, nullptr);
@@ -44,7 +50,7 @@ GLuint compile_shader(GLenum shaderType, const char* source) {
 	if ( compile_status == GL_FALSE ) {
 		char buffer[2048];
 
-		Logging::error("Failed to compile shader: \n");
+		Logging::error("Failed to compile shader %s: \n", name);
 		std::stringstream code(source);
 		int linenr=0;
 		while(!code.eof()) {
@@ -52,31 +58,29 @@ GLuint compile_shader(GLenum shaderType, const char* source) {
 			Logging::error("%4d %s\n", ++linenr, buffer);
 		}
 		glGetShaderInfoLog(shader, 2048, NULL, buffer);
-		Logging::error("Error in shader %s\n", buffer);
+		Logging::error("Error in shader %s: %s\n", name, buffer);
 		return 0;
 	}
 
 	return shader;
 }
 
-GLuint link_program(const std::string &shader_name, const std::vector<GLuint> &shaderList) {
+GLuint link_program(const char* shader_name, const std::vector<ShaderStage*> &shaderList) {
 	GLint gl_tmp;
 	GLuint program = glCreateProgram();
 
-	for(GLuint shader : shaderList) {
-		glAttachShader(program, shader);
+	for(ShaderStage* shader : shaderList) {
+		glAttachShader(program, shader->resource);
 	}
 
 	glLinkProgram(program);
-
-	std::for_each(shaderList.begin(), shaderList.end(), glDeleteShader);
 
 	glGetProgramiv(program, GL_LINK_STATUS, &gl_tmp);
 
 	if(!gl_tmp) {
 		char buffer[2048];
 		glGetProgramInfoLog(program, 2048, NULL, buffer);
-		Logging::error("Link error in shader %s: %s\n", shader_name.c_str(), buffer);
+		Logging::error("Link error in shader %s: %s\n", shader_name, buffer);
 		return 0;
 	}
 
@@ -88,7 +92,7 @@ GLuint link_program(const std::string &shader_name, const std::vector<GLuint> &s
 	if(!gl_tmp) {
 		char buffer[2048];
 		glGetProgramInfoLog(program, 2048, NULL, buffer);
-		Logging::error("Validate error in shader %s: %s\n", shader_name.c_str(), buffer);
+		Logging::error("Validate error in shader %s: %s\n", shader_name, buffer);
 		return 0;
 	}
 
@@ -121,23 +125,70 @@ static void init_shader(Shader* shader) {
 	glBindAttribLocation(shader->resource, 1, "in_uv");
 }
 
+ShaderStage* create_shaderstage_from_source(ShaderStageId stageid, const char* name, const char* source) {
+	GLenum shader_type;
+	switch(stageid) {
+		case ShaderStage_Vertex:
+			shader_type = GL_VERTEX_SHADER;
+			break;
+		case ShaderStage_Fragment:
+			shader_type = GL_FRAGMENT_SHADER;
+			break;
+		default:
+			Logging::fatal("%s: Invalid shader stage %d\n", name, stageid);
+			return nullptr;
+	}
+
+	GLuint resource = compile_shader(shader_type, name, source);
+	if(resource == 0) return nullptr;
+
+	ShaderStage* stage = new ShaderStage(resource);
+
+	return stage;
+}
+
+void free_shaderstage(ShaderStage* stage) {
+	if(stage == nullptr) return;
+	glDeleteShader(stage->resource);
+	delete stage;
+}
+
+Shader* create_shader(const char* name, const std::vector<ShaderStage*>& stages) {
+	GLuint resource = link_program(name, stages);
+
+	if(resource == 0) return nullptr;
+
+	Shader* shader = new Shader();
+	shader->resource = resource;
+
+	init_shader(shader);
+
+	return shader;
+}
+
+
 #ifdef ENABLE_DEBUG
 Shader* create_shader_from_filename(const std::string& filename) {
-	std::vector<GLuint> shader_list;
+	std::vector<ShaderStage*> shader_list;
 	{
 		FileData file = load_file(filename + ".vert");
-		shader_list.push_back(compile_shader(GL_VERTEX_SHADER, file.data()));
+		shader_list.push_back(new ShaderStage(compile_shader(GL_VERTEX_SHADER, filename.c_str(), file.data())));
 	}
 	{
 		FileData file = load_file(filename + ".frag");
-		shader_list.push_back(compile_shader(GL_FRAGMENT_SHADER, file.data()));
+		shader_list.push_back(new ShaderStage(compile_shader(GL_FRAGMENT_SHADER, filename.c_str(), file.data())));
 	}
 
-	for(GLuint i : shader_list) {
-		if(i == 0) return nullptr;
+	for(ShaderStage* s : shader_list) {
+		if(s->resource == 0) {
+			std::for_each(shader_list.begin(), shader_list.end(), free_shaderstage);
+			return nullptr;
+		}
 	}
 
-	GLuint resource = link_program(filename, shader_list);
+	GLuint resource = link_program(filename.c_str(), shader_list);
+	std::for_each(shader_list.begin(), shader_list.end(), free_shaderstage);
+
 	if(resource == 0) return nullptr;
 
 	Shader* shader = new Shader();

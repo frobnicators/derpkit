@@ -3,6 +3,7 @@
 
 #include <derpkit/render/math.hpp>
 #include <string>
+#include <vector>
 
 namespace derpkit {
 namespace render {
@@ -13,6 +14,7 @@ namespace impl {
 
 struct RenderTarget;
 struct Shader;
+struct ShaderStage;
 struct Uniform;
 struct Texture2D;
 
@@ -38,7 +40,17 @@ void unbind_rendertarget();
 
 // Shaders
 
+enum ShaderStageId {
+	ShaderStage_Vertex,
+	ShaderStage_Fragment
+};
+
+ShaderStage* create_shaderstage_from_source(ShaderStageId stage, const char* name, const char* source);
+void free_shaderstage(ShaderStage* stage);
+
+Shader* create_shader(const char* name, const std::vector<ShaderStage*>& stages);
 void free_shader(Shader* shader);
+
 void bind_shader(Shader* shader);
 void unbind_shader();
 
