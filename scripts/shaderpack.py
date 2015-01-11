@@ -3,6 +3,7 @@
 import json
 import sys
 import re
+import os
 
 g_shader_sources = {}
 g_programs = {}
@@ -61,8 +62,6 @@ def main():
 
     g_directory = g_root_dir + "data/shaders/"
 
-    print "Building shaders from %s" % (g_directory)
-
     # TODO: check trailing slash
 
     parse()
@@ -82,7 +81,6 @@ def parse():
 
 def build_program(name, sources):
     global g_programs
-    print "Shader: %s" % name
     source_ids = g_programs[name] = []
     for source in sources:
         source_ids.append(build_source_def(source))
@@ -168,6 +166,7 @@ def build_source_def(filename):
         return g_shader_sources[filename]["index"]
 
 def write_output():
+    os.makedirs("gen/")
     hpp_in_f = open(g_root_dir + "shaderdefs.hpp.in")
     cpp_in_f = open(g_root_dir + "shaderdefs.cpp.in")
 
