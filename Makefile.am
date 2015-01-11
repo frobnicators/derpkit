@@ -16,9 +16,9 @@ endif
 
 #TODO: Remove srcdir define (used for inspector file include)
 
-libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Dsrcdir=\"${top_srcdir}\" -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include ${json_CFLAGS}
+libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Dsrcdir=\"${top_srcdir}\" -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include ${json_CFLAGS} ${freetype_CFLAGS}
 libderpkit_la_CFLAGS = ${libderpkit_la_CXXFLAGS} -Wno-unused
-libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la
+libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la ${freetype_LIBS}
 libderpkit_la_SOURCES = \
 	include/derpkit/derpkit.hpp \
 	include/derpkit/export.hpp \

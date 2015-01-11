@@ -44,6 +44,8 @@ AM_CONDITIONAL([BUILD_TESTS], [test "x$no_cppunit" != "xyes"])
 # Only required for inspector
 PKG_CHECK_MODULES([json],[json-c])
 
+PKG_CHECK_MODULES([freetype],[freetype2])
+
 AC_CHECK_FUNCS([access stat gettimeofday usleep setitimer])
 AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_CHECK_HEADERS([sys/time.h])
