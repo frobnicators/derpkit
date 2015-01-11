@@ -13,6 +13,7 @@
 #include <derpkit/render/rendertarget.hpp>
 #include <derpkit/render/shader.hpp>
 #include <derpkit/render/utils.hpp>
+#include <derpkit/render/texture.hpp>
 
 #include "window.hpp"
 #include "render/impl.hpp"
@@ -129,6 +130,12 @@ int main(int argc, char * argv[]) {
 		RenderTarget rt(1280, 720);
 		Shader* shader = Shader::from_file("/data/shaders/main");
 
+		Shader::Uniform u_tex0 = shader->get_uniform("texture0");
+		shader->bind();
+		u_tex0.set(0);
+
+		Texture texture("/data/debug.jpg");
+
 		while(window.running()) {
 			utils::usleep(100);
 			inspector.update();
@@ -138,9 +145,10 @@ int main(int argc, char * argv[]) {
 
 			impl::clear();
 			shader->bind();
+			texture.bind();
 
 			shader->set_projection(window.screenortho());
-			Utils::draw_rect(0.f, 0.f, 128.f, 128.f);
+			Utils::draw_rect(0.f, 0.f, 512.f, 512.f);
 
 			shader->unbind();
 

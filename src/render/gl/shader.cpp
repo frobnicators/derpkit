@@ -165,6 +165,17 @@ Uniform* get_uniform(Shader* shader, const std::string& name) {
 	return uniform;
 }
 
+Uniform* copy_uniform(const Uniform* other) {
+	Uniform* uniform = new Uniform();
+	uniform->location = other->location;
+#ifdef ENABLE_DEBUG
+	uniform->program = other->program;
+	uniform->name = other->name;
+#endif
+
+	return uniform;
+}
+
 void free_uniform(Uniform* uniform) {
 	delete uniform;
 }

@@ -22,10 +22,10 @@ static GLuint vbo[2];
 #ifdef ENABLE_DEBUG
 void DERPKIT_DEBUG_EXPORT initialize() {
 	static const float vertices[] = {
-		0.f, 0.f, 0.f, 1.f,
-		0.f, 1.f, 0.f, 0.f,
-		1.f, 1.f, 1.f, 0.f,
-		1.f, 0.f, 1.f, 1.f,
+		0.f, 0.f, 0.f, 0.f,
+		0.f, 1.f, 0.f, 1.f,
+		1.f, 1.f, 1.f, 1.f,
+		1.f, 0.f, 1.f, 0.f,
 	};
 
 	static const unsigned int indices[] = { 0, 1, 3, 2 };
@@ -57,6 +57,7 @@ void DERPKIT_DEBUG_EXPORT draw_rect() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
 
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, 0); // pos
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (const GLvoid*)(sizeof(float)*2)); //uv
 	glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_INT, 0);

@@ -1,5 +1,5 @@
-#ifndef DERPKIT_RENDERTARGETIMPL_HPP
-#define DERPKIT_RENDERTARGETIMPL_HPP
+#ifndef DERPKIT_IMPL_HPP
+#define DERPKIT_IMPL_HPP
 
 #include <derpkit/render/math.hpp>
 #include <derpkit/css/datatype.hpp>
@@ -15,6 +15,7 @@ namespace impl {
 struct RenderTarget;
 struct Shader;
 struct Uniform;
+struct Texture2D;
 
 // General
 
@@ -53,6 +54,7 @@ void set_projection(Shader* shader, const mat3& m);
 void set_model_matrix(Shader* shader, const mat3& m);
 
 Uniform* get_uniform(Shader* shader, const std::string& name);
+Uniform* copy_uniform(const Uniform* uniform);
 void free_uniform(Uniform* uniform);
 
 // These requires the correct shader to be set
@@ -63,6 +65,13 @@ void uniform_set(Uniform* uniform, const vec2 &v);
 void uniform_set(Uniform* uniform, const mat3 &m);
 void uniform_set(Uniform* uniform, float f);
 void uniform_set(Uniform* uniform, int i);
+
+// Textures
+Texture2D* load_texture(const std::string& path);
+void free_texture(Texture2D* texture);
+
+void bind_texture(Texture2D* tex, int unit);
+void unbind_texture(int unit);
 
 }
 
