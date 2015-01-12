@@ -4,6 +4,7 @@
 
 #include <derpkit/render/rendertarget.hpp>
 #include <derpkit/render/math.hpp>
+#include <derpkit/render/texture.hpp>
 #include "impl.hpp"
 
 namespace derpkit {
@@ -21,9 +22,12 @@ RenderTarget::RenderTarget(int width, int height)
 
 	m_impl = impl::create_rendertarget(m_resolution);
 	m_ortho = render::ortho(m_resolution);
+	m_texture = new Texture(impl::get_rendertarget_texture(m_impl));
 }
 
 RenderTarget::~RenderTarget() {
+	m_texture->set_impl(nullptr); // Prevent double free
+	delete m_texture;
 	impl::free_rendertarget(m_impl);
 }
 

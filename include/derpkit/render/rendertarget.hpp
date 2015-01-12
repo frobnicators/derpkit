@@ -6,6 +6,8 @@
 namespace derpkit {
 namespace render {
 
+class Texture;
+
 namespace impl {
 	struct RenderTarget;
 }
@@ -23,6 +25,8 @@ class DERPKIT_EXPORT RenderTarget {
 		const mat3& ortho() const { return m_ortho; }
 		const ivec2& resolution() const { return m_resolution; }
 
+		const Texture* texture() const { return m_texture; }
+
 		static const RenderTarget* current();
 
 	private:
@@ -31,6 +35,8 @@ class DERPKIT_EXPORT RenderTarget {
 		vec4 m_background_color;
 
 		impl::RenderTarget* m_impl;
+		Texture* m_texture;
+
 
 		static const RenderTarget* s_current;
 };

@@ -35,6 +35,7 @@ void draw_rect();
 
 RenderTarget* create_rendertarget(const ivec2& resolution);
 void free_rendertarget(RenderTarget* target);
+Texture2D* get_rendertarget_texture(RenderTarget* target);
 
 void bind_rendertarget(RenderTarget* target);
 void unbind_rendertarget();

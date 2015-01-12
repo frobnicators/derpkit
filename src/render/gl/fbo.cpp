@@ -15,18 +15,20 @@ namespace impl {
 RenderTarget* create_rendertarget(const ivec2& resolution) {
 	RenderTarget* target = new RenderTarget();
 	glGenFramebuffers(1, &target->resource);
-	glGenTextures(1, &target->texture);
+	glGenTextures(1, &target->texture.resource);
 
 	target->size = resolution;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, target->resource);
 
-	glBindTexture(GL_TEXTURE_2D, target->texture);
+	glBindTexture(GL_TEXTURE_2D, target->texture.resource);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, resolution.x, resolution.y, 0, GL_RGBA, GL_UNSIGNED_INT, NULL);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target->texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target->texture.resource, 0);
 
 	// TODO: Remove fatal and return nullptr
 
@@ -63,14 +65,20 @@ RenderTarget* create_rendertarget(const ivec2& resolution) {
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	check_for_errors("fbo post create");
 
 	return target;
+}
+
+Texture2D* get_rendertarget_texture(RenderTarget* target) {
+	if(target == nullptr) return nullptr;
+	return &target->texture;
 }
 
 void free_rendertarget(RenderTarget* target) {
 	if(target == nullptr) return;
 	glDeleteFramebuffers(1, &target->resource);
-	glDeleteTextures(1, &target->texture);
+	glDeleteTextures(1, &target->texture.resource);
 	delete target;
 }
 
