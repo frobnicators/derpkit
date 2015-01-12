@@ -10,5 +10,5 @@ in vec2 uv;
 out vec4 out_color;
 
 void main() {
-	out_color = vec4(texture2D(texture0, uv).rrr, 1.f) * color;
+	out_color = vec4(1.0, 1.0, 1.0, texture2D(texture0, uv).r) * color;
 }
