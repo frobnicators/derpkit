@@ -4,6 +4,8 @@
 
 #include "text.hpp"
 #include <derpkit/render/utils.hpp>
+#include <derpkit/render/shader.hpp>
+#include "gen/shaderdefs.hpp"
 #include <cstdarg>
 
 namespace derpkit { namespace render {
@@ -65,6 +67,8 @@ void TextHandle::update(struct box box, std::string text, FontDefinition font){
 }
 
 void Text::blit(const TextHandle& text){
+	Shader::get(Shader_text)->bind();
+
 	const auto& box = text.box;
 	text.texture.bind();
 	Utils::draw_rect(box);

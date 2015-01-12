@@ -147,7 +147,6 @@ int main(int argc, char * argv[]) {
 
 			shader->bind();
 			texture.bind();
-			Shader::set_projection(rt.ortho());
 
 			Utils::draw_rect(0.f, 0.f, 512.f, 512.f);
 
@@ -164,6 +163,7 @@ int main(int argc, char * argv[]) {
 			window.update();
 
 			Utils::check_for_errors("end_main");
+			Shader::unbind();
 		}
 
 		Shader::cleanup();

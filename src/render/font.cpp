@@ -8,7 +8,7 @@ namespace derpkit { namespace render {
 
 const char* FontLookup::filename_from_family(const char* family){
 	/** @todo replace with real implementation */
-	return "/usr/share/fonts/corefonts/arial.ttf";
+	return "/usr/share/fonts/truetype/msttcorefonts/arial.ttf";
 }
 
 }}

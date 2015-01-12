@@ -16,13 +16,15 @@ namespace impl {
 	struct Uniform;
 }
 
+class RenderTarget;
+
 // TODO: Implement correct shader loading
 // TODO: Cache shaders
 class DERPKIT_EXPORT Shader {
 	public:
 		~Shader();
 		void bind() const;
-		void unbind() const;
+		static void unbind();
 
 		bool valid() const { return m_impl != nullptr; }
 
@@ -66,6 +68,8 @@ class DERPKIT_EXPORT Shader {
 		Uniform m_model_mat;
 
 		std::map<UniformId, Uniform> m_uniforms;
+
+		mutable const RenderTarget* m_last_rt;
 
 		static Shader* s_current;
 		static Shader** s_shaders;

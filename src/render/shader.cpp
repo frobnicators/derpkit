@@ -3,6 +3,7 @@
 #endif
 
 #include <derpkit/render/shader.hpp>
+#include <derpkit/render/rendertarget.hpp>
 #include "impl.hpp"
 
 #include <derpkit/utils/logging.hpp>
@@ -21,7 +22,9 @@ Shader* Shader::s_current = nullptr;
 Shader** Shader::s_shaders = nullptr;
 
 Shader::Shader(impl::Shader* shader)
-: m_impl(shader) { }
+: m_impl(shader)
+, m_last_rt(nullptr)
+{ }
 
 Shader::~Shader() {
 	impl::free_shader(m_impl);
@@ -110,13 +113,19 @@ void Shader::bind() const {
 		if(s_current != this) {
 			impl::bind_shader(m_impl);
 		}
+		if(m_last_rt != RenderTarget::current()) {
+			m_last_rt = RenderTarget::current();
+			if(m_last_rt != nullptr) {
+				m_proj_mat.set(m_last_rt->ortho());
+			}
+		}
 	} else {
 		impl::unbind_shader();
 	}
 	s_current = const_cast<Shader*>(this);
 }
 
-void Shader::unbind() const {
+void Shader::unbind() {
 	impl::unbind_shader();
 	s_current = nullptr;
 }

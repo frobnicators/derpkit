@@ -27,7 +27,7 @@ class DERPKIT_EXPORT RenderTarget {
 
 		const Texture* texture() const { return m_texture; }
 
-		static const RenderTarget* current();
+		static const RenderTarget* current() { return s_current; }
 
 	private:
 		mat3 m_ortho;
