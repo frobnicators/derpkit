@@ -111,14 +111,13 @@ mat3 model_matrix(const box& box){
 	);
 }
 
-/*
-mat3 mat3::operator*(const mat3& m1, const mat3& m2)
-{
+mat3 mat3::operator*(const mat3& mat) const {
 	mat3 ret;
 	int i,j,k;
-	const float* fm1 = (float*)&m1;
-	const float* fm2 = (float*)&m2;
-	float* fret = (float*)&ret;
+	const float* fm1 = m;
+	const float* fm2 = mat.m;
+	float* fret = ret.m;
+	memset(fret, 0, 9*sizeof(float));
 	for (j=0; j<3; ++j) {
 		for (i=0; i<3; ++i) {
 			for(k=0; k<3; ++k) {
@@ -128,7 +127,6 @@ mat3 mat3::operator*(const mat3& m1, const mat3& m2)
 	}
 	return ret;
 }
-*/
 
 #ifdef ENABLE_DEBUG
 DERPKIT_EXPORT std::ostream& operator<<(std::ostream& os, const vec3& v) {

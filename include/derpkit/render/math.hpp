@@ -50,6 +50,7 @@ struct DERPKIT_EXPORT vec3 {
 			float g;
 			float b;
 		};
+		float value[3];
 	};
 
 	float length() const;
@@ -94,7 +95,12 @@ struct DERPKIT_EXPORT mat3 {
 		 float m20, float m21, float m22);
 	mat3(const mat3& m);
 
-	float m[9];
+	union {
+		float m[9];
+		vec3 row[3];
+	};
+
+	mat3 operator*(const mat3& m) const;
 };
 
 inline const float* value_ptr(const vec2& v) { return reinterpret_cast<const float*>(&v); }
