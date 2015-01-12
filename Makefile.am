@@ -18,7 +18,7 @@ endif
 
 libderpkit_la_CXXFLAGS = ${AM_CXXFLAGS} -Dsrcdir=\"${top_srcdir}\" -I${top_builddir}/src/css/parser -I${top_srcdir}/vendor/antlr3/include -I${top_srcdir}/vendor/sha1/include -I${top_srcdir}/vendor/b64/include ${json_CFLAGS} ${freetype_CFLAGS}
 libderpkit_la_CFLAGS = ${libderpkit_la_CXXFLAGS} -Wno-unused
-libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la ${freetype_LIBS}
+libderpkit_la_LIBADD = libantlr3c.la libsha1.la libb64.la ${freetype_LIBS} -ljpeg -lGL -lGLU
 libderpkit_la_SOURCES = \
 	include/derpkit/export.hpp \
 	include/derpkit/forward.hpp \
@@ -99,11 +99,11 @@ libb64_la_CFLAGS = ${VENDOR_CFLAGS} -I${top_srcdir}/vendor/b64/include
 libb64_la_SOURCES = vendor/b64/src/cdecode.c vendor/b64/src/cencode.c vendor/b64/include/b64/cdecode.h vendor/b64/include/b64/cencode.h
 
 derptest_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include
-derptest_LDADD = libderpkit.la ${json_LIBS} -lGL -lSDL -lGLEW -lGLU -ljpeg
+derptest_LDADD = libderpkit.la ${json_LIBS} -lSDL -lGLEW -lGL
 derptest_SOURCES = src/test/window.cpp src/test/main.cpp
 
 domtest_CXXFLAGS = ${AM_CXXFLAGS} -I${top_srcdir}/include -I${top_srcdir}/src
-domtest_LDADD = libderpkit.la ${json_LIBS} -lGL -lGLU -ljpeg
+domtest_LDADD = libderpkit.la ${json_LIBS} -lGL
 domtest_SOURCES = src/dom/test.cpp
 
 test_dom_CXXFLAGS = ${AM_CXXFLAGS} $(CPPUNIT_CFLAGS)
