@@ -4,13 +4,21 @@
 
 #include "window.hpp"
 #include "render/impl.hpp"
+#include "gen/shaderdefs.hpp"
+
+#include <derpkit/render/rendertarget.hpp>
+#include <derpkit/render/texture.hpp>
+#include <derpkit/render/shader.hpp>
+#include <derpkit/render/utils.hpp>
 
 #include <SDL/SDL.h>
 #include <GL/glew.h>
 
 namespace derpkit {
 
-Window::Window(int width, int height) : m_running(true) {
+using namespace render;
+
+Window::Window(int width, int height) : m_size(width, height),  m_running(true) {
 	// Initialize SDL
 
 	if ( SDL_Init(SDL_INIT_VIDEO) != 0 ){
@@ -28,7 +36,9 @@ Window::Window(int width, int height) : m_running(true) {
 		abort();
 	}
 
-	m_screenortho = render::ortho(render::ivec2(width, height));
+	m_screenortho = render::ortho(render::ivec2(width, height)) * mat3(1.f,  0.f, 0.f,
+	                                                                   0.f, -1.f, 0.f,
+	                                                                   0.f,  0.f, 1.f);
 
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
@@ -56,6 +66,20 @@ void Window::update() {
 	}
 
 	SDL_GL_SwapBuffers();
+}
+
+void Window::blit(const render::RenderTarget* rt) {
+	Shader::get(Shader_texture)->bind();
+	Shader::set_projection(m_screenortho);
+	rt->texture()->bind();
+	Utils::draw_rect(ivec2(0, 0), m_size);
+}
+
+void Window::blit(const render::Texture* texture) {
+	Shader::get(Shader_texture)->bind();
+	Shader::set_projection(m_screenortho);
+	texture->bind();
+	Utils::draw_rect(ivec2(0, 0), m_size);
 }
 
 }

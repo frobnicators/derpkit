@@ -132,7 +132,7 @@ int main(int argc, char * argv[]) {
 		inspector.set_document(&doc);
 
 		RenderTarget rt(1280, 720);
-		const Shader* shader = Shader::get(Shader_main);
+		const Shader* shader = Shader::get(Shader_texture);
 
 		Texture texture("/data/debug.jpg");
 
@@ -143,14 +143,12 @@ int main(int argc, char * argv[]) {
 			utils::usleep(100);
 			inspector.update();
 
-			//rt.begin_frame();
-			//rt.end_frame();
+			rt.begin_frame();
 
-			impl::clear(vec4(1.f, 1.f, 1.f, 1.f));
 			shader->bind();
 			texture.bind();
+			Shader::set_projection(rt.ortho());
 
-			Shader::set_projection(window.screenortho());
 			Utils::draw_rect(0.f, 0.f, 512.f, 512.f);
 
 			if ( text.is_dirty() ){
@@ -158,7 +156,10 @@ int main(int argc, char * argv[]) {
 			}
 			Text::blit(text);
 
-			shader->unbind();
+			rt.end_frame();
+
+			impl::clear(vec4(1.f, 0.f, 1.f, 1.f));
+			window.blit(&rt);
 
 			window.update();
 
