@@ -95,7 +95,6 @@ def build_source_def(filename):
     if filename not in g_shader_sources:
         index = len(g_shader_sources)
         shader = g_shader_sources[filename] = {}
-        shader["index"] = index
 
         f = open(g_directory + filename)
         g_deps.append(g_directory + filename)
@@ -161,9 +160,9 @@ def build_source_def(filename):
 
         g_samplers.add(sdef)
 
-        return index
+        return shader
     else:
-        return g_shader_sources[filename]["index"]
+        return g_shader_sources[filename]
 
 def write_output():
     if not os.path.exists("gen"):
@@ -227,19 +226,21 @@ def write_output():
     hpp.write("enum ShaderSourceId {\n")
     cpp.write("ShaderSourceDef stage_sources[_ShaderSource_Count] = {\n")
 
-    first = True
+    index = 0
     for name in g_shader_sources:
         shader = g_shader_sources[name]
         if shader["stage"] == None:
             continue
-        hpp.write("\tShaderSource_%s%s,\n" % (shader["enum"], (" = 0" if first else "")))
-        first = False
+        hpp.write("\tShaderSource_%s%s,\n" % (shader["enum"], (" = 0" if index == 0 else "")))
 
         cpp.write("{ \"%s\", u8R\"SHADER_SOURCE(\n" % name);
         cpp.write(shader["source"])
         cpp.write(")SHADER_SOURCE\",\nimpl::ShaderStage_%s, _samplerdefs%d, _uniformdefs%d },\n"
                 % (shader["stage"], shader["samplers"].index, shader["uniforms"].index)
                 )
+
+        shader["index"] = index
+        index += 1
 
     hpp.write("\t_ShaderSource_Count\n};\n")
     cpp.write("};\n")
@@ -248,7 +249,7 @@ def write_output():
 
     for name in g_programs:
         shaders = g_programs[name]
-        cpp.write("\t{ \"%s\", { %s } },\n" % (name, ", ".join(str(x) for x in shaders)))
+        cpp.write("\t{ \"%s\", { %s } },\n" % (name, ", ".join(str(s["index"]) for s in shaders)))
 
     cpp.write("};\n")
 
