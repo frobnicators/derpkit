@@ -81,8 +81,11 @@ void DERPKIT_DEBUG_EXPORT clear(const vec4& color) {
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
+void DERPKIT_DEBUG_EXPORT bind_vertex_array() {
+	glBindVertexArray(vao);
+}
+
 void DERPKIT_DEBUG_EXPORT draw_rect() {
-	glBindVertexArray(vao); // TODO: This is only needed for the debug draw into the window
 	glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_INT, 0);
 }
 

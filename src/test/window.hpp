@@ -22,7 +22,6 @@ class Window {
 		const render::mat3& screenortho() const { return m_screenortho; }
 
 		void blit(const render::RenderTarget* rt);
-		void blit(const render::Texture* texture);
 	private:
 		render::ivec2 m_size;
 		bool m_running;

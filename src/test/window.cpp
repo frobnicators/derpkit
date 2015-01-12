@@ -75,13 +75,7 @@ void Window::blit(const render::RenderTarget* rt) {
 	Shader::get(Shader_texture)->bind();
 	Shader::set_projection(m_screenortho);
 	rt->texture()->bind();
-	Utils::draw_rect(ivec2(0, 0), m_size);
-}
-
-void Window::blit(const render::Texture* texture) {
-	Shader::get(Shader_texture)->bind();
-	Shader::set_projection(m_screenortho);
-	texture->bind();
+	render::impl::bind_vertex_array();
 	Utils::draw_rect(ivec2(0, 0), m_size);
 }
 

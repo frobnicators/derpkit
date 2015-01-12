@@ -35,6 +35,9 @@ void check_for_errors(const char* context);
 void clear(const vec4& color);
 void draw_rect();
 
+// only needed if draw_rect is called outside of begin/end frame scope
+void bind_vertex_array();
+
 // RenderTargets
 
 RenderTarget* create_rendertarget(const ivec2& resolution);
