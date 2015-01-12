@@ -4,18 +4,13 @@
 
 #include "render/impl.hpp"
 #include "gl.hpp"
+#include "types.hpp"
 
 #include <derpkit/utils/logging.hpp>
 
 namespace derpkit {
 namespace render {
 namespace impl {
-
-struct RenderTarget {
-	GLuint resource;
-	GLuint texture;
-	ivec2 size;
-};
 
 RenderTarget* create_rendertarget(const ivec2& resolution) {
 	RenderTarget* target = new RenderTarget();

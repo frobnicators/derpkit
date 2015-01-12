@@ -4,6 +4,7 @@
 
 #include "render/impl.hpp"
 #include "gl.hpp"
+#include "types.hpp"
 
 #include <derpkit/utils/logging.hpp>
 #include <derpkit/utils/file.hpp>
@@ -15,24 +16,6 @@
 namespace derpkit {
 namespace render {
 namespace impl {
-
-struct Uniform {
-	GLint location;
-#ifdef ENABLE_DEBUG
-	GLuint program;
-	std::string name;
-#endif
-};
-
-struct ShaderStage {
-	GLuint resource;
-
-	ShaderStage(GLuint i) : resource(i) {}
-};
-
-struct Shader {
-	GLuint resource;
-};
 
 #ifdef ENABLE_DEBUG
 static GLuint bound_shader = 0;

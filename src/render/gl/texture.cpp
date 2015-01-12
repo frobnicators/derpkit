@@ -4,6 +4,7 @@
 
 #include "render/impl.hpp"
 #include "gl.hpp"
+#include "types.hpp"
 
 #include <derpkit/utils/file.hpp>
 #include <derpkit/utils/logging.hpp>
@@ -17,17 +18,6 @@ namespace derpkit {
 namespace render {
 
 namespace impl {
-
-struct Texture2D {
-	GLuint resource;
-};
-
-struct ImageData {
-	unsigned char* data;
-	ivec2 size;
-	GLint internal_format;
-	GLenum format;
-};
 
 static bool load_jpeg(const std::string& path, ImageData& img);
 
