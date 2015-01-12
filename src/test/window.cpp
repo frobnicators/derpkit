@@ -40,6 +40,8 @@ Window::Window(int width, int height) : m_size(width, height),  m_running(true) 
 	                                                                   0.f, -1.f, 0.f,
 	                                                                   0.f,  0.f, 1.f);
 
+	//TODO: We need these attributes (in fbo init?), but we don't want to affect the user's content
+	// Can we push/pop these?
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
