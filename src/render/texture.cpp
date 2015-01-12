@@ -26,13 +26,19 @@ void Texture::upload(unsigned char* pixels, ivec2 size, TextureFormat format, in
 }
 
 
-void Texture::bind(int unit) {
+void Texture::bind(int unit) const {
 	impl::bind_texture(m_impl, unit);
 	m_unit = unit;
 }
-void Texture::unbind() {
+void Texture::unbind() const {
 	if(m_unit < 0) return;
 	impl::unbind_texture(m_unit);
+}
+
+Texture::Texture(impl::Texture2D* impl) : m_impl(impl), m_unit(-1) { }
+
+void Texture::set_impl(impl::Texture2D* impl) {
+	m_impl = impl;
 }
 
 }

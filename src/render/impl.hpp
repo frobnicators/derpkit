@@ -81,7 +81,7 @@ void free_texture(Texture2D* texture);
 
 void texture_upload(Texture2D* texture, unsigned char* pixels, ivec2 size, TextureFormat format, int unpack_alignment); /** @todo format */
 
-void bind_texture(Texture2D* tex, int unit);
+void bind_texture(const Texture2D* tex, int unit);
 void unbind_texture(int unit);
 
 }

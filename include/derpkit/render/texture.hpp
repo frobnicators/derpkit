@@ -25,11 +25,15 @@ class DERPKIT_EXPORT Texture {
 
 		void upload(unsigned char* pixels, ivec2 size, TextureFormat format = TextureFormat_RGB, int unpack_alignment=4);
 
-		void bind(int unit=0);
-		void unbind();
+		void bind(int unit=0) const;
+		void unbind() const;
 	private:
 		impl::Texture2D* m_impl;
-		int m_unit;
+		mutable int m_unit;
+
+		friend class RenderTarget;
+		Texture(impl::Texture2D* impl);
+		void set_impl(impl::Texture2D* impl);
 };
 
 }

@@ -106,7 +106,7 @@ void texture_upload(Texture2D* texture, unsigned char* pixels, ivec2 size, Textu
 	if(alignment != unpack_alignment) glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 }
 
-void bind_texture(Texture2D* tex, int unit) {
+void bind_texture(const Texture2D* tex, int unit) {
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(GL_TEXTURE_2D, tex->resource);
 }
