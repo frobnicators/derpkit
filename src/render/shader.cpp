@@ -107,7 +107,9 @@ const Shader* Shader::get(ShaderId shaderId) {
 
 void Shader::bind() const {
 	if(valid()) {
-		impl::bind_shader(m_impl);
+		if(s_current != this) {
+			impl::bind_shader(m_impl);
+		}
 	} else {
 		impl::unbind_shader();
 	}
