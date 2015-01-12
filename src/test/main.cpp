@@ -143,6 +143,7 @@ int main(int argc, char * argv[]) {
 			utils::usleep(100);
 			inspector.update();
 
+			impl::begin_frame();
 			rt.begin_frame();
 
 			shader->bind();
@@ -156,6 +157,7 @@ int main(int argc, char * argv[]) {
 			Text::blit(text);
 
 			rt.end_frame();
+			impl::end_frame();
 
 			impl::clear(vec4(1.f, 0.f, 1.f, 1.f));
 			window.blit(&rt);

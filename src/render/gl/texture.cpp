@@ -75,9 +75,8 @@ void free_texture(Texture2D* texture) {
 }
 
 void texture_upload(Texture2D* texture, unsigned char* pixels, ivec2 size, TextureFormat tex_format, int unpack_alignment){
-	int alignment;
-	glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignment);
-	if(alignment != unpack_alignment) glPixelStorei(GL_UNPACK_ALIGNMENT, unpack_alignment);
+	glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, unpack_alignment);
 
 	GLint internal_format;
 	GLenum format;
@@ -103,7 +102,7 @@ void texture_upload(Texture2D* texture, unsigned char* pixels, ivec2 size, Textu
 	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size.x, size.y, 0, format, GL_UNSIGNED_BYTE, pixels);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	if(alignment != unpack_alignment) glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+	glPopClientAttrib();
 }
 
 void bind_texture(const Texture2D* tex, int unit) {

@@ -83,14 +83,12 @@ void free_rendertarget(RenderTarget* target) {
 }
 
 void bind_rendertarget(RenderTarget* target) {
-	glPushAttrib(GL_VIEWPORT_BIT);
 	glViewport(0, 0, target->size.x, target->size.y);
 	glBindFramebuffer(GL_FRAMEBUFFER, target->resource);
 }
 
 void unbind_rendertarget() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glPopAttrib();
 }
 
 

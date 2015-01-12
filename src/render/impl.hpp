@@ -24,6 +24,10 @@ struct Texture2D;
 void initialize();
 void cleanup();
 
+// Setup and restore state for each frame
+void begin_frame();
+void end_frame();
+
 void check_for_errors(const char* context);
 
 // Drawing
