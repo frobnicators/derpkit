@@ -23,6 +23,13 @@ mat3::mat3(float m00, float m01, float m02,
 	}
 { }
 
+mat3::mat3() : m{
+	1.f, 0.f, 0.f,
+	0.f, 1.f, 0.f,
+	0.f, 0.f, 1.f
+   }
+{ }
+
 vec2 vec2::operator*(float f) const {
 	return vec2(x*f, y*f);
 }
