@@ -3,6 +3,7 @@
 #endif
 
 #include <derpkit/render/math.hpp>
+#include <cstring>
 
 namespace derpkit {
 namespace render {
@@ -128,6 +129,20 @@ mat3 mat3::operator*(const mat3& m1, const mat3& m2)
 	return ret;
 }
 */
+
+#ifdef ENABLE_DEBUG
+DERPKIT_EXPORT std::ostream& operator<<(std::ostream& os, const vec3& v) {
+	os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+	return os;
+}
+
+DERPKIT_EXPORT std::ostream& operator<<(std::ostream& os, const mat3& m) {
+	for(int i=0; i<3; ++i) {
+		os << m.row[i] << std::endl;
+	}
+	return os;
+}
+#endif
 
 }
 }

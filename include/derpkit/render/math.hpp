@@ -3,6 +3,10 @@
 
 #include <cmath>
 
+#ifdef ENABLE_DEBUG
+#include <ostream>
+#endif
+
 namespace derpkit {
 namespace render {
 
@@ -109,6 +113,11 @@ vec4 DERPKIT_EXPORT normalized(const vec4& v);
 mat3 DERPKIT_EXPORT ortho(const ivec2& size);
 mat3 DERPKIT_EXPORT model_matrix(const vec2& pos, const vec2& size);
 mat3 DERPKIT_EXPORT model_matrix(const box& box);
+
+#ifdef ENABLE_DEBUG
+std::ostream& operator<<(std::ostream& os, const vec3& m);
+std::ostream& operator<<(std::ostream& os, const mat3& m);
+#endif
 
 }
 }
