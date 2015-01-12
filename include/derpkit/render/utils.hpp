@@ -12,6 +12,7 @@ class DERPKIT_EXPORT Utils {
 			draw_rect(vec2(x, y), vec2(width, height));
 		}
 
+		static void draw_rect(const ivec2& pos, const ivec2& size);
 		static void draw_rect(const vec2& pos, const vec2& size);
 		static void draw_rect(const box& box);
 

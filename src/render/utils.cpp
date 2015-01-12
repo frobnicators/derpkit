@@ -12,6 +12,10 @@ namespace derpkit {
 namespace render {
 
 
+void Utils::draw_rect(const ivec2& pos, const ivec2& size) {
+	draw_rect(vec2(pos.x, pos.y), vec2(size.x, size.y));
+}
+
 void Utils::draw_rect(const vec2& pos, const vec2& size) {
 	Shader::set_model_matrix(model_matrix(pos, size));
 	impl::draw_rect();
