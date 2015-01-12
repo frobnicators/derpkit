@@ -2,6 +2,7 @@
 #define DERPKIT_IMPL_HPP
 
 #include <derpkit/render/math.hpp>
+#include <derpkit/render/texture.hpp>
 #include <string>
 #include <vector>
 
@@ -77,7 +78,8 @@ void uniform_set(Uniform* uniform, int i);
 Texture2D* empty_texture();
 Texture2D* load_texture(const std::string& path);
 void free_texture(Texture2D* texture);
-void texture_upload(Texture2D* texture, unsigned char* pixels, ivec2 size); /** @todo format */
+
+void texture_upload(Texture2D* texture, unsigned char* pixels, ivec2 size, TextureFormat format, int unpack_alignment); /** @todo format */
 
 void bind_texture(Texture2D* tex, int unit);
 void unbind_texture(int unit);

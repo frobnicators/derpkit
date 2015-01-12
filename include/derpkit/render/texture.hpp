@@ -7,6 +7,12 @@
 namespace derpkit {
 namespace render {
 
+enum TextureFormat {
+	TextureFormat_RED,
+	TextureFormat_RGB,
+	TextureFormat_RGBA,
+};
+
 namespace impl {
 	struct Texture2D;
 };
@@ -17,7 +23,7 @@ class DERPKIT_EXPORT Texture {
 		Texture(const std::string& path);
 		~Texture();
 
-		void upload(unsigned char* pixels, ivec2 size); /** @todo format */
+		void upload(unsigned char* pixels, ivec2 size, TextureFormat format = TextureFormat_RGB, int unpack_alignment=4);
 
 		void bind(int unit=0);
 		void unbind();

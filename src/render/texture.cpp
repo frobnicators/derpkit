@@ -21,8 +21,8 @@ Texture::~Texture() {
 	impl::free_texture(m_impl);
 }
 
-void Texture::upload(unsigned char* pixels, ivec2 size){
-	impl::texture_upload(m_impl, pixels, size);
+void Texture::upload(unsigned char* pixels, ivec2 size, TextureFormat format, int unpack_alignment){
+	impl::texture_upload(m_impl, pixels, size, format, unpack_alignment);
 }
 
 

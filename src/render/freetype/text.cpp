@@ -87,7 +87,7 @@ void Text::draw(const TextHandle& text){
 		x += slot->advance.x >> 6;
 	}
 
-	texture.upload(ctx.buffer, ivec2(box.w, box.h));
+	texture.upload(ctx.buffer, ivec2(box.w, box.h), TextureFormat_RED, 1);
 
 	text.dirty = false;
 }

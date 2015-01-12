@@ -84,10 +84,36 @@ void free_texture(Texture2D* texture) {
 	delete texture;
 }
 
-void texture_upload(Texture2D* texture, unsigned char* pixels, ivec2 size){
+void texture_upload(Texture2D* texture, unsigned char* pixels, ivec2 size, TextureFormat tex_format, int unpack_alignment){
+	int alignment;
+	glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignment);
+	if(alignment != unpack_alignment) glPixelStorei(GL_UNPACK_ALIGNMENT, unpack_alignment);
+
+	GLint internal_format;
+	GLenum format;
+	switch(tex_format) {
+		case TextureFormat_RED:
+			internal_format = GL_R8;
+			format = GL_RED;
+			break;
+		case TextureFormat_RGB:
+			internal_format = GL_RGB8;
+			format = GL_RGB;
+			break;
+		case TextureFormat_RGBA:
+			internal_format = GL_RGBA8;
+			format = GL_RGBA;
+			break;
+		default:
+			internal_format = GL_RGB8;
+			format = GL_RGB;
+	}
+
 	glBindTexture(GL_TEXTURE_2D, texture->resource);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.x, size.y, 0, GL_RED, GL_UNSIGNED_BYTE, pixels);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size.x, size.y, 0, format, GL_UNSIGNED_BYTE, pixels);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	if(alignment != unpack_alignment) glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 }
 
 void bind_texture(Texture2D* tex, int unit) {

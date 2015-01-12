@@ -137,7 +137,7 @@ int main(int argc, char * argv[]) {
 		Texture texture("/data/debug.jpg");
 
 		TextHandle text;
-		text.update(box(50,50,200,50), "abcdefiwiwi 012", FontDefinition::create("arial", 24));
+		text.update(box(50,50,201,50), "abcdefiwiwi 012", FontDefinition::create("arial", 24));
 
 		while(window.running()) {
 			utils::usleep(100);
