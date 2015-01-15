@@ -33,7 +33,6 @@ void DERPKIT_DEBUG_EXPORT initialize() {
 	glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 
 	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
 
 	glGenBuffers(2, vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
@@ -41,12 +40,25 @@ void DERPKIT_DEBUG_EXPORT initialize() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
+
+	glBindVertexBuffer(0, vbo[0], 0, sizeof(float)*4);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, 0); // pos
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (const GLvoid*)(sizeof(float)*2)); //uv
+	glVertexAttribFormat(0, 2, GL_FLOAT, GL_FALSE, 0);
+	glVertexAttribFormat(1, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2);
+
+	glVertexAttribBinding(0, 0);
+	glVertexAttribBinding(1, 0);
 
 	glBindVertexArray(0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glPopClientAttrib();
 
@@ -60,7 +72,6 @@ void DERPKIT_DEBUG_EXPORT cleanup() {
 
 void DERPKIT_DEBUG_EXPORT begin_frame() {
 	glPushAttrib(GL_VIEWPORT_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT | GL_POLYGON_BIT | GL_STENCIL_BUFFER_BIT | GL_TEXTURE_BIT);
-	glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 	glBindVertexArray(vao);
 
 	glEnable(GL_TEXTURE_2D);
@@ -72,7 +83,7 @@ void DERPKIT_DEBUG_EXPORT begin_frame() {
 }
 
 void DERPKIT_DEBUG_EXPORT end_frame() {
-	glPopClientAttrib();
+	glBindVertexArray(0);
 	glPopAttrib();
 }
 
@@ -87,6 +98,8 @@ void DERPKIT_DEBUG_EXPORT bind_vertex_array() {
 
 void DERPKIT_DEBUG_EXPORT draw_rect() {
 	glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_INT, 0);
+
+	check_for_errors("draw_rect()");
 }
 
 void DERPKIT_DEBUG_EXPORT check_for_errors(const char* context) {
