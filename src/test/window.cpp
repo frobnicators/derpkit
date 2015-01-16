@@ -36,10 +36,11 @@ Window::Window(int width, int height) : m_size(width, height),  m_running(true) 
 		printf("Failed to initialize GLEW: %s\n", glewGetErrorString(ret));
 		abort();
 	}
+	mat3 inv_mat =  mat3(1.f,  0.f, 0.f,
+	                     0.f, -1.f, 0.f,
+	                     0.f,  0.f, 1.f);
 
-	m_screenortho = render::ortho(render::ivec2(width, height)) * mat3(1.f,  0.f, 0.f,
-	                                                                   0.f, -1.f, 0.f,
-	                                                                   0.f,  0.f, 1.f);
+	m_screenortho = inv_mat * render::ortho(render::ivec2(width, height));
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_CULL_FACE);

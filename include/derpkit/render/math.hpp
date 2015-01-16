@@ -53,6 +53,9 @@ struct DERPKIT_EXPORT vec3 {
 		float value[3];
 	};
 
+	float& operator[](int index) { return value[index]; }
+	float operator[](int index) const { return value[index]; }
+
 	float length() const;
 };
 
@@ -101,34 +104,19 @@ struct DERPKIT_EXPORT mat3 {
 	};
 
 	mat3 operator*(const mat3& m) const;
+	mat3& operator=(const mat3& m);
 };
 
-class DERPKIT_EXPORT Transform {
+struct DERPKIT_EXPORT Transform {
 	Transform();
-	Transform(const vec2& pos);
-	Transform(const vec2& pos, float rotation);
 	Transform(float rotation);
-	Transform(const vec2& pos, float rotation, const vec2& scale);
+	Transform(const vec2& pos, float rotation=0.f, const vec2& scale=vec2(1.f));
 
-	void set_position(const vec2& pos);
-	void set_rotation(float rot);
-	void set_scale(const vec2& scale);
+	mat3 matrix() const;
 
-	bool has_position() const { return m_has_position; }
-	bool has_rotation() const { return m_has_rotation; }
-	bool has_scale() const { return m_has_scale; }
-
-	const vec2& position() const { return m_position; }
-	float rotation() const { return m_rotation; }
-	const vec2& scale() const { return m_scale; }
-private:
-	bool m_has_position;
-	bool m_has_rotation;
-	bool m_has_scale;
-
-	vec2 m_position;
-	float m_rotation;
-	vec2 m_scale;
+	vec2 position;
+	float rotation;
+	vec2 scale;
 };
 
 inline const float* value_ptr(const vec2& v) { return reinterpret_cast<const float*>(&v); }

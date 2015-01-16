@@ -18,7 +18,7 @@ class DERPKIT_EXPORT Draw {
 		static void push_transform(const Transform& transform);
 		static void pop_transform();
 	private:
-		static mat3 m_transform;
+		static mat3 s_transform;
 };
 
 }

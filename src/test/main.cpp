@@ -136,7 +136,10 @@ int main(int argc, char * argv[]) {
 		Texture texture("/data/debug.jpg");
 
 		TextHandle text;
-		text.update(box(50,50,201,50), "abcdefiwiwi 012", FontDefinition::create("arial", 24));
+		text.update(box(10,10,201,50), "abcdefiwiwi 012", FontDefinition::create("arial", 24));
+
+		float scale = 0.f;
+		float rotation = 0.f;
 
 		while(window.running()) {
 			utils::usleep(100);
@@ -145,12 +148,23 @@ int main(int argc, char * argv[]) {
 			impl::begin_frame();
 			rt.begin_frame();
 
+			Transform trans(vec2(100.f, 100.f), rotation, vec2(sin(scale) + 1.5f));
+
+			rotation += 0.0002f;
+			scale += 0.00001f;
+
+			Draw::push_transform(trans);
+
 			Draw::rect(box(0.f, 0.f, 512.f, 512.f), texture);
 
 			if ( text.is_dirty() ){
 				Text::draw(text);
 			}
-			Text::blit(text);
+
+			Text::blit(text, vec4(1.f, 0.f, 1.f, 1.f));
+
+			Draw::pop_transform();
+
 
 			rt.end_frame();
 			impl::end_frame();

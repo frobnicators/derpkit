@@ -4,6 +4,7 @@
 
 #include <derpkit/render/math.hpp>
 #include <cstring>
+#include <cmath>
 
 namespace derpkit {
 namespace render {
@@ -28,6 +29,11 @@ mat3::mat3(float m00, float m01, float m02,
 	m20, m21, m22
 	}
 { }
+
+mat3& mat3::operator=(const mat3& mat) {
+	memcpy(m, mat.m, sizeof(float)*9);
+	return *this;
+}
 
 mat3::mat3() : m{
 	1.f, 0.f, 0.f,
@@ -117,75 +123,59 @@ mat3 model_matrix(const box& box){
 }
 
 mat3 mat3::operator*(const mat3& mat) const {
+	float SrcA00 = row[0][0];
+	float SrcA01 = row[0][1];
+	float SrcA02 = row[0][2];
+	float SrcA10 = row[1][0];
+	float SrcA11 = row[1][1];
+	float SrcA12 = row[1][2];
+	float SrcA20 = row[2][0];
+	float SrcA21 = row[2][1];
+	float SrcA22 = row[2][2];
+
+	float SrcB00 = mat.row[0][0];
+	float SrcB01 = mat.row[0][1];
+	float SrcB02 = mat.row[0][2];
+	float SrcB10 = mat.row[1][0];
+	float SrcB11 = mat.row[1][1];
+	float SrcB12 = mat.row[1][2];
+	float SrcB20 = mat.row[2][0];
+	float SrcB21 = mat.row[2][1];
+	float SrcB22 = mat.row[2][2];
+
 	mat3 ret;
-	int i,j,k;
-	const float* fm1 = m;
-	const float* fm2 = mat.m;
-	float* fret = ret.m;
-	memset(fret, 0, 9*sizeof(float));
-	for (j=0; j<3; ++j) {
-		for (i=0; i<3; ++i) {
-			for(k=0; k<3; ++k) {
-				fret[i*3 + j] += fm1[i * 3 + k] * fm2[k * 3 + j];
-			}
-		}
-	}
+	ret.row[0][0] = SrcA00 * SrcB00 + SrcA10 * SrcB01 + SrcA20 * SrcB02;
+	ret.row[0][1] = SrcA01 * SrcB00 + SrcA11 * SrcB01 + SrcA21 * SrcB02;
+	ret.row[0][2] = SrcA02 * SrcB00 + SrcA12 * SrcB01 + SrcA22 * SrcB02;
+	ret.row[1][0] = SrcA00 * SrcB10 + SrcA10 * SrcB11 + SrcA20 * SrcB12;
+	ret.row[1][1] = SrcA01 * SrcB10 + SrcA11 * SrcB11 + SrcA21 * SrcB12;
+	ret.row[1][2] = SrcA02 * SrcB10 + SrcA12 * SrcB11 + SrcA22 * SrcB12;
+	ret.row[2][0] = SrcA00 * SrcB20 + SrcA10 * SrcB21 + SrcA20 * SrcB22;
+	ret.row[2][1] = SrcA01 * SrcB20 + SrcA11 * SrcB21 + SrcA21 * SrcB22;
+	ret.row[2][2] = SrcA02 * SrcB20 + SrcA12 * SrcB21 + SrcA22 * SrcB22;
 	return ret;
 }
 
 Transform::Transform()
-: m_has_position(false)
-, m_has_rotation(false)
-, m_has_scale(false)
-, m_rotation(0.f)
-{ }
-
-Transform::Transform(const vec2& pos)
-: m_has_position(true)
-, m_has_rotation(false)
-, m_has_scale(false)
-, m_position(pos)
-, m_rotation(0.f)
+: rotation(0.f)
 { }
 
 
 Transform::Transform(float rotation)
-: m_has_position(false)
-, m_has_rotation(true)
-, m_has_scale(false)
-, m_rotation(rotation)
-{ }
-
-Transform::Transform(const vec2& pos, float rotation)
-: m_has_position(true)
-, m_has_rotation(true)
-, m_has_scale(false)
-, m_position(pos)
-, m_rotation(rotation)
+: rotation(rotation)
 { }
 
 Transform::Transform(const vec2& pos, float rotation, const vec2& scale)
-: m_has_position(true)
-, m_has_rotation(true)
-, m_has_scale(true)
-, m_position(pos)
-, m_rotation(rotation)
-, m_scale(scale)
+: position(pos)
+, rotation(rotation)
+, scale(scale)
 { }
 
-void Transform::set_position(const vec2& pos) {
-	m_position = pos;
-	m_has_position = true;
-}
-
-void Transform::set_rotation(float rot) {
-	m_rotation = rot;
-	m_has_rotation = true;
-}
-
-void Transform::set_scale(const vec2& scale) {
-	m_scale = scale;
-	m_has_scale = true;
+mat3 Transform::matrix() const {
+	return mat3(
+		cos(rotation) * scale.x, -sin(rotation), 0.f,
+		sin(rotation), cos(rotation) * scale.y , 0.f,
+		position.x , position.y                , 1.f);
 }
 
 #ifdef ENABLE_DEBUG
