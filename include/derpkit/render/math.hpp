@@ -11,7 +11,7 @@ namespace derpkit {
 namespace render {
 
 struct DERPKIT_EXPORT vec2 {
-	vec2() {};
+	vec2(float v=0.f);
 	vec2(float x, float y);
 
 	float x;
@@ -26,7 +26,7 @@ struct DERPKIT_EXPORT vec2 {
 };
 
 struct DERPKIT_EXPORT ivec2 {
-	ivec2() {};
+	ivec2(int v=0);
 	ivec2(int x, int y);
 
 	int x;
@@ -36,7 +36,7 @@ struct DERPKIT_EXPORT ivec2 {
 };
 
 struct DERPKIT_EXPORT vec3 {
-	vec3() {};
+	vec3(float v=0.f);
 	vec3(float x, float y, float z);
 
 	union {
@@ -57,7 +57,7 @@ struct DERPKIT_EXPORT vec3 {
 };
 
 struct DERPKIT_EXPORT vec4 {
-	vec4() {};
+	vec4(float v=0.f);
 	vec4(float x, float y, float z, float w);
 
 	union {
@@ -79,7 +79,7 @@ struct DERPKIT_EXPORT vec4 {
 };
 
 struct DERPKIT_EXPORT box {
-	box() {};
+	box();
 	box(float x, float y, float w, float h);
 
 	float x;
@@ -101,6 +101,34 @@ struct DERPKIT_EXPORT mat3 {
 	};
 
 	mat3 operator*(const mat3& m) const;
+};
+
+class DERPKIT_EXPORT Transform {
+	Transform();
+	Transform(const vec2& pos);
+	Transform(const vec2& pos, float rotation);
+	Transform(float rotation);
+	Transform(const vec2& pos, float rotation, const vec2& scale);
+
+	void set_position(const vec2& pos);
+	void set_rotation(float rot);
+	void set_scale(const vec2& scale);
+
+	bool has_position() const { return m_has_position; }
+	bool has_rotation() const { return m_has_rotation; }
+	bool has_scale() const { return m_has_scale; }
+
+	const vec2& position() const { return m_position; }
+	float rotation() const { return m_rotation; }
+	const vec2& scale() const { return m_scale; }
+private:
+	bool m_has_position;
+	bool m_has_rotation;
+	bool m_has_scale;
+
+	vec2 m_position;
+	float m_rotation;
+	vec2 m_scale;
 };
 
 inline const float* value_ptr(const vec2& v) { return reinterpret_cast<const float*>(&v); }

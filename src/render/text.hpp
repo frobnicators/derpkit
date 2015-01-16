@@ -44,7 +44,7 @@ class DERPKIT_EXPORT Text {
 	static void cleanup();
 
 	static void draw(const TextHandle& text);
-	static void blit(const TextHandle& text);
+	static void blit(const TextHandle& text, const vec4& color=vec4(1.f));
 };
 
 }}

@@ -14,6 +14,7 @@
 #include <derpkit/render/rendertarget.hpp>
 #include <derpkit/render/shader.hpp>
 #include <derpkit/render/utils.hpp>
+#include <derpkit/render/draw.hpp>
 #include <derpkit/render/texture.hpp>
 
 #include "window.hpp"
@@ -132,8 +133,6 @@ int main(int argc, char * argv[]) {
 		inspector.set_document(&doc);
 
 		RenderTarget rt(1280, 720);
-		const Shader* shader = Shader::get(Shader_texture);
-
 		Texture texture("/data/debug.jpg");
 
 		TextHandle text;
@@ -146,10 +145,7 @@ int main(int argc, char * argv[]) {
 			impl::begin_frame();
 			rt.begin_frame();
 
-			shader->bind();
-			texture.bind();
-
-			Utils::draw_rect(0.f, 0.f, 512.f, 512.f);
+			Draw::rect(box(0.f, 0.f, 512.f, 512.f), texture);
 
 			if ( text.is_dirty() ){
 				Text::draw(text);

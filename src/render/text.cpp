@@ -3,7 +3,7 @@
 #endif
 
 #include "text.hpp"
-#include <derpkit/render/utils.hpp>
+#include <derpkit/render/draw.hpp>
 #include <derpkit/render/shader.hpp>
 #include "gen/shaderdefs.hpp"
 #include <cstdarg>
@@ -66,12 +66,8 @@ void TextHandle::update(struct box box, std::string text, FontDefinition font){
 	set_font(font);
 }
 
-void Text::blit(const TextHandle& text){
-	Shader::get(Shader_text)->bind();
-
-	const auto& box = text.box;
-	text.texture.bind();
-	Utils::draw_rect(box);
+void Text::blit(const TextHandle& text, const vec4& color){
+	Draw::rect(text.box, text.texture, color, Shader_text);
 }
 
 }}

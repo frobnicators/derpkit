@@ -10,6 +10,7 @@
 #include <derpkit/render/texture.hpp>
 #include <derpkit/render/shader.hpp>
 #include <derpkit/render/utils.hpp>
+#include <derpkit/render/draw.hpp>
 
 #include <SDL/SDL.h>
 #include <GL/glew.h>
@@ -74,9 +75,8 @@ void Window::update() {
 void Window::blit(const render::RenderTarget* rt) {
 	Shader::get(Shader_texture)->bind();
 	Shader::set_projection(m_screenortho);
-	rt->texture()->bind();
 	render::impl::bind_vertex_array();
-	Utils::draw_rect(ivec2(0, 0), m_size);
+	Draw::rect(box(0, 0, m_size.x, m_size.y), *rt->texture());
 }
 
 }

@@ -8,14 +8,6 @@ namespace render {
 
 class DERPKIT_EXPORT Utils {
 	public:
-		static void inline draw_rect(float x, float y, float width, float height) {
-			draw_rect(vec2(x, y), vec2(width, height));
-		}
-
-		static void draw_rect(const ivec2& pos, const ivec2& size);
-		static void draw_rect(const vec2& pos, const vec2& size);
-		static void draw_rect(const box& box);
-
 		static void check_for_errors(const char* context);
 };
 

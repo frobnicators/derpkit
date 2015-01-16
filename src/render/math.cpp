@@ -8,10 +8,15 @@
 namespace derpkit {
 namespace render {
 
+vec2::vec2(float v) : x(v), y(v) { }
 vec2::vec2(float x, float y) : x(x), y(y) { }
+ivec2::ivec2(int v) : x(v), y(v) { }
 ivec2::ivec2(int x, int y) : x(x), y(y) { }
 vec3::vec3(float x, float y, float z) : x(x), y(y), z(z) { }
+vec3::vec3(float v) : x(v), y(v), z(v) { }
+vec4::vec4(float v) : x(v), y(v), z(v), w(v) { }
 vec4::vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) { }
+box::box() : x(0.f), y(0.f), w(0.f), h(0.f) { }
 box::box(float x, float y, float w, float h) : x(x), y(y), w(w), h(h) { }
 
 mat3::mat3(float m00, float m01, float m02,
@@ -126,6 +131,61 @@ mat3 mat3::operator*(const mat3& mat) const {
 		}
 	}
 	return ret;
+}
+
+Transform::Transform()
+: m_has_position(false)
+, m_has_rotation(false)
+, m_has_scale(false)
+, m_rotation(0.f)
+{ }
+
+Transform::Transform(const vec2& pos)
+: m_has_position(true)
+, m_has_rotation(false)
+, m_has_scale(false)
+, m_position(pos)
+, m_rotation(0.f)
+{ }
+
+
+Transform::Transform(float rotation)
+: m_has_position(false)
+, m_has_rotation(true)
+, m_has_scale(false)
+, m_rotation(rotation)
+{ }
+
+Transform::Transform(const vec2& pos, float rotation)
+: m_has_position(true)
+, m_has_rotation(true)
+, m_has_scale(false)
+, m_position(pos)
+, m_rotation(rotation)
+{ }
+
+Transform::Transform(const vec2& pos, float rotation, const vec2& scale)
+: m_has_position(true)
+, m_has_rotation(true)
+, m_has_scale(true)
+, m_position(pos)
+, m_rotation(rotation)
+, m_scale(scale)
+{ }
+
+void Transform::set_position(const vec2& pos) {
+	m_position = pos;
+	m_has_position = true;
+}
+
+void Transform::set_rotation(float rot) {
+	m_rotation = rot;
+	m_has_rotation = true;
+}
+
+void Transform::set_scale(const vec2& scale) {
+	m_scale = scale;
+	m_has_scale = true;
 }
 
 #ifdef ENABLE_DEBUG
